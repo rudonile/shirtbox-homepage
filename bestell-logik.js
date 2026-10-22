@@ -5,7 +5,7 @@
   const money = amount => `CHF ${Number(amount).toFixed(2)}`;
   function totalForQuantity(quantity) { return quantity > 0 ? (PRICE_CENTS + (quantity - 1) * DISCOUNTED_PRICE_CENTS) / 100 : 0; }
   const SIZES = ['S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', '5XL', '6XL', '7XL'];
-  const SIZE_LABELS = Object.fromEntries(SIZES.map((size, i) => [size, `${size} → ${SIZES[i + 2] || 'nicht verfügbar'}`]));
+  const SIZE_LABELS = Object.fromEntries(SIZES.map((size, i) => [size, size]));
   const ORDER_SIZE = Object.fromEntries(SIZES.slice(0, -2).map((size, i) => [size, SIZES[i + 2]]));
   function calculate(designs) {
     const errors = [];

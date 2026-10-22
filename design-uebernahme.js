@@ -25,7 +25,7 @@
         window.ShirtboxOrderDesigns.restoreDetails?.(input,number);
         count++;
       }
-      note(`${count} Shirt-Design${count===1?'':'s'} übernommen. Klicken Sie auf das Bild, um es gross anzusehen, oder auf „Mit KI bearbeiten“, um es zu ändern.`);
+      note('');
       document.getElementById('design-list')?.scrollIntoView({block:'start',behavior:'smooth'});
     }catch(error){console.error('ShirtBOX Design-Übernahme:',error);note('Das Shirt konnte nicht übernommen werden: '+(error?.message||'Unbekannter Fehler')+'. Bitte im KI-Designer erneut auf „Ausgewählte Shirts bestellen“ klicken.',true);}
   })();

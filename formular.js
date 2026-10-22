@@ -33,10 +33,10 @@
         if (size.value) used.add(size.value);
         quantity.setCustomValidity(order.quantity > api.MAX_TOTAL ? 'Maximal fünf Shirts insgesamt pro Bestellung.' : '');
       }
-      state.card.querySelector('.design-data').value = `Datei: ${item.filename || 'fehlt'}\n${item.rows.map(row => `${row.size ? api.SIZE_LABELS[row.size] : 'Grösse fehlt'}: ${row.quantity || 0} Stück`).join(', ')}\nZwischensumme: ${money(item.subtotal)}`;
+      state.card.querySelector('.design-data').value = `Datei: ${item.filename || 'fehlt'}\n${item.rows.map(row => `${row.size ? row.size : 'Grösse fehlt'}: ${row.quantity || 0} Stück`).join(', ')}\nZwischensumme: ${money(item.subtotal)}`;
       const tr = document.createElement('tr');
       const shirtCell=document.createElement('td'); const viewButton=document.createElement('button'); viewButton.type='button'; viewButton.className='order-view-design'; viewButton.textContent=item.filename ? `🔍 Design ${state.designNumber || index + 1} gross ansehen` : 'Noch kein Entwurf'; viewButton.disabled=!state.previewUrl; viewButton.addEventListener('click',()=>showDesign(state)); if(state.previewUrl){const thumb=document.createElement('img');thumb.src=state.previewUrl;thumb.alt='T-Shirt Design '+(state.designNumber||index+1);thumb.style.cssText='display:block;width:390px;max-width:100%;max-height:450px;object-fit:contain;margin:0 auto 8px;cursor:zoom-in;border-radius:8px';thumb.addEventListener('click',()=>showDesign(state));shirtCell.append(thumb);}shirtCell.append(viewButton);const editLink=document.createElement('a');editLink.href='designhilfe.html?weiterbearbeiten='+encodeURIComponent(state.designNumber||index+1);editLink.textContent='✎ Design '+(state.designNumber||index+1)+' mit KI bearbeiten und zurück zur Bestellung';editLink.style.cssText='display:block;margin-top:8px;color:#27b6ff';editLink.addEventListener('click',saveDetails);shirtCell.append(editLink);tr.append(shirtCell);
-      cell(tr, item.rows.map(row => `${row.size ? api.SIZE_LABELS[row.size] : '–'} × ${row.quantity || '–'}`).join(', '));
+      cell(tr, item.rows.map(row => `${row.size ? row.size : '–'} × ${row.quantity || '–'}`).join(', '));
       cell(tr, String(item.quantity)); cell(tr, money(item.subtotal)); body.append(tr);
     });
     document.getElementById('summary-quantity').textContent = `${order.quantity} Shirt${order.quantity === 1 ? '' : 's'}`;
@@ -62,15 +62,17 @@
     phone.setCustomValidity(number.length >= 4 && number.length <= 15 ? '' : 'Bitte eine gültige Telefonnummer ohne Ländervorwahl eingeben.');
     if (prefix.value !== '+39') number = number.replace(/^0+/, '');
     document.getElementById('telefon-komplett').value = `${prefix.value} ${number}`;
-    submit.disabled = !online || !order.valid || !filesReady || ![...form.querySelectorAll('[required]')].every(field => field.validity.valid);
-    return {order, valid: !submit.disabled};
+    const ready = online && order.valid && filesReady && [...form.querySelectorAll('[required]')].every(field => field.validity.valid);
+    submit.disabled = false; submit.setAttribute('aria-disabled', String(!ready));
+    return {order, valid: ready};
   }
   function addSize(state, values = {}) {
     if (state.card.querySelectorAll('.design-size-row').length >= api.SIZES.length) return;
     const row = document.createElement('div'); row.className = 'design-size-row';
-    row.innerHTML = `<div class="field"><label>Gewohnte Grösse *<select required><option value="">Bitte wählen</option>${api.SIZES.map(size => `<option value="${size}">${api.SIZE_LABELS[size] || size}</option>`).join('')}</select></label></div><div class="field"><label>Stückzahl *<input type="number" min="1" max="5" step="1" required inputmode="numeric" placeholder="Anzahl"></label></div><button class="remove-size" type="button" aria-label="Diese Grössenzeile entfernen">×</button>`;
+    row.innerHTML = `<div class="field"><label>Gewohnte Grösse *<select required><option value="">Bitte wählen</option>${api.SIZES.map(size => `<option value="${size}">${size}</option>`).join('')}</select></label></div><div class="field"><label>Stückzahl *<input type="number" min="1" max="5" step="1" required inputmode="numeric" placeholder="Anzahl"></label></div><button class="remove-size" type="button" aria-label="Diese Grössenzeile entfernen">×</button>`;
     // The named design summary carries all size rows together with the matching file slot.
     row.querySelector('select').value = values.size || '';
+    
     const hint = document.createElement('small'); hint.className = 'asian-size-hint'; hint.style.cssText = 'display:block;color:#b91c1c;font-size:.83rem;margin-top:4px'; row.querySelector('select').after(hint);
     const updateHint = () => { const size = row.querySelector('select').value; hint.textContent = size ? `Automatisch bestellt: ${api.ORDER_SIZE[size]}` : 'Bitte wählen'; };
     row.querySelector('select').addEventListener('change', updateHint); updateHint();
@@ -119,7 +121,10 @@
     state.card.querySelector('.order-inline-edit').addEventListener('click',saveDetails);
     state.file.addEventListener('change', () => selectFile(state));
     card.querySelector('.add-size').addEventListener('click', () => { addSize(state); refresh(); });
-    const remove=document.createElement('button');remove.type='button';remove.className='remove-design';remove.textContent='✕ Dieses Design aus der Bestellung löschen';remove.style.cssText='margin-top:12px;padding:10px;border:1px solid #d55;border-radius:8px;color:#a22;background:#fff;cursor:pointer';card.append(remove);remove.addEventListener('click',async()=>{if(!confirm('Dieses Design endgültig aus der Bestellliste löschen?'))return;const number=state.designNumber;releasePreview(state);designs.delete(slot);card.remove();try{const saved=await window.ShirtboxDesignTransfer.load();if(saved){const blobs=(saved.blobs||[saved.blob]).filter((item,i)=>(item.number||i+1)!==number);if(blobs.length)await window.ShirtboxDesignTransfer.save(blobs);else await window.ShirtboxDesignTransfer.clear();}}catch{}try{const details=JSON.parse(sessionStorage.getItem(detailKey)||'{}');delete details[number];sessionStorage.setItem(detailKey,JSON.stringify(details));}catch{}refresh();window.ShirtboxRefreshOrderLink?.();});
+    const actions=document.createElement('div');actions.className='order-design-actions';const editAction=card.querySelector('.order-inline-edit');editAction.hidden=false;editAction.removeAttribute('aria-hidden');editAction.removeAttribute('tabindex');actions.append(editAction);card.querySelector('.design-size-list').before(actions);
+    const asianNote=document.createElement('span');asianNote.className='asian-size-notice';asianNote.textContent='⚠️ Achtung: Asiatische Grössen – wir bestellen automatisch zwei Grössen grösser.';actions.append(asianNote);
+    const guideTemplate=document.getElementById('shirtbox-size-guide-template');if(guideTemplate){const guide=guideTemplate.content.firstElementChild.cloneNode(true);guide.removeAttribute('id');actions.append(guide);}
+    const remove=document.createElement('button');remove.type='button';remove.className='remove-design';remove.textContent='✕ Dieses Design aus der Bestellung löschen';remove.style.cssText='margin-top:12px;padding:10px;border:1px solid #d55;border-radius:8px;color:#a22;background:#fff;cursor:pointer';actions.append(remove);remove.addEventListener('click',async()=>{if(!confirm('Dieses Design endgültig aus der Bestellliste löschen?'))return;const number=state.designNumber;releasePreview(state);designs.delete(slot);card.remove();try{const saved=await window.ShirtboxDesignTransfer.load();if(saved){const blobs=(saved.blobs||[saved.blob]).filter((item,i)=>(item.number||i+1)!==number);if(blobs.length)await window.ShirtboxDesignTransfer.save(blobs);else await window.ShirtboxDesignTransfer.clear();}}catch{}try{const details=JSON.parse(sessionStorage.getItem(detailKey)||'{}');delete details[number];sessionStorage.setItem(detailKey,JSON.stringify(details));}catch{}refresh();window.ShirtboxRefreshOrderLink?.();});
     refresh();
     return state;
   }
@@ -176,7 +181,12 @@
     const result = refresh();
     if (!online || !result.valid || !form.reportValidity()) {
       event.preventDefault();
-      message(!online ? 'Bitte die veröffentlichte Website öffnen.' : 'Bitte Ihren Entwurf im Shirt-Designer übernehmen und alle Pflichtfelder, Grössen, Stückzahlen und Bestätigungen prüfen.');
+      message(!online ? 'Bitte die veröffentlichte Website öffnen.' : 'Bitte die gelb markierte Angabe ergänzen.');
+      document.querySelectorAll('.missing-required').forEach(el=>el.classList.remove('missing-required'));
+      const missing=[...form.querySelectorAll('[required]')].find(el=>!el.validity.valid);
+      const target=missing || (result.order.errors.length ? list.querySelector('.design-size-row') || list : null);
+      if(target){const box=target.closest('.agb-consent,.design-size-row,.field')||target;box.classList.add('missing-required');box.scrollIntoView({behavior:'smooth',block:'center'});if(missing)missing.focus({preventScroll:true});}
+      else if(!result.order.valid){list.classList.add('missing-required');list.scrollIntoView({behavior:'smooth',block:'center'});}
       return;
     }
     message('Sie werden zum Versanddienst weitergeleitet. Bitte dort die Sicherheitsprüfung abschliessen.');
