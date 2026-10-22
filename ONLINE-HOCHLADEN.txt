@@ -1,0 +1,12 @@
+ShirtBOX Online-Version fuer GitHub / Cloudflare
+
+Alle Dateien und Ordner aus diesem ZIP ins Hauptverzeichnis des GitHub-Repositories hochladen.
+Nicht den ZIP-Ordner selbst hochladen.
+
+Cloudflare Workers Builds:
+Build command: mkdir -p public && find . -maxdepth 1 -type f -exec cp {} public/ \; && cp -R bilder anleitung videos public/
+Deploy command: npx wrangler deploy --assets ./public
+Root directory: /
+
+Der Button Zurueck zur Startseite erscheint ausschliesslich bei 5/5 aufgebrauchten Ueberraschungen.
+Hinweis: Das Tageslimit wird derzeit lokal im Browser gespeichert und ist nicht serverseitig abgesichert.
