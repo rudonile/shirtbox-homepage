@@ -1,0 +1,10 @@
+ShirtBOX OFFLINE-TEST
+
+Doppelklick auf ShirtBOX TESTEN.bat. Kein Python notwendig.
+Wenn Windows HTML im Editor oeffnet: Rechtsklick auf index.html > Oeffnen mit > Edge oder Chrome.
+
+Auf der KI-Seite unten links zwischen Testmodus und Echte KI waehlen.
+Testmodus zeigt ein Beispiel-Shirt, keine echte KI-Generierung.
+Echte KI benoetigt Internet und die Freigabe lokaler Anfragen durch den Cloudflare-Worker.
+Wenn echte KI mit "Failed to fetch" scheitert, muss der Worker CORS fuer lokale Dateien/localhost erlauben.
+Keine Testbestellungen absenden. Keine Dateien dieser Testversion auf GitHub hochladen.

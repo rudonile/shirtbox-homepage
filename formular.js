@@ -41,7 +41,8 @@
     });
     document.getElementById('summary-quantity').textContent = `${order.quantity} Shirt${order.quantity === 1 ? '' : 's'}`;
     document.getElementById('summary-total').textContent = order.valid ? money(order.total) : 'Bitte Grössen und Stückzahlen prüfen';
-    document.getElementById('gesamt').textContent = order.valid ? `Gesamtbetrag: ${money(order.total)}` : 'Bitte Grössen und Stückzahlen eintragen';
+    const totalLabel = document.getElementById('gesamt');
+    if (totalLabel) totalLabel.textContent = order.valid ? `Gesamtbetrag: ${money(order.total)}` : 'Bitte Grössen und Stückzahlen eintragen';
     document.getElementById('gesamt-feld').value = order.valid ? String(order.total) : '';
     document.getElementById('gesamt-anzahl').value = order.valid ? String(order.quantity) : '';
     document.getElementById('bestell-details').value = api.description(order);
