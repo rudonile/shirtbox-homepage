@@ -124,7 +124,7 @@
     const actions=document.createElement('div');actions.className='order-design-actions';const editAction=card.querySelector('.order-inline-edit');editAction.hidden=false;editAction.removeAttribute('aria-hidden');editAction.removeAttribute('tabindex');actions.append(editAction);card.querySelector('.design-size-list').before(actions);
     const asianNote=document.createElement('span');asianNote.className='asian-size-notice';asianNote.textContent='⚠️ Achtung: Asiatische Grössen – wir bestellen automatisch zwei Grössen grösser.';actions.append(asianNote);
     const guideTemplate=document.getElementById('shirtbox-size-guide-template');if(guideTemplate){const guide=guideTemplate.content.firstElementChild.cloneNode(true);guide.removeAttribute('id');actions.append(guide);}
-    const remove=document.createElement('button');remove.type='button';remove.className='remove-design';remove.textContent='✕ Dieses Design aus der Bestellung löschen';remove.style.cssText='margin-top:12px;padding:10px;border:1px solid #d55;border-radius:8px;color:#a22;background:#fff;cursor:pointer';actions.append(remove);remove.addEventListener('click',async()=>{if(!confirm('Dieses Design endgültig aus der Bestellliste löschen?'))return;const number=state.designNumber;releasePreview(state);designs.delete(slot);card.remove();try{const saved=await window.ShirtboxDesignTransfer.load();if(saved){const blobs=(saved.blobs||[saved.blob]).filter((item,i)=>(item.number||i+1)!==number);if(blobs.length)await window.ShirtboxDesignTransfer.save(blobs);else await window.ShirtboxDesignTransfer.clear();}}catch{}try{const details=JSON.parse(sessionStorage.getItem(detailKey)||'{}');delete details[number];sessionStorage.setItem(detailKey,JSON.stringify(details));}catch{}refresh();window.ShirtboxRefreshOrderLink?.();});
+    const remove=document.createElement('button');remove.type='button';remove.className='remove-design';remove.textContent='✕ Dieses Design aus der Bestellung löschen';remove.style.cssText='margin-top:12px;padding:10px;border:1px solid #d55;border-radius:8px;color:#a22;background:#fff;cursor:pointer';actions.append(remove);remove.addEventListener('click',async()=>{if(!confirm('Sind Sie sicher, dass Sie dieses Design aus der Bestellung löschen wollen?'))return;const number=state.designNumber;releasePreview(state);designs.delete(slot);card.remove();try{const saved=await window.ShirtboxDesignTransfer.load();if(saved){const blobs=(saved.blobs||[saved.blob]).filter((item,i)=>(item.number||i+1)!==number);if(blobs.length)await window.ShirtboxDesignTransfer.save(blobs);else await window.ShirtboxDesignTransfer.clear();}}catch{}try{const details=JSON.parse(sessionStorage.getItem(detailKey)||'{}');delete details[number];sessionStorage.setItem(detailKey,JSON.stringify(details));}catch{}refresh();window.ShirtboxRefreshOrderLink?.();});
     refresh();
     return state;
   }
@@ -189,8 +189,13 @@
       else if(!result.order.valid){list.classList.add('missing-required');list.scrollIntoView({behavior:'smooth',block:'center'});}
       return;
     }
-    message('Sie werden zum Versanddienst weitergeleitet. Bitte dort die Sicherheitsprüfung abschliessen.');
+    const progress=document.getElementById('order-submit-progress');
+    if(progress){progress.hidden=false;progress.scrollIntoView({behavior:'smooth',block:'center'});}
+    submit.disabled=true;
+    submit.setAttribute('aria-busy','true');
+    submit.textContent='⏳ Bestellung wird übermittelt …';
+    message('Ihre Bestellung wird übermittelt. Bitte warten und die Seite nicht schliessen.');
   });
-  window.addEventListener('pageshow', refresh);
+  window.addEventListener('pageshow', () => { const progress=document.getElementById('order-submit-progress');if(progress)progress.hidden=true;submit.disabled=false;submit.removeAttribute('aria-busy');submit.innerHTML='Zahlungspflichtig bestellen <span aria-hidden="true">↗</span>';refresh(); });
   // Empty orders stay empty until a new design is added from the designer.
 })();
