@@ -117,3 +117,4 @@ Vier Upload-Felder, Bild ersetzen, direkte Auswahl, Verschieben, Eckpunkt-
 Skalierung, Drehpunkt, Bearbeitung in beiden Ärmelansichten, Effektknöpfe,
 Transparenz, Bildrechte und Export ohne Anfasser mit Canvas automatisiert geprüft.
 Vor Verwendung auf eigenen Zielgeräten die Bedienung und Mailzustellung prüfen.
+
