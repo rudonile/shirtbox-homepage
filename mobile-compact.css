@@ -1,0 +1,37 @@
+/* Nur Smartphones: Desktop bleibt unveraendert. */
+.mobile-order-shortcut{display:none}
+@media(max-width:600px){
+.simple-home .shell{padding:8px 8px 20px!important}
+.simple-home .masthead{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:5px 7px!important;padding:8px 9px!important;margin:0!important;border-radius:8px!important}
+.simple-home .masthead .brand{order:0!important;flex:0 0 auto!important;margin:0!important}
+.simple-home .masthead .brand-logo{width:78px!important;height:auto!important}
+.simple-home .masthead .mobile-order-shortcut{display:inline-flex!important;order:1!important;margin-left:auto!important;font-size:10px!important;font-weight:800!important;color:#172638!important;background:#dbc5a2!important;padding:6px 7px!important;border-radius:5px!important;text-decoration:none!important;white-space:nowrap!important}
+.simple-home .masthead .language-switch{display:flex!important;order:2!important;margin:0!important;gap:3px!important}
+.simple-home .masthead .language-switch button{font-size:10px!important;min-height:27px!important;padding:4px 5px!important}
+.simple-home .masthead nav{order:3!important;display:flex!important;flex-wrap:wrap!important;justify-content:center!important;align-items:center!important;width:100%!important;gap:3px 10px!important;padding:3px 0 0!important;margin:0!important;font-size:10px!important;line-height:1.2!important}
+.simple-home .masthead nav a{padding:4px 1px!important;white-space:nowrap!important}
+.simple-home .masthead nav .order-return-link{display:none!important}
+.simple-home .welcome{padding:10px 8px!important;margin-top:8px!important}
+.simple-home .welcome-copy{display:flex!important;flex-direction:column!important;gap:0!important;min-width:0!important}
+.simple-home .hero-kicker{order:0!important;margin:0 0 5px!important;font-size:9px!important}
+.simple-home .hero-title-row{order:1!important;margin:0!important}
+.simple-home .hero-title-row h1{font-size:clamp(24px,7vw,34px)!important;line-height:1.12!important;margin:0!important}
+.simple-home .box-carousel{order:2!important;margin:4px 0 6px!important;padding:0!important}
+.simple-home .box-stage{height:220px!important}
+.simple-home .box-item{height:190px!important;width:150px!important}
+.simple-home .hero-price{order:3!important;margin-top:6px!important}
+.simple-home .hero-actions{order:4!important}
+}
+
+/* Einheitlicher kompakter Handy-Kopf auf allen Hauptseiten. */
+@media(max-width:600px){
+body.simple-home .masthead{display:flex!important;flex-wrap:wrap!important;align-items:center!important;column-gap:5px!important;row-gap:2px!important;padding:4px 7px!important;margin:0!important;min-height:0!important;border-radius:8px!important}
+body.simple-home .masthead .brand{order:0!important;flex:0 1 auto!important;margin:0!important;min-width:0!important;display:flex!important;align-items:center!important}
+body.simple-home .masthead .brand-logo{width:clamp(112px,32vw,145px)!important;max-height:46px!important;height:auto!important;object-fit:contain!important;display:block!important}
+body.simple-home .masthead .mobile-order-shortcut{display:inline-flex!important;order:1!important;margin-left:auto!important;font-size:9px!important;font-weight:800!important;padding:5px 5px!important;white-space:nowrap!important}
+body.simple-home .masthead .language-switch{display:flex!important;order:2!important;gap:2px!important;margin:0!important}
+body.simple-home .masthead .language-switch button{font-size:9px!important;min-height:26px!important;padding:3px 4px!important}
+body.simple-home .masthead nav{order:3!important;display:flex!important;flex-wrap:wrap!important;justify-content:center!important;align-items:center!important;width:100%!important;gap:2px 9px!important;padding:1px 0 0!important;margin:0!important;font-size:10px!important;line-height:1.15!important}
+body.simple-home .masthead nav a{padding:3px 1px!important;white-space:nowrap!important}
+body.simple-home .masthead nav .order-return-link{display:none!important}
+}

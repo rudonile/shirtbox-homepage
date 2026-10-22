@@ -1,0 +1,17 @@
+
+/* Einheitlicher Desktop-Kopf auf allen ShirtBOX-Hauptseiten. */
+@media (min-width:901px){
+ body.simple-home .masthead{box-sizing:border-box;min-height:112px;padding:15px 22px!important;gap:16px!important;align-items:center!important;align-content:center!important;flex-wrap:nowrap!important}
+ body.simple-home .masthead .brand{flex:0 0 auto!important;margin:0!important}
+ body.simple-home .masthead .brand-logo{width:200px!important;height:auto!important;max-height:78px!important;object-fit:contain!important}
+ body.simple-home .masthead nav{display:flex!important;flex:1 1 auto!important;min-width:0!important;width:auto!important;justify-content:center!important;align-items:center!important;flex-wrap:wrap!important;gap:6px 14px!important;margin:0!important;font-size:14px!important}
+ body.simple-home .masthead nav a{box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;min-height:40px!important;padding:7px 8px!important;margin:0!important;border:0!important;background:transparent!important;color:#f4f2ed!important;border-radius:5px!important;white-space:nowrap!important;text-decoration:none!important}
+ body.simple-home .masthead nav a[aria-current="page"]{background:#dbc5a2!important;color:#172638!important}
+ body.simple-home .masthead .language-switch{flex:0 0 auto!important;margin-left:0!important}
+}
+/* Nur auf Handys: Preisfeld auf etwa halbe Hoehe reduzieren. */
+@media (max-width:600px){
+ body.simple-home .welcome .hero-price{padding:4px 0!important;gap:4px 9px!important;margin-top:2px!important;align-items:center!important}
+ body.simple-home .welcome .hero-price strong{font-size:20px!important;line-height:1.05!important}
+ body.simple-home .welcome .hero-price span{font-size:10px!important;line-height:1.15!important}
+}

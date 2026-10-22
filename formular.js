@@ -1,0 +1,185 @@
+(() => {
+  'use strict';
+  const form = document.getElementById('bestellung');
+  const api = window.ShirtboxOrder;
+  const list = document.getElementById('design-list');
+  const submit = document.getElementById('absenden');
+  const status = document.getElementById('formular-status');
+  const phone = document.getElementById('telefon');
+  const prefix = document.getElementById('vorwahl');
+  const online = ['https:', 'http:'].includes(location.protocol);
+  const designs = new Map();
+  let nextSlot = 0;
+  const money = api.money;
+  function message(text) { status.textContent = text; status.hidden = !text; }
+  function snapshot() {
+    return [...designs.values()].map(state => ({slot: state.slot, filename: state.file.files[0]?.name || '', rows: [...state.card.querySelectorAll('.design-size-row')].map(row => ({size: row.querySelector('select').value, quantity: row.querySelector('input').value}))}));
+  }
+  function cell(row, text) { const td = document.createElement('td'); td.textContent = text; row.append(td); }
+  function refresh() {
+    const order = api.calculate(snapshot());
+    const body = document.getElementById('order-summary-body'); body.replaceChildren();
+    [...designs.values()].forEach((state, index) => {
+      const item = order.designs[index];
+      const title=state.card.querySelector('.design-title');title.textContent=`Design ${state.designNumber || index + 1} `;if(state.previewUrl){const mini=document.createElement('img');mini.src=state.previewUrl;mini.alt='Design vergrössern';mini.title='Zum Vergrössern anklicken';mini.style.cssText='width:76px;height:76px;object-fit:contain;vertical-align:middle;margin-left:14px;border-radius:8px;cursor:zoom-in;background:#fff';mini.addEventListener('click',()=>showDesign(state));title.append(mini);}
+      state.card.querySelector('.design-subtotal').textContent = `${item.quantity} Shirts · ${money(item.subtotal)}`;
+      const rows = [...state.card.querySelectorAll('.design-size-row')];
+      state.card.querySelector('.add-size').disabled = rows.length >= api.SIZES.length;
+      rows.forEach(row => row.querySelector('.remove-size').disabled = rows.length === 1);
+      const used = new Set();
+      for (const row of rows) {
+        const size = row.querySelector('select'), quantity = row.querySelector('input');
+        size.setCustomValidity(size.value && used.has(size.value) ? 'Diese Grösse ist bei diesem Design bereits vorhanden.' : '');
+        if (size.value) used.add(size.value);
+        quantity.setCustomValidity(order.quantity > api.MAX_TOTAL ? 'Maximal fünf Shirts insgesamt pro Bestellung.' : '');
+      }
+      state.card.querySelector('.design-data').value = `Datei: ${item.filename || 'fehlt'}\n${item.rows.map(row => `${row.size ? api.SIZE_LABELS[row.size] : 'Grösse fehlt'}: ${row.quantity || 0} Stück`).join(', ')}\nZwischensumme: ${money(item.subtotal)}`;
+      const tr = document.createElement('tr');
+      const shirtCell=document.createElement('td'); const viewButton=document.createElement('button'); viewButton.type='button'; viewButton.className='order-view-design'; viewButton.textContent=item.filename ? `🔍 Design ${state.designNumber || index + 1} gross ansehen` : 'Noch kein Entwurf'; viewButton.disabled=!state.previewUrl; viewButton.addEventListener('click',()=>showDesign(state)); if(state.previewUrl){const thumb=document.createElement('img');thumb.src=state.previewUrl;thumb.alt='T-Shirt Design '+(state.designNumber||index+1);thumb.style.cssText='display:block;width:390px;max-width:100%;max-height:450px;object-fit:contain;margin:0 auto 8px;cursor:zoom-in;border-radius:8px';thumb.addEventListener('click',()=>showDesign(state));shirtCell.append(thumb);}shirtCell.append(viewButton);const editLink=document.createElement('a');editLink.href='designhilfe.html?weiterbearbeiten='+encodeURIComponent(state.designNumber||index+1);editLink.textContent='✎ In KI weiterbearbeiten';editLink.style.cssText='display:block;margin-top:8px;color:#27b6ff';editLink.addEventListener('click',saveDetails);shirtCell.append(editLink);tr.append(shirtCell);
+      cell(tr, item.rows.map(row => `${row.size ? api.SIZE_LABELS[row.size] : '–'} × ${row.quantity || '–'}`).join(', '));
+      cell(tr, String(item.quantity)); cell(tr, money(item.subtotal)); body.append(tr);
+    });
+    document.getElementById('summary-quantity').textContent = `${order.quantity} Shirt${order.quantity === 1 ? '' : 's'}`;
+    document.getElementById('summary-total').textContent = order.valid ? money(order.total) : 'Bitte Grössen und Stückzahlen prüfen';
+    document.getElementById('gesamt').textContent = order.valid ? `Gesamtbetrag: ${money(order.total)}` : 'Bitte Grössen und Stückzahlen eintragen';
+    document.getElementById('gesamt-feld').value = order.valid ? String(order.total) : '';
+    document.getElementById('gesamt-anzahl').value = order.valid ? String(order.quantity) : '';
+    document.getElementById('bestell-details').value = api.description(order);
+    document.getElementById('antwort-mail').value = order.valid ? api.email(order) : 'Vielen Dank für Ihre ShirtBOX-Bestellung!';
+    if (online) {
+      const next = new URL('danke.html', location.href);
+      if (order.valid) next.searchParams.set('anzahl', String(order.quantity));
+      document.getElementById('weiter').value = next.href;
+    }
+    const validation = document.getElementById('design-validation');
+    validation.textContent = order.errors.join(' '); validation.hidden = !order.errors.length; validation.dataset.state = 'error';
+    const filesReady = designs.size>0 && [...designs.values()].every(state => Boolean(state.file.files[0]));
+    for (const field of form.querySelectorAll('[required]')) {
+      if (!['file', 'number', 'checkbox'].includes(field.type) && field.tagName !== 'SELECT') field.setCustomValidity(field.value.trim() ? '' : 'Bitte dieses Pflichtfeld ausfüllen.');
+    }
+    let number = phone.value.replace(/[^0-9]/g, '');
+    phone.setCustomValidity(number.length >= 4 && number.length <= 15 ? '' : 'Bitte eine gültige Telefonnummer ohne Ländervorwahl eingeben.');
+    if (prefix.value !== '+39') number = number.replace(/^0+/, '');
+    document.getElementById('telefon-komplett').value = `${prefix.value} ${number}`;
+    submit.disabled = !online || !order.valid || !filesReady || ![...form.querySelectorAll('[required]')].every(field => field.validity.valid);
+    return {order, valid: !submit.disabled};
+  }
+  function addSize(state, values = {}) {
+    if (state.card.querySelectorAll('.design-size-row').length >= api.SIZES.length) return;
+    const row = document.createElement('div'); row.className = 'design-size-row';
+    row.innerHTML = `<div class="field"><label>Gewohnte Grösse *<select required><option value="">Bitte wählen</option>${api.SIZES.map(size => `<option value="${size}">${api.SIZE_LABELS[size] || size}</option>`).join('')}</select></label></div><div class="field"><label>Stückzahl *<input type="number" min="1" max="5" step="1" required inputmode="numeric" placeholder="Anzahl"></label></div><button class="remove-size" type="button" aria-label="Diese Grössenzeile entfernen">×</button>`;
+    // The named design summary carries all size rows together with the matching file slot.
+    row.querySelector('select').value = values.size || '';
+    const hint = document.createElement('small'); hint.className = 'asian-size-hint'; hint.style.cssText = 'display:block;color:#b91c1c;font-size:.83rem;margin-top:4px'; row.querySelector('select').after(hint);
+    const updateHint = () => { const size = row.querySelector('select').value; hint.textContent = size ? `Automatisch bestellt: ${api.ORDER_SIZE[size]}` : 'Bitte wählen'; };
+    row.querySelector('select').addEventListener('change', updateHint); updateHint();
+    row.querySelector('input').value = values.quantity || '';
+    row.querySelector('.remove-size').addEventListener('click', () => { if (state.card.querySelectorAll('.design-size-row').length > 1) { row.remove(); refresh(); } });
+    state.card.querySelector('.design-size-list').append(row);
+  }
+  function releasePreview(state) {
+    if (state.previewUrl) URL.revokeObjectURL(state.previewUrl);
+    state.previewUrl = '';
+    state.preview.removeAttribute('src'); state.preview.hidden = true; state.preview.style.display='none';
+  }
+  function selectFile(state) {
+    const file = state.file.files[0] || null;
+    state.designNumber = Number(file?.name.match(/shirtbox-design-(\d+)\.jpg$/)?.[1]) || state.slot;
+    state.rights.checked = false; releasePreview(state);
+    state.card.querySelector('.order-inline-view').hidden = !file;
+    state.card.querySelector('.order-inline-edit').hidden = !file;
+    state.card.querySelector('.design-heading-actions').hidden = !file;
+    state.filename.textContent = file ? 'Ihr Entwurf wurde übernommen.' : 'Bitte zuerst Ihren Entwurf im Shirt-Designer übernehmen.';
+    if (file && (file.type.startsWith('image/') || /\.(jpe?g|png|webp|gif|bmp|svg|avif|heic|heif|tiff?)$/i.test(file.name))) {
+      state.previewUrl = URL.createObjectURL(file); state.preview.src = state.previewUrl; state.preview.hidden = false; state.preview.style.display='block'; state.preview.style.width='100%'; state.preview.style.maxHeight='520px'; state.preview.style.objectFit='contain'; state.preview.onerror=()=>{state.filename.textContent='Bildvorschau konnte nicht geladen werden.';};
+      state.card.querySelector('.order-inline-edit').href=`designhilfe.html?weiterbearbeiten=${encodeURIComponent(state.designNumber)}`;
+      state.card.querySelector('.design-heading-edit').href=state.card.querySelector('.order-inline-edit').href;
+    }
+    refresh();
+  }
+  function showDesign(state) {
+    if (!state.previewUrl) return;
+    const modal=document.getElementById('order-design-modal');
+    modal.querySelector('img').src=state.previewUrl;
+    modal.querySelector('.order-design-edit').href=`designhilfe.html?weiterbearbeiten=${encodeURIComponent(state.designNumber || state.slot)}`;
+    if(typeof modal.showModal==='function') modal.showModal();
+  }
+  function addDesign() {
+    if (designs.size >= api.MAX_DESIGNS) return;
+    const slot = ++nextSlot;
+    const card = document.createElement('section'); card.className = 'order-design'; card.setAttribute('aria-labelledby', `design-${slot}-title`);
+    card.innerHTML = `<div class="design-heading-row"><h3 class="design-title" id="design-${slot}-title">Ihr Shirt</h3><div class="design-heading-actions" hidden><button type="button" class="design-heading-zoom">🔍 Vergrössern</button><a class="design-heading-edit" href="designhilfe.html">✏️ Bearbeiten</a></div></div><input id="design-${slot}-file" name="attachment_design_${slot}" type="file" accept="image/jpeg" hidden tabindex="-1" aria-hidden="true"><div class="design-file-preview"><img hidden alt="Ihr übernommener Shirt-Entwurf"><p class="design-filename">Bitte zuerst Ihren Entwurf im Shirt-Designer übernehmen.</p><button type="button" class="order-inline-view" hidden>🔍 Design gross ansehen</button><a class="order-inline-edit" href="designhilfe.html" hidden>✎ Mit KI weiterbearbeiten</a></div><div class="design-size-list"></div><button class="add-size" type="button">+ Weitere Grösse</button><div class="design-subtotal"></div><div class="agb-consent"><input id="design-${slot}-rights" name="Design_${slot}_Rechte_und_Inhalte" type="checkbox" value="Ja – erforderliche Rechte vorhanden und Inhaltsvorgaben eingehalten" required><label for="design-${slot}-rights">Ich bestätige die erforderlichen Nutzungs- und Bildrechte sowie zulässige Inhalte für meinen Entwurf. *</label></div><textarea class="design-data" name="Design_${slot}_Datei_und_Stückzahlen" hidden></textarea>`;
+    const state = {slot, card, previewUrl: '', file: card.querySelector('input[type=file]'), rights: card.querySelector('input[type=checkbox]'), preview: card.querySelector('img'), filename: card.querySelector('.design-filename')};
+    designs.set(slot, state); list.append(card); addSize(state, {quantity:1});
+    state.preview.style.cursor='zoom-in'; state.preview.tabIndex=0; state.preview.setAttribute('role','button'); state.preview.setAttribute('aria-label','Design gross ansehen'); state.preview.addEventListener('click',()=>showDesign(state)); state.preview.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();showDesign(state);}});
+    state.card.querySelector('.order-inline-view').addEventListener('click',()=>showDesign(state));
+    state.card.querySelector('.design-heading-zoom').addEventListener('click',()=>showDesign(state));
+    state.card.querySelector('.design-heading-edit').addEventListener('click',saveDetails);
+    state.card.querySelector('.order-inline-edit').addEventListener('click',saveDetails);
+    state.file.addEventListener('change', () => selectFile(state));
+    card.querySelector('.add-size').addEventListener('click', () => { addSize(state); refresh(); });
+    const remove=document.createElement('button');remove.type='button';remove.className='remove-design';remove.textContent='✕ Dieses Design aus der Bestellung löschen';remove.style.cssText='margin-top:12px;padding:10px;border:1px solid #d55;border-radius:8px;color:#a22;background:#fff;cursor:pointer';card.append(remove);remove.addEventListener('click',async()=>{if(!confirm('Dieses Design endgültig aus der Bestellliste löschen?'))return;const number=state.designNumber;releasePreview(state);designs.delete(slot);card.remove();try{const saved=await window.ShirtboxDesignTransfer.load();if(saved){const blobs=(saved.blobs||[saved.blob]).filter((item,i)=>(item.number||i+1)!==number);if(blobs.length)await window.ShirtboxDesignTransfer.save(blobs);else await window.ShirtboxDesignTransfer.clear();}}catch{}try{const details=JSON.parse(sessionStorage.getItem(detailKey)||'{}');delete details[number];sessionStorage.setItem(detailKey,JSON.stringify(details));}catch{}refresh();window.ShirtboxRefreshOrderLink?.();});
+    refresh();
+    return state;
+  }
+  function attachOriginals(input, originals, placement) {
+    const state=[...designs.values()].find(d=>d.file===input);if(!state)return;
+    state.card.querySelectorAll('.print-original').forEach(el=>el.remove());
+    if(!originals.length&&!placement)return;
+    const data=document.createElement('textarea');data.hidden=true;data.className='print-original';data.name=`Design_${state.slot}_Bildplatzierungen`;data.value=placement;state.card.append(data);
+    originals.forEach((item,i)=>{const file=item.file;if(!(file instanceof Blob))throw Error('Originalbild fehlt');const field=document.createElement('input');field.type='file';field.hidden=true;field.className='print-original';field.name=`attachment_original_${state.slot}_${i+1}`;const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';const transfer=new DataTransfer();transfer.items.add(new File([file],`design-${state.designNumber}-original-${i+1}.${ext}`,{type:file.type}));field.files=transfer.files;state.card.append(field);});
+    const note=document.createElement('p');note.className='print-original';note.textContent=originals.length?`${originals.length} Originalbild${originals.length===1?'':'er'} und Platzierungsangaben für den Druck beigefügt.`:'Shirt-Farbe und Gestaltungseinstellungen für den Druck beigefügt.';state.card.append(note);
+  }
+  // Preserve each design's sizes, quantities and rights independently across editing trips.
+  const detailKey='shirtbox-design-order-details';
+  function saveDetails(){
+    const data={};
+    for(const state of designs.values())if(state.file.files[0])data[state.designNumber]={
+      rows:[...state.card.querySelectorAll('.design-size-row')].map(row=>({size:row.querySelector('select').value,quantity:row.querySelector('input').value})),rights:state.rights.checked};
+    try{sessionStorage.setItem(detailKey,JSON.stringify(data));}catch{}
+  }
+  function restoreDetails(input,number){
+    const state=[...designs.values()].find(d=>d.file===input);if(!state)return;
+    try{const saved=JSON.parse(sessionStorage.getItem(detailKey)||'{}')[number];if(!saved)return;
+      state.card.querySelector('.design-size-list').replaceChildren();
+      for(const row of saved.rows||[])addSize(state,row);
+      if(!saved.rows?.length)addSize(state,{quantity:1});
+      state.rights.checked=!!saved.rights;refresh();
+    }catch{}
+  }
+  form.addEventListener('input',saveDetails);
+  form.addEventListener('change',saveDetails);
+  document.querySelector('.order-design-edit')?.addEventListener('click',saveDetails);
+  window.ShirtboxOrderDesigns = { add: addDesign, attachOriginals, restoreDetails };
+  if (online) {
+    document.getElementById('weiter').disabled = false;
+    document.getElementById('formular-url').disabled = false;
+    document.getElementById('formular-url').value = location.href;
+  } else message('Dies ist eine lokale Vorschau. Zum Absenden bitte die veröffentlichte Website öffnen.');
+  form.noValidate = true;
+  form.addEventListener('input', refresh);
+  form.addEventListener('change', refresh);
+  form.addEventListener('reset', () => {
+    const originals=[...form.querySelectorAll('input.print-original')].map(input=>({input,file:input.files[0]}));
+    const saved = [...designs.values()].map(state => ({state, file: state.file.files[0]}));
+    setTimeout(() => {
+      for(const {input,file} of originals){if(file){const transfer=new DataTransfer();transfer.items.add(file);input.files=transfer.files;}}
+      for (const {state, file} of saved) {
+        if (file) { const transfer = new DataTransfer(); transfer.items.add(file); state.file.files = transfer.files; }
+        state.card.querySelector('.design-size-list').replaceChildren(); addSize(state);
+      }
+      refresh();
+    }, 0);
+  });
+  form.addEventListener('submit', event => {
+    const result = refresh();
+    if (!online || !result.valid || !form.reportValidity()) {
+      event.preventDefault();
+      message(!online ? 'Bitte die veröffentlichte Website öffnen.' : 'Bitte Ihren Entwurf im Shirt-Designer übernehmen und alle Pflichtfelder, Grössen, Stückzahlen und Bestätigungen prüfen.');
+      return;
+    }
+    message('Sie werden zum Versanddienst weitergeleitet. Bitte dort die Sicherheitsprüfung abschliessen.');
+  });
+  window.addEventListener('pageshow', refresh);
+  // Empty orders stay empty until a new design is added from the designer.
+})();

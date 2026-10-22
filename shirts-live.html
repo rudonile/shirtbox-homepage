@@ -1,0 +1,22 @@
+<!doctype html><html lang="de-CH"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Shirts live · ShirtBOX</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="startseite.css"><link rel="stylesheet" href="mobile-compact.css?v=20261018b"><link rel="stylesheet" href="layout-unified.css?v=20261018"/><link rel="stylesheet" href="sticky-navigation.css?v=20261018sticky2"><link rel="stylesheet" href="shirtbox-2.css?v=2"></head><body class="simple-home"><main class="shell"><header class="masthead"><a class="brand" href="index.html"><img class="brand-logo" src="shirtbox-logo-ch.png" alt="ShirtBOX"></a><nav aria-label="Hauptnavigation"><a href="index.html">Startseite</a><a href="faq.html">FAQs</a><a href="shirts-live.html" aria-current="page">Shirts live</a><a href="designhilfe.html">Shirt erstellen</a><a href="ueber-uns.html">Über uns</a></nav><a class="mobile-order-shortcut" href="bestellen.html#bestellen">Zur Bestellung</a><div class="language-switch" aria-label="Sprache / Language"><button type="button" data-lang="de">DE</button><button type="button" data-lang="en">EN</button></div></header><section class="about-us"><h1>Shirts live</h1>        <div class="shirt-film" aria-labelledby="shirt-film-title">
+          <div class="shirt-film-heading"><span class="shirt-film-kicker">EIN FERTIGES SHIRT</span><h2 id="shirt-film-title">Ihr Design wird Wirklichkeit.</h2></div>
+          <video id="shirt-example-video" controls playsinline preload="none" poster="videos/shirt-detail.webp" width="720" height="966" aria-label="Fertiges Shirt mit Darts-Motiv: Vorderseite, Rückseite und Details, mit leiser Hintergrundmusik.">
+            <source src="videos/shirt-detail.mp4" type="video/mp4">
+            Ihr Browser unterstützt die Videowiedergabe nicht. <a href="videos/shirt-detail.mp4">Video öffnen</a>.
+          </video>
+          <p class="shirt-film-caption">Entdecken Sie unsere individuell gestalteten Sportshirts.</p>
+          
+        </div></section></main><script src="navigation.js" defer></script><script src="language.js" defer></script><style>
+.live-lightbox{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.94);display:none;align-items:center;justify-content:center;flex-direction:column;padding:70px 12px 20px;box-sizing:border-box}
+.live-lightbox.is-open{display:flex}.live-lightbox img{max-width:100%;max-height:calc(100dvh - 130px);object-fit:contain}
+.live-lightbox-close{position:absolute;top:14px;left:14px;border:2px solid #fff;background:#b91c1c;color:white;border-radius:12px;padding:12px 18px;font-size:17px;font-weight:700;cursor:pointer;min-height:48px}
+body.live-photo-open{overflow:hidden}
+</style>
+<div class="live-lightbox" id="live-photo-viewer" role="dialog" aria-modal="true" aria-label="Shirt-Foto vergrössert" aria-hidden="true"><button class="live-lightbox-close" type="button">← Zurück zu Shirts live</button><img alt=""></div>
+<script>
+(function(){const viewer=document.getElementById('live-photo-viewer');const img=viewer.querySelector('img');const close=viewer.querySelector('button');let last=null;
+function hide(){viewer.classList.remove('is-open');viewer.setAttribute('aria-hidden','true');document.body.classList.remove('live-photo-open');img.removeAttribute('src');if(last)last.focus();}
+document.querySelectorAll('a[data-live-photo]').forEach(a=>a.addEventListener('click',function(e){e.preventDefault();last=a;img.src=a.href;img.alt=a.querySelector('img')?.alt||'Shirt-Foto';viewer.classList.add('is-open');viewer.setAttribute('aria-hidden','false');document.body.classList.add('live-photo-open');close.focus();}));
+close.addEventListener('click',hide);viewer.addEventListener('click',e=>{if(e.target===viewer)hide()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&viewer.classList.contains('is-open'))hide()});
+})();
+</script></body></html>

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ShirtBOX – individuell bedruckte Shirts für Sport, Freizeit und Vereine. Eigenes Motiv hochladen und Ihr persönliches Shirt bestellen.">
+  <title>Eigenes Bild auf Ihr Shirt · ShirtBOX.ch</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23172638'/%3E%3Ccircle cx='32' cy='32' r='23' fill='none' stroke='%23dbc5a2' stroke-width='5'/%3E%3Ccircle cx='32' cy='32' r='8' fill='%23dbc5a2'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="startseite.css?v=20261010-ohne-limit">
+  <link rel="stylesheet" href="shirtbox-bildgenerator.css?v=20261010-ohne-limit">
+  <script>if ("scrollRestoration" in history) history.scrollRestoration = "manual";</script>
+<link rel="stylesheet" href="mobile-compact.css?v=20261018b"><link rel="stylesheet" href="layout-unified.css?v=20261018"/><link rel="stylesheet" href="sticky-navigation.css?v=20261018sticky2"><link rel="stylesheet" href="shirtbox-2.css?v=2"></head>
+<body class="simple-home design-page">
+  <main class="shell">
+    <header class="masthead">
+      <a class="brand" href="index.html" aria-label="ShirtBOX.ch – Startseite"><img class="brand-logo" src="shirtbox-logo-ch.png" alt="ShirtBOX.ch"></a>
+      <nav aria-label="Hauptnavigation"><a href="index.html">Startseite</a><a href="faq.html">FAQs</a><a href="shirts-live.html">Shirts live</a><a href="designhilfe.html">Shirt erstellen</a><a href="ueber-uns.html">Über uns</a></nav>
+    <a class="mobile-order-shortcut" href="bestellen.html#bestellen">Zur Bestellung</a><div class="language-switch" aria-label="Sprache / Language"><button type="button" data-lang="de">DE</button><button type="button" data-lang="en">EN</button></div></header>
+    <div class="single-help screenshot-guide">
+      <a class="back-home" href="index.html">← Zur Startseite</a>
+      <nav class="designer-paths" aria-label="Gestaltung auswählen"><a href="designhilfe.html" ><strong>Bild generieren</strong><span>Shirt mit KI gestalten</span></a></nav>
+      <section class="ai-design" aria-labelledby="ai-design-title">
+        <p class="hero-kicker">DEIN SHIRT. DEINE IDEE.</p>
+        <h1 id="ai-design-title">Eigenes Bild auf Ihr Shirt</h1>
+        <p class="ai-intro">Gestalten Sie Ihr Shirt mit je einem Bild für Vorderseite, Rückseite, linken und rechten Ärmel. Erstellen Sie bis zu fünf Designs und wählen Sie unten Ihre Shirts für die Bestellung. Erstes Shirt CHF 89.–, jedes weitere Shirt derselben Bestellung CHF 80.10 (10 % Rabatt). Alle Preise inklusive Mehrwertsteuer und Versand.</p>
+        <div class="ai-design-layout">
+          <form id="ai-design-form" data-upload-only="true">
+            <textarea id="ai-design-prompt" hidden aria-hidden="true" tabindex="-1"></textarea>
+
+            <section class="upload-editor" aria-labelledby="upload-title">
+<h2 id="upload-title">Eigene Bilder auf Ihrem Shirt</h2>
+<p>Vier klare Bereiche, je ein Bild: Vorderseite, Rückseite, linker Ärmel und rechter Ärmel. Links und rechts gelten aus Sicht der Person, die das Shirt trägt. Ärmelmotive erscheinen automatisch in beiden Ansichten.</p>
+<p class="upload-help">PNG, JPG oder WebP, maximal 2 MB pro Bild. Wählen Sie Ihre Bilder direkt im passenden Feld. Sie können Bereiche auch frei lassen.</p>
+<fieldset id="shirt-colour-controls" class="shirt-colour-controls"><legend>1. Shirt-Farbe wählen</legend><label for="shirt-colour">Ihre Wunschfarbe <input id="shirt-colour" type="color" value="#ffffff"></label><div id="shirt-colour-presets" class="shirt-colour-presets" aria-label="Beliebte Shirt-Farben"></div><p>Die Farbe gilt für Vorderseite, Rückseite, Kragen und Ärmel.</p></fieldset>
+<p class="upload-help"><strong>2. Bild direkt bearbeiten:</strong> Ziehen Sie das Bild zum Verschieben. Ziehen Sie einen Eckpunkt zum Vergrössern oder Verkleinern. Den runden Punkt über dem Bild ziehen Sie zum Drehen. Effekte einfach anklicken.</p>
+<div id="upload-layers"></div><p id="upload-status" role="status" aria-live="polite"></p>
+</section>
+<div class="ai-preview-below">
+            <figure class="ai-design-preview"><img id="ai-design-image" src="anleitung/polo-api-vorlage.jpg" width="1536" height="1228" alt="Weisse Polo-Vorlage mit Vorderseite und Rückseite"><canvas id="shirt-upload-canvas" width="1536" height="1228" hidden tabindex="0" aria-label="Shirt-Vorschau: ausgewähltes Bild mit Maus oder Finger verschieben. Eckpunkte zum Ändern der Grösse ziehen, oberen Punkt zum Drehen ziehen. Mit Tastatur: Pfeile verschieben, Plus und Minus ändern die Grösse, R dreht."></canvas><figcaption>Ihr Designentwurf: Vorderseite links, Rückseite rechts.</figcaption></figure><div id="upload-tools" class="upload-tools" aria-live="polite"></div>
+            <button id="upload-apply" type="button" hidden>Bildgestaltung übernehmen – ohne KI</button>
+            
+            <div id="ai-result-actions" class="ai-result-actions" hidden><a id="ai-download" class="ai-download-link" download="shirtbox-entwurf.jpg">Bild herunterladen ↓</a></div>
+          </div>
+            <div class="ai-consent"><input id="ai-rights" type="checkbox" required><label for="ai-rights">Ich verwende nur Inhalte, für die ich die erforderlichen Rechte habe, und halte die Inhaltsvorgaben von ShirtBOX ein.</label></div>
+            <div class="ai-quick-actions"><button id="ai-reset" class="ai-red-action" type="button" disabled>Neu anfangen</button><div id="ai-new-design-actions" class="ai-new-design-actions" hidden><button id="ai-add-design" class="ai-red-action" type="button" disabled>+ Ein weiteres Design erstellen</button></div></div><div class="ai-design-buttons"><button id="ai-create" type="button" hidden>Jetzt Shirt generieren</button></div>
+            <p id="ai-design-status" role="status" aria-live="polite"></p>
+          <section id="ai-selection" class="ai-selection" hidden aria-labelledby="ai-selection-title"><h2 id="ai-selection-title">Welche Designs möchten Sie bestellen?</h2><p>Bei mehreren Designs kreuzen Sie die gewünschten Shirts an. Jedes ausgewählte Design wird automatisch als JPEG in das Bestellformular eingefügt.</p><div id="ai-design-slots" class="ai-design-slots" aria-label="Ihre bis zu fünf Designs"></div><p id="ai-selection-total" role="status" aria-live="polite"></p><button id="ai-order" type="button" disabled>Dieses Shirt bestellen ↗</button></section>
+          </form>
+
+        </div>
+        <p class="ai-disclosure">Ihre Bilder bleiben beim Platzieren in Ihrem Browser. Für die Bestellung werden die ausgewählten Vorschauen, Originalbilder und Platzierungsangaben vorübergehend in diesem Browser gespeichert und beim Absenden an ShirtBOX und den Versanddienst übermittelt. Maximal 9 MB insgesamt pro Bestellung. Diese Gestaltung benötigt keine KI.</p>
+        <noscript><p>Bitte aktivieren Sie JavaScript für die direkte Bildgestaltung.</p></noscript>
+      </section>
+      <section class="design-help guide-contact" aria-labelledby="help-title">
+        <h2 id="help-title">Brauchen Sie Hilfe beim Design?</h2>
+        <p>Wir helfen Ihnen gerne bei der Gestaltung Ihres Shirts.</p>
+        <p class="help-whatsapp"><a href="https://wa.me/41764690100" target="_blank" rel="noopener">WhatsApp: 076 469 01 00 ↗</a></p>
+      </section>
+    </div>
+    <footer><strong>ShirtBOX.ch</strong><span>·</span><a href="https://wa.me/41764690100" target="_blank" rel="noopener">WhatsApp: 076 469 01 00</a><span>·</span><a href="mailto:r-n@gmx.ch">r-n@gmx.ch</a><span>·</span><a href="agb.html">AGB</a><span>·</span><a href="impressum.html">Impressum</a></footer>
+  </main>
+  <script src="design-uebernahme.js?v=20261010-ohne-limit" defer></script>
+  <script src="bestell-logik.js?v=20261010-ohne-limit" defer></script>
+  <script src="bild-effekte.js?v=20261010-ohne-limit" defer></script>
+  <script src="shirt-upload.js?v=20261010-ohne-limit" defer></script>
+  <script src="shirtbox-bildgenerator.js?v=20261010-ohne-limit" defer></script>
+  <script src="navigation.js" defer></script>
+<script src="language.js" defer></script></body>
+</html>

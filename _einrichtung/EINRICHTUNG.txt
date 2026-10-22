@@ -1,0 +1,20 @@
+BILDGENERATOR AKTUALISIEREN – OHNE TAGESLIMIT
+
+1. Cloudflare: Workers & Pages -> black-snow-2fdf -> Edit code.
+2. Neueste Version auswählen.
+3. Alles markieren und durch den Inhalt von worker-code.txt ersetzen.
+4. Deploy anklicken.
+
+Secret OPENAI_API_KEY bleibt erhalten. Keine DB- oder WEBSITE-Bindings
+sind erforderlich. Bestehende Bindings werden vom Code nicht verwendet.
+Keine Tages-/Monatsgrenzen und kein Versuchszähler.
+
+Website: shirtbox.ch oder mute-silence-0ef0.r-n.workers.dev.
+Modell: gpt-image-2.5-flare; medium; 1536x1024; JPEG.
+API-Schlüssel niemals in die Website-Dateien schreiben.
+
+Prüfen: https://black-snow-2fdf.r-n.workers.dev/health
+Die Antwort muss version: 20261010-ohne-limit enthalten.
+ready bestätigt nur den vorhandenen Schlüssel, nicht seine Gültigkeit.
+Bei API-Fehlern nennt die Website Schlüssel, Berechtigung oder Guthaben als
+Handlungshinweis, wenn sich die Ursache anhand des API-Fehlers zuordnen lässt.
