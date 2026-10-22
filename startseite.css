@@ -258,3 +258,10 @@ body.simple-home {background-image:linear-gradient(90deg,rgba(6,18,35,.65),rgba(
 .welcome .hero-title-row .mini-shirt{flex-basis:196px;max-width:196px;width:196px}
 .welcome .rotation-stage{height:270px;width:196px;max-width:100%;background:transparent;overflow:hidden}
 @media(max-width:600px){.welcome .hero-title-row .mini-shirt{width:155px;max-width:155px;flex-basis:155px}.welcome .rotation-stage{width:155px;height:207px;aspect-ratio:auto}}
+
+/* Startseite: zentrierter Claim und deutlich groesseres Logo, ohne die Hero-Flaeche zu vergroessern. */
+.simple-home .welcome-copy > .hero-kicker {text-align:center; margin-bottom:10px;}
+.simple-home .welcome .hero-title-row {display:block; margin-bottom:10px;}
+.simple-home .welcome .hero-title-row h1 {text-align:center; font-size:clamp(23px,3vw,40px); line-height:1.13; margin:0;}
+.simple-home .welcome .sb-hero-logo {display:block; width:min(94%,540px); max-width:100%; height:auto; max-height:155px; object-fit:contain; margin:0 auto 10px;}
+@media(max-width:600px){.simple-home .welcome .hero-title-row h1{font-size:clamp(22px,5.6vw,32px)}.simple-home .welcome .sb-hero-logo{width:96%;max-height:110px}}

@@ -10,7 +10,7 @@
       const saved=await window.ShirtboxDesignTransfer.load();
       if(!saved){note('Noch kein Shirt in der Bestellung. Bitte im KI-Designer Ihr Shirt auswählen und auf „Ausgewählte Shirts bestellen“ klicken.',true);return;}
       const blobs=saved.blobs||[saved.blob];
-      if(!blobs.length||blobs.length>5)throw Error('Ungültige Anzahl Designs');
+      if(!blobs.length||blobs.length>100)throw Error('Ungültige Anzahl Designs');
       let count=0;
       for(let i=0;i<blobs.length;i++){
         const item=blobs[i];const blob=item?.blob||item;
