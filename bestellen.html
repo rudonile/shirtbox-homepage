@@ -25,6 +25,15 @@
 .order-submit-progress[hidden]{display:none!important}
 .order-submit-progress::before{content:'⏳';display:inline-block;margin-right:8px;animation:shirtbox-spin 1.4s ease-in-out infinite}
 @keyframes shirtbox-spin{50%{transform:rotate(180deg)}}
+</style><style id="shirtbox-order-alignment-v2">
+/* Same top and bottom baseline for size and quantity controls. */
+.order-page .design-size-row{align-items:start!important}
+.order-page .design-size-row .field>label{display:flex!important;flex-direction:column!important;justify-content:flex-start!important;gap:6px!important}
+.order-page .design-size-row .field select,.order-page .design-size-row .field input{height:46px!important;box-sizing:border-box!important}
+.order-page .design-size-row .remove-size{align-self:end!important}
+/* Half-width delete button on the right, even when the row wraps. */
+.order-page .order-design-actions .remove-design{flex:0 1 calc(50% - 5px)!important;width:calc(50% - 5px)!important;max-width:calc(50% - 5px)!important;min-width:0!important;margin:0 0 0 auto!important;box-sizing:border-box!important;text-align:center!important;padding:10px 8px!important;line-height:1.3!important}
+@media(max-width:440px){.order-page .order-design-actions .remove-design{font-size:12px!important}}
 </style></head>
 <body class="simple-home order-page">
 <main class="shell">

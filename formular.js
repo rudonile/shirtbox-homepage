@@ -73,9 +73,6 @@
     // The named design summary carries all size rows together with the matching file slot.
     row.querySelector('select').value = values.size || '';
     
-    const hint = document.createElement('small'); hint.className = 'asian-size-hint'; hint.style.cssText = 'display:block;color:#b91c1c;font-size:.83rem;margin-top:4px'; row.querySelector('select').after(hint);
-    const updateHint = () => { const size = row.querySelector('select').value; hint.textContent = size ? `Automatisch bestellt: ${api.ORDER_SIZE[size]}` : 'Bitte wählen'; };
-    row.querySelector('select').addEventListener('change', updateHint); updateHint();
     row.querySelector('input').value = values.quantity || '';
     row.querySelector('.remove-size').addEventListener('click', () => { if (state.card.querySelectorAll('.design-size-row').length > 1) { row.remove(); refresh(); } });
     state.card.querySelector('.design-size-list').append(row);
@@ -189,6 +186,8 @@
       else if(!result.order.valid){list.classList.add('missing-required');list.scrollIntoView({behavior:'smooth',block:'center'});}
       return;
     }
+    // Nur nach Rueckkehr auf die Danke-Seite als abgeschlossen behandeln.
+    try { sessionStorage.setItem('shirtbox-order-pending', JSON.stringify({quantity:result.order.quantity, at:Date.now()})); } catch(e) {}
     const progress=document.getElementById('order-submit-progress');
     if(progress){progress.hidden=false;progress.scrollIntoView({behavior:'smooth',block:'center'});}
     submit.disabled=true;
