@@ -10,31 +10,9 @@
 <link href="style.css?v=20261015-bestellansicht-fix" rel="stylesheet"/>
 <link href="startseite.css?v=20261010-1130" rel="stylesheet"/>
 <script>if ("scrollRestoration" in history) history.scrollRestoration = "manual";</script>
-<style>.size-guide{margin:9px 0 14px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;overflow:hidden}.size-guide summary{padding:10px 12px;cursor:pointer;font-size:0.95rem;font-weight:800;color:#14283f;line-height:1.35;background:#f1f5f9}.size-guide summary:hover{background:#e5edf5}.size-guide-body{padding:10px}.size-guide-body p{font-size:.9rem;line-height:1.5}.size-guide-body img{display:block;width:100%;height:auto;max-width:570px;margin:9px auto;border-radius:8px}.asian-size-notice{color:#b91c1c;font-size:.92rem;font-weight:700;line-height:1.45;margin:10px 0 8px}</style><link href="mobile-compact.css?v=20261018b" rel="stylesheet"/><link href="layout-unified.css?v=20261018" rel="stylesheet"/><link href="sticky-navigation.css?v=20261018sticky2" rel="stylesheet"/><style>.order-summary .summary-scroll{overflow-x:auto}.order-summary td:first-child{min-width:340px}.order-summary .order-view-design{display:block;margin:8px auto}.design-file-preview img:not([hidden]){width:min(100%,520px);max-height:520px;object-fit:contain;display:block;margin:auto}.order-design-modal img{max-width:95%;max-height:70vh;object-fit:contain}</style><link href="shirtbox-2.css?v=3" rel="stylesheet"/><style>.design-heading-row{display:flex;align-items:center;flex-wrap:wrap;gap:12px}.design-heading-row h3{margin:0}.design-heading-actions:not([hidden]){display:flex;gap:8px;flex-wrap:wrap}.design-heading-actions button,.design-heading-actions a{padding:7px 10px;border:1px solid #9aafbb;border-radius:7px;background:#eef3f5;color:#17354b;text-decoration:none;font-size:13px;font-weight:700;cursor:pointer}.order-design .design-file-preview img:not([hidden]){width:min(100%,360px);max-height:360px}</style><style>/* Oberen Design-Kopf mit Miniatur und Aktionsbuttons ausblenden */
-.order-design .design-heading-row{display:none!important}
-</style><style>.order-design .agb-consent{border:3px solid #f2bb39!important;background:#fff4cf!important;color:#2c2411!important;padding:14px!important;border-radius:10px!important;margin:14px 0!important}.order-design .agb-consent label{font-weight:800!important;color:#2c2411!important}.order-design .agb-consent input{width:23px;height:23px;accent-color:#137a36}.order-design .agb-consent:has(input:checked){background:#e0f7e5!important;border-color:#259b4b!important}.asian-size-notice{margin:12px 0!important;padding:10px 12px;background:#fff1d8;border:2px solid #e9aa36;border-radius:8px}.order-design .design-size-list{margin-top:12px}.order-design .remove-design{background:#b91c1c!important;color:white!important;border-color:#b91c1c!important;margin:0!important}.order-design .order-design-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:12px 0}.missing-required{outline:3px solid #f4b000!important;outline-offset:3px;background:#fff4cc!important;scroll-margin-top:110px}#absenden[aria-disabled="true"]{opacity:1!important;cursor:pointer!important;background:#b58935!important}</style><style>.order-design-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.order-design-actions .inline-size-guide{display:inline-block;margin:0;max-width:100%}.order-design-actions .inline-size-guide summary{cursor:pointer;white-space:normal}.order-design-actions .inline-size-guide[open]{width:100%;flex-basis:100%}.order-design-actions .asian-size-notice{margin:0!important;flex:1 1 210px}.order-design .design-size-list>.asian-size-notice{display:none!important}</style><style id="shirtbox-mobile-order-fix">
-/* Labels sit above both inputs; the controls stay side by side on mobile. */
-.order-page .design-size-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 30px!important;align-items:end!important;gap:7px!important}
-.order-page .design-size-row .field{min-width:0;margin-bottom:0}
-.order-page .design-size-row .field>label{display:flex!important;flex-direction:column!important;gap:6px;font-size:12px!important;line-height:1.25!important;white-space:normal;min-width:0;margin:0!important}
-.order-page .design-size-row .field select,.order-page .design-size-row .field input{min-width:0!important;width:100%!important;margin:0!important;padding-left:7px!important;padding-right:20px!important;font-size:14px!important;height:46px!important}
-.order-page .design-size-row .field input{padding-right:5px!important}
-.order-page .design-size-row .remove-size{margin:0!important;height:46px!important;min-height:46px!important;align-self:end!important}
-@media(max-width:400px){.order-page .order-design{padding:10px!important}.order-page .design-size-row{gap:5px!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 28px!important}.order-page .design-size-row .field>label{font-size:11px!important}}
-.order-submit-progress{margin:14px 0;padding:14px 16px;border:2px solid #d4a72b;border-radius:10px;background:#fff3c4;color:#302712;font-weight:800;line-height:1.45}
-.order-submit-progress[hidden]{display:none!important}
-.order-submit-progress::before{content:'⏳';display:inline-block;margin-right:8px;animation:shirtbox-spin 1.4s ease-in-out infinite}
-@keyframes shirtbox-spin{50%{transform:rotate(180deg)}}
-</style><style id="shirtbox-order-alignment-v2">
-/* Same top and bottom baseline for size and quantity controls. */
-.order-page .design-size-row{align-items:start!important}
-.order-page .design-size-row .field>label{display:flex!important;flex-direction:column!important;justify-content:flex-start!important;gap:6px!important}
-.order-page .design-size-row .field select,.order-page .design-size-row .field input{height:46px!important;box-sizing:border-box!important}
-.order-page .design-size-row .remove-size{align-self:end!important}
-/* Half-width delete button on the right, even when the row wraps. */
-.order-page .order-design-actions .remove-design{flex:0 1 calc(50% - 5px)!important;width:calc(50% - 5px)!important;max-width:calc(50% - 5px)!important;min-width:0!important;margin:0 0 0 auto!important;box-sizing:border-box!important;text-align:center!important;padding:10px 8px!important;line-height:1.3!important}
-@media(max-width:440px){.order-page .order-design-actions .remove-design{font-size:12px!important}}
-</style><link rel="stylesheet" href="site.css?v=20261023c"></head>
+<link href="mobile-compact.css?v=20261018b" rel="stylesheet"/><link href="layout-unified.css?v=20261018" rel="stylesheet"/><link href="sticky-navigation.css?v=20261018sticky2" rel="stylesheet"/><link href="shirtbox-2.css?v=3" rel="stylesheet"/>
+<link rel="stylesheet" href="site.css?v=20261023d">
+<link rel="stylesheet" href="bestellung.css?v=20261023b"></head>
 <body class="simple-home order-page">
 <main class="shell">
 <header class="masthead">
@@ -42,7 +20,11 @@
 <nav aria-label="Hauptnavigation"><a href="index.html">Startseite</a><a href="faq.html">FAQs</a><a href="shirts-live.html">Shirts live</a><a href="designhilfe.html">Shirt erstellen</a><a href="ueber-uns.html">Über uns</a></nav>
 <a class="mobile-order-shortcut" href="bestellen.html#bestellen" hidden aria-hidden="true">Zur Bestellung</a><div aria-label="Sprache / Language" class="language-switch"><button data-lang="de" type="button">DE</button><button data-lang="en" type="button">EN</button></div></header>
 <div class="single-order">
-<a class="back-home" href="index.html">← Zur Startseite</a>
+<div class="order-head">
+<p class="hero-kicker">BESTELLUNG</p>
+<h1 id="form-title">Ihre Bestellung</h1>
+<p>In drei einfachen Schritten zu Ihrem T-Shirt: Grösse wählen, Angaben eintragen, bestellen.</p>
+</div>
 <section aria-labelledby="form-title" class="form-panel" id="bestellen">
 <form accept-charset="UTF-8" action="https://formsubmit.co/r-n@gmx.ch" enctype="multipart/form-data" id="bestellung" method="post">
 <input name="_subject" type="hidden" value="Bestellbestätigung"/>
@@ -58,38 +40,64 @@ Vielen Dank für Ihre ShirtBOX-Bestellung! Bitte bezahlen Sie den Gesamtbetrag j
 <input name="TWINT_Empfänger" type="hidden" value="ShirtBOX · 079 915 48 24"/>
 <div aria-hidden="true" class="trap"><label for="website">Website</label><input autocomplete="off" id="website" name="_honey" tabindex="-1" type="text"/></div>
 
-<div class="section-label"><span>01</span> KONTAKTDATEN</div>
+<div class="order-layout">
+<div class="order-main">
+
+<section class="order-step" aria-labelledby="step-shirts">
+<h2 class="order-step-title" id="step-shirts"><span>1</span>Ihre T-Shirts</h2>
+<p class="order-step-intro">Wählen Sie für jedes Design Ihre gewohnte Grösse und die Stückzahl.</p>
+<p aria-live="polite" class="form-status" id="design-transfer-status" role="status"></p><div id="design-list"></div>
+<div class="order-empty"><p>Ihr Warenkorb ist noch leer.</p><a href="designhilfe.html">✨ T-Shirt designen</a></div>
+<p aria-live="polite" class="file-check-status" hidden="" id="design-validation" role="status"></p>
+<a class="order-more" href="designhilfe.html">+ Weiteres T-Shirt designen</a>
+</section>
+
+<section class="order-step" aria-labelledby="step-contact">
+<h2 class="order-step-title" id="step-contact"><span>2</span>Kontaktdaten</h2>
 <div class="two-col">
 <div class="field"><label for="vorname">Vorname *</label><input autocomplete="given-name" id="vorname" maxlength="80" name="vorname" required=""/></div>
 <div class="field"><label for="nachname">Nachname *</label><input autocomplete="family-name" id="nachname" maxlength="80" name="nachname" required=""/></div>
 </div>
 <div class="two-col">
 <div class="field"><label for="email">E-Mail-Adresse *</label><input autocomplete="email" id="email" maxlength="254" name="email" required="" type="email"/></div>
-<div class="field"><label for="telefon">Telefonnummer *</label><div class="phone-row"><select aria-label="Ländervorwahl" autocomplete="tel-country-code" id="vorwahl" name="Ländervorwahl" required=""><option selected="" value="+41">Schweiz +41</option><option value="+49">Deutschland +49</option><option value="+33">Frankreich +33</option><option value="+39">Italien +39</option><option value="+43">Österreich +43</option><option value="+423">Liechtenstein +423</option></select><input aria-describedby="telefon-hilfe" autocomplete="tel-national" id="telefon" maxlength="25" name="Telefonnummer_ohne_Vorwahl" pattern="[0-9 \(\)\/\-]{4,25}" placeholder="079 123 45 67" required="" type="tel"/></div><input id="telefon-komplett" name="telefon" type="hidden"/><p class="field-help" id="telefon-hilfe">Ländervorwahl wählen, dann Ihre Telefonnummer eingeben.</p></div>
+<div class="field"><label for="telefon">Telefonnummer *</label><div class="phone-row"><select aria-label="Ländervorwahl" autocomplete="tel-country-code" id="vorwahl" name="Ländervorwahl" required=""><option selected="" value="+41">Schweiz +41</option><option value="+49">Deutschland +49</option><option value="+33">Frankreich +33</option><option value="+39">Italien +39</option><option value="+43">Österreich +43</option><option value="+423">Liechtenstein +423</option></select><input aria-describedby="telefon-hilfe" autocomplete="tel-national" id="telefon" maxlength="25" name="Telefonnummer_ohne_Vorwahl" pattern="[0-9 \(\)\/\-]{4,25}" placeholder="079 123 45 67" required="" type="tel"/></div><input id="telefon-komplett" name="telefon" type="hidden"/><p class="field-help" id="telefon-hilfe">Für Rückfragen zu Ihrer Bestellung.</p></div>
 </div>
-<div class="section-label second"><span>02</span> LIEFERADRESSE</div>
+</section>
+
+<section class="order-step" aria-labelledby="step-address">
+<h2 class="order-step-title" id="step-address"><span>3</span>Lieferadresse</h2>
 <div class="field"><label for="strasse">Strasse und Hausnummer *</label><input autocomplete="street-address" id="strasse" maxlength="120" name="strasse" required=""/></div>
 <div class="two-col address-row">
 <div class="field"><label for="plz">Postleitzahl *</label><input autocomplete="postal-code" id="plz" maxlength="20" name="plz" required=""/></div>
 <div class="field"><label for="ort">Ort *</label><input autocomplete="address-level2" id="ort" maxlength="100" name="ort" required=""/></div>
 </div>
 <div class="field"><label for="land">Land *</label><input autocomplete="country-name" id="land" maxlength="80" name="land" placeholder="z. B. Schweiz" required=""/></div>
-<p aria-live="polite" class="form-status" id="design-transfer-status" role="status"></p><div id="design-list"></div>
-<p aria-live="polite" class="file-check-status" hidden="" id="design-validation" role="status"></p>
-<section aria-labelledby="summary-title" class="order-summary"><h3 id="summary-title">Ihre Bestellübersicht</h3><div class="summary-scroll"><table><thead><tr><th>Ihr Shirt (zum Bearbeiten anklicken)</th><th>Grössen</th><th>Shirts</th><th>Betrag</th></tr></thead><tbody id="order-summary-body"></tbody></table></div><div class="summary-total"><span class="sr-only" hidden="" id="gesamt"></span><span id="summary-quantity">0 Shirts</span><strong id="summary-total">CHF 0.–</strong></div><p>Erstes Shirt CHF 89.–, jedes weitere Shirt derselben Bestellung CHF 80.10 (10 % Rabatt). Alle Beträge inklusive Mehrwertsteuer und Versand.</p></section>
+</section>
+
+</div>
+
+<aside class="order-side" aria-label="Zusammenfassung">
+<section aria-labelledby="summary-title" class="order-summary"><h3 id="summary-title">Zusammenfassung</h3><div class="summary-scroll"><table><thead><tr><th>Design</th><th>Grössen</th><th>Shirts</th><th>Betrag</th></tr></thead><tbody id="order-summary-body"></tbody></table></div><div class="summary-total"><span class="sr-only" hidden="" id="gesamt"></span><span id="summary-quantity">0 Shirts</span><strong id="summary-total">CHF 0.–</strong></div><p>Erstes Shirt CHF 89.–, jedes weitere Shirt derselben Bestellung CHF 80.10 (10 % Rabatt). Alle Beträge inklusive Mehrwertsteuer und Versand.</p></section>
 <div class="agb-consent"><input id="agb-zustimmung" name="AGB_akzeptiert" required="" type="checkbox" value="Ja – Stand 03.10.2026"/><label for="agb-zustimmung">Ich habe die <a href="agb.html" rel="noopener" target="_blank">Allgemeinen Geschäftsbedingungen (AGB)</a> gelesen und akzeptiere sie. *</label></div>
 <p aria-live="polite" class="form-status" hidden="" id="formular-status" role="status"></p>
 <p class="order-submit-progress" id="order-submit-progress" role="status" aria-live="polite" hidden>Ihre Bestellung wird übermittelt. Bitte warten und die Seite nicht schliessen …</p>
 <button id="absenden" type="submit">Zahlungspflichtig bestellen <span aria-hidden="true">↗</span></button>
+<ul class="order-trust">
+<li>Bezahlung per TWINT nach der Bestellung</li>
+<li>Lieferung in ca. 14 Tagen</li>
+<li>Bestätigung per E-Mail</li>
+</ul>
+</aside>
+</div>
 </form>
 </section>
-<section aria-labelledby="questions-title" class="quick-questions"><h2>Gut zu wissen</h2><details><summary>Welche Grösse soll ich wählen?</summary><p>Wählen Sie die gewünschte Grösse im Dropdown. Direkt darüber können Sie den Grössenrechner mit den Shirtmassen aufklappen. Ihre gewählte Grösse wird für die Bestellung automatisch um zwei Grössen erhöht (z. B. S → L).</p></details><details><summary>Wie kommt mein Entwurf in die Bestellung?</summary><p>Gestalten Sie Ihr Shirt im <a href="designhilfe.html">Shirt-Designer</a> und klicken Sie auf „T-Shirt zur Bestellung“. Ihr Entwurf wird automatisch eingefügt.</p></details><details><summary>Wann kommt mein Shirt?</summary><p>Es kann ca. 14 Tage (± einige Tage) dauern, bis Ihr Shirt eintrifft. Die Produktion beginnt nach Zahlungseingang, sobald eine geeignete Druckdatei und alle Angaben vorliegen.</p></details><details><summary>Wie bezahle ich?</summary><p>Nach dem Absenden überweisen Sie den Totalbetrag per TWINT an ShirtBOX: 079 915 48 24. Die Bestätigungs-Mail enthält die Zahlungsangaben.</p></details></section>
+<section aria-labelledby="questions-title" class="quick-questions"><h2 id="questions-title">Gut zu wissen</h2><details><summary>Welche Grösse soll ich wählen?</summary><p>Wählen Sie die gewünschte Grösse im Dropdown. Direkt darüber können Sie den Grössenrechner mit den Shirtmassen aufklappen. Ihre gewählte Grösse wird für die Bestellung automatisch um zwei Grössen erhöht (z. B. S → L).</p></details><details><summary>Wie kommt mein Entwurf in die Bestellung?</summary><p>Gestalten Sie Ihr Shirt im <a href="designhilfe.html">Shirt-Designer</a> und klicken Sie auf „T-Shirt zur Bestellung“. Ihr Entwurf wird automatisch eingefügt.</p></details><details><summary>Wann kommt mein Shirt?</summary><p>Es kann ca. 14 Tage (± einige Tage) dauern, bis Ihr Shirt eintrifft. Die Produktion beginnt nach Zahlungseingang, sobald eine geeignete Druckdatei und alle Angaben vorliegen.</p></details><details><summary>Wie bezahle ich?</summary><p>Nach dem Absenden überweisen Sie den Totalbetrag per TWINT an ShirtBOX: 079 915 48 24. Die Bestätigungs-Mail enthält die Zahlungsangaben.</p></details></section>
 </div>
 <footer class="site-footer"><strong>ShirtBOX.ch</strong><span aria-hidden="true">·</span><a href="https://wa.me/41764690100" target="_blank" rel="noopener">WhatsApp 076 469 01 00</a><span aria-hidden="true">·</span><a href="mailto:r-n@gmx.ch">r-n@gmx.ch</a><span aria-hidden="true">·</span><a href="agb.html">AGB</a><span aria-hidden="true">·</span><a href="impressum.html">Impressum</a></footer>
 </main>
 <script defer="" src="bestell-logik.js?v=20261023-unbegrenzt"></script>
-<script defer="" src="formular.js?v=20261023-unbegrenzt"></script>
+<script defer="" src="formular.js?v=20261023-kundenfreundlich"></script>
 <script defer="" src="design-uebernahme.js?v=20261023c"></script>
-<script defer="" src="navigation.js"></script>
-<script defer="" src="order-persistence.js"></script><dialog aria-label="Design gross ansehen" class="order-design-modal" id="order-design-modal"><form method="dialog"><button aria-label="Ansicht schliessen" class="modal-close">✕ Schliessen</button></form><img alt="Vergrösserte Ansicht Ihres Shirt-Designs"/><p>Hier sehen Sie Ihren Entwurf in voller Grösse.</p><a class="order-design-edit" href="designhilfe.html">✎ Zur KI-Gestaltung zurückkehren</a><p class="modal-note">Ihr bestehendes Design wird in der KI-Gestaltung geladen und kann weiterbearbeitet werden.</p></dialog><script defer="" src="language.js?v=20261023e"></script><template id="shirtbox-size-guide-template"><details class="size-guide inline-size-guide" id="groessentabelle"><summary>📏 GRÖSSENRECHNER / GRÖSSENTABELLE ANZEIGEN</summary><div class="size-guide-body"><p>Vergleichen Sie die Masse eines gut passenden Poloshirts mit der Tabelle. Die angegebenen Masse beziehen sich auf das Shirt, nicht direkt auf den Körperumfang. Die Tabelle zeigt Grössen von XS bis 3XL; für grössere Grössen liegen in dieser Vorlage keine bestätigten Zentimeterangaben vor.</p><img alt="Poloshirt-Grössentabelle: Länge und Brustumfang für XS bis 3XL" loading="lazy" src="groessenrechner-polo.jpg"/></div></details></template></body>
+<script defer="" src="navigation.js?v=20261023b"></script>
+<script defer="" src="order-persistence.js"></script><dialog aria-label="Design gross ansehen" class="order-design-modal" id="order-design-modal"><form method="dialog"><button aria-label="Ansicht schliessen" class="modal-close">✕ Schliessen</button></form><img alt="Vergrösserte Ansicht Ihres Shirt-Designs"/><p>Hier sehen Sie Ihren Entwurf in voller Grösse.</p><a class="order-design-edit" href="designhilfe.html">✎ Zur KI-Gestaltung zurückkehren</a><p class="modal-note">Ihr bestehendes Design wird in der KI-Gestaltung geladen und kann weiterbearbeitet werden.</p></dialog><script defer="" src="language.js?v=20261023f"></script><template id="shirtbox-size-guide-template"><details class="size-guide inline-size-guide" id="groessentabelle"><summary>📏 Grössentabelle anzeigen</summary><div class="size-guide-body"><p>Vergleichen Sie die Masse eines gut passenden Poloshirts mit der Tabelle. Die angegebenen Masse beziehen sich auf das Shirt, nicht direkt auf den Körperumfang. Die Tabelle zeigt Grössen von XS bis 3XL; für grössere Grössen liegen in dieser Vorlage keine bestätigten Zentimeterangaben vor.</p><img alt="Poloshirt-Grössentabelle: Länge und Brustumfang für XS bis 3XL" loading="lazy" src="groessenrechner-polo.jpg"/></div></details></template></body>
 </html>

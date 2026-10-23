@@ -4,6 +4,10 @@ body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 ::selection{background:#e5c68b;color:#102536}
 a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:3px solid var(--sb-gold);outline-offset:3px}
 .hero-kicker{font-size:12px!important}
+/* Kopfzeile fest oben (navigation.js setzt Position, Breite und Platzhalter). */
+body.simple-home .masthead.is-pinned{position:fixed!important;top:0!important;z-index:1000!important;margin:0!important;box-sizing:border-box}
+.masthead-spacer{flex:none}
+
 /* Fusszeile bleibt wie der Kopf immer sichtbar (unten fixiert). */
 footer.site-footer{position:sticky;bottom:0;z-index:890;box-sizing:border-box;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px 10px;max-width:1176px;margin:28px auto 0!important;padding:11px 20px calc(11px + env(safe-area-inset-bottom))!important;border:1px solid var(--sb-line)!important;border-bottom:0!important;border-radius:18px 18px 0 0!important;background:#0b1b2af2!important;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 -10px 30px #0003;color:var(--sb-muted);font-size:13px!important;line-height:1.6!important}
 footer.site-footer strong{color:#fff}

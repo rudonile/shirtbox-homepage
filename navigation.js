@@ -7,6 +7,26 @@
     startAtTop();
     window.requestAnimationFrame(startAtTop);
   });
+  // Kopfzeile fest oben fixieren. Ein Platzhalter gleicher Höhe hält den Inhalt an seinem Platz;
+  // Position und Breite werden aus dem normalen Layout übernommen, damit sie zu jeder Seite passen.
+  const head = document.querySelector('body.simple-home .masthead');
+  if (head) {
+    const spacer = document.createElement('div'); spacer.className = 'masthead-spacer'; spacer.setAttribute('aria-hidden', 'true');
+    head.before(spacer);
+    const pin = () => {
+      head.classList.remove('is-pinned'); head.style.left = head.style.width = ''; spacer.style.height = '0px';
+      const box = head.getBoundingClientRect(), css = getComputedStyle(head);
+      spacer.style.height = `${box.height}px`; spacer.style.marginTop = css.marginTop; spacer.style.marginBottom = css.marginBottom;
+      head.style.left = `${box.left}px`; head.style.width = `${box.width}px`;
+      head.classList.add('is-pinned');
+    };
+    pin();
+    window.addEventListener('resize', pin);
+    window.addEventListener('load', pin);
+    // Höhe kann sich ändern (z. B. wenn „Zur Bestellung“ erscheint).
+    if ('ResizeObserver' in window) new ResizeObserver(() => { if (head.classList.contains('is-pinned')) spacer.style.height = `${head.offsetHeight}px`; }).observe(head);
+  }
+
   const help = document.getElementById('design-hilfe');
   if (!help) return;
   document.querySelectorAll('[data-open-help]').forEach(link => {

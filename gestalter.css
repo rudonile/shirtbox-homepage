@@ -115,7 +115,7 @@
  .studio-rights{margin:2px 0 12px;padding:6px 0}
  .studio .studio-surprise{min-height:58px;border-radius:14px;font-size:19px}
  /* Vor dem ersten Design keine leere Vorlage und keine leere Liste zeigen. */
- .studio-stage.is-empty .studio-preview,.studio-stage.is-empty .studio-collection{display:none}
+ .studio-stage.is-empty .studio-preview,.studio-stage.is-empty .studio-collection,.studio-collection:has(.studio-designs:empty){display:none}
  .studio-stage{gap:12px;scroll-margin-top:84px}
  .studio-preview{border-radius:18px;box-shadow:none}
  .studio-preview figcaption{padding:6px;font-size:11px}

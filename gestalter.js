@@ -135,12 +135,22 @@
     return new Blob([bytes], {type: 'image/jpeg'});
   }
 
+  // T-Shirt-Vorschau mittig in den sichtbaren Bereich zwischen fixem Kopf und Fuss scrollen.
+  function showPreview() {
+    const figure = picture.closest('figure'); if (!figure) return;
+    const top = document.querySelector('.masthead')?.getBoundingClientRect().bottom || 0;
+    const bottom = window.innerHeight - (document.querySelector('.site-footer')?.offsetHeight || 0);
+    const box = figure.getBoundingClientRect(), room = bottom - top;
+    const target = box.height + 16 > room ? top + 8 : top + (room - box.height) / 2;
+    window.scrollBy({top: box.top - target, behavior: 'smooth'});
+  }
+
   async function run(task) {
     busy = true; fail(''); say(''); render();
-    stage.scrollIntoView({behavior: 'smooth', block: 'center'});
+    requestAnimationFrame(showPreview);
     try { await task(); }
     catch (e) { fail(['TimeoutError', 'AbortError'].includes(e.name) ? 'Die Anfrage dauert zu lange. Bitte später erneut versuchen.' : e.message === 'Failed to fetch' ? 'Die Bildgestaltung ist nicht erreichbar. Bitte später erneut versuchen.' : e.message); }
-    finally { busy = false; render(); }
+    finally { busy = false; render(); requestAnimationFrame(showPreview); }
   }
 
   form.addEventListener('submit', event => {
