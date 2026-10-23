@@ -43,7 +43,6 @@
 .studio .studio-surprise:disabled{filter:grayscale(.85);opacity:.55;cursor:not-allowed;transform:none;animation:none}
 @keyframes studioShine{to{background-position:250% 0}}
 @media(prefers-reduced-motion:reduce){.studio .studio-surprise{animation:none}}
-.studio-quota{margin:9px 0 0;text-align:center;font-size:12.5px;color:var(--muted)}
 .studio-error{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:#7a1d2a;color:#fff;font-size:14px;font-weight:600}
 .studio-error[hidden],.studio [hidden]{display:none!important}
 

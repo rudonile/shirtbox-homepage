@@ -5,22 +5,16 @@
   const form = $('studio-form'); if (!form) return;
   const API = 'https://black-snow-2fdf.r-n.workers.dev';
   const TEMPLATE = 'anleitung/polo-api-vorlage.jpg';
-  const DAILY_KEY = 'shirtbox_surprise_count_v1', DAILY_MAX = 5, MAX_PHOTO = 5 * 1024 * 1024;
+  const MAX_PHOTO = 5 * 1024 * 1024;
 
   const keyword = $('studio-keyword'), shirtText = $('studio-text'), photo = $('studio-photo'), rights = $('studio-rights');
-  const surprise = $('studio-surprise'), quota = $('studio-quota'), error = $('studio-error');
+  const surprise = $('studio-surprise'), error = $('studio-error');
   const photoBox = $('studio-photo-box'), photoName = $('studio-photo-name'), photoThumb = $('studio-photo-thumb'), photoRemove = $('studio-photo-remove');
   const stage = document.querySelector('.studio-stage'), picture = $('studio-image'), loader = $('studio-loader'), status = $('studio-status');
   const editRow = $('studio-edit'), editInput = $('studio-edit-input'), editButton = $('studio-edit-button');
   const list = $('studio-designs'), count = $('studio-count'), orderBar = $('studio-order'), total = $('studio-total'), orderButton = $('studio-order-button'), another = $('studio-another');
 
   const designs = []; let active = -1, busy = false, editingOrder = false;
-
-  // Tageslimit für neue Designs (Änderungen sind frei).
-  const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
-  function used() { try { const v = JSON.parse(localStorage.getItem(DAILY_KEY) || '{}'); return v.date === today() ? Math.min(DAILY_MAX, Number(v.count) || 0) : 0; } catch { return 0; } }
-  function consume() { try { localStorage.setItem(DAILY_KEY, JSON.stringify({date: today(), count: used() + 1})); } catch {} }
-  const left = () => DAILY_MAX - used();
 
   const fail = text => { error.textContent = text; error.hidden = !text; };
   const say = text => { status.textContent = text; };
@@ -53,10 +47,8 @@
   }
 
   function controls() {
-    const none = left() <= 0;
-    surprise.disabled = busy || none;
+    surprise.disabled = busy;
     surprise.textContent = designs.length ? '✨ Weiteres T-Shirt designen' : '✨ T-Shirt designen';
-    quota.textContent = none ? `Heute sind alle ${DAILY_MAX} KI-Designs aufgebraucht – morgen wieder. Änderungen sind weiterhin möglich.` : `Noch ${left()} von ${DAILY_MAX} KI-Designs heute · Änderungen zählen nicht dazu`;
     editButton.disabled = busy || !editInput.value.trim();
     orderButton.disabled = busy || !chosen().length;
     another.disabled = busy;
@@ -159,10 +151,8 @@
     const word = keyword.value.trim(), text = shirtText.value.trim(), file = photo.files[0];
     if (!word && !text && !file && !styleChoice) { fail('Bitte wählen Sie einen Stil, beschreiben Sie Ihr Design, geben Sie einen Text ein oder laden Sie ein Foto hoch.'); keyword.focus(); return; }
     if (!rights.checked) { fail('Bitte bestätigen Sie Ihre Inhalts- und Bildrechte.'); rights.closest('label').classList.add('attention'); rights.focus(); return; }
-    if (left() <= 0) return;
     run(async () => {
       const blob = await request(surprisePrompt(word, text, !!file), file ? await withPhoto(file) : null);
-      consume();
       const summary = [styleChoice && `Stil: ${STYLES[styleChoice].label}`, word && `Design: ${word}`, text && `Text: ${text}`, file && 'mit eigenem Foto'].filter(Boolean).join(' · ');
       designs.push({blob, url: URL.createObjectURL(blob), prompt: `KI-Design – ${summary}`, selected: true, number: editingOrder ? Math.max(0, ...designs.map(d => d.number || 0)) + 1 : null});
       active = designs.length - 1;

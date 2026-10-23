@@ -39,8 +39,6 @@ Object.assign(dict,{
 // Texte mit Zahlen, die per JavaScript erzeugt werden.
 const plural=(n,one,many)=>Number(n)===1?one:many;
 const patterns=[
-[/^Noch (\d+) von (\d+) KI-Designs heute · Änderungen zählen nicht dazu$/,'$1 of $2 AI designs left today · changes don’t count'],
-[/^Heute sind alle (\d+) KI-Designs aufgebraucht – morgen wieder\. Änderungen sind weiterhin möglich\.$/,'All $1 AI designs for today have been used – more tomorrow. Changes are still possible.'],
 [/^(\d+) Designs?$/,(m,n)=>`${n} ${plural(n,'design','designs')}`],
 [/^(\d+) T-Shirts? ausgewählt · ab (.+)$/,(m,n,p)=>`${n} ${plural(n,'T-shirt','T-shirts')} selected · from ${p}`],
 [/^(\d+) T-Shirts zur Bestellung →$/,'Add $1 T-shirts to order →'],
