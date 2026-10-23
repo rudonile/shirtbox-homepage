@@ -1,0 +1,119 @@
+SHIRTBOX – AKTUELLE WEBSITE, 10.10.2026
+
+Diese vollständige ZIP enthält die Website samt Bildern und Videos.
+Entpacken und alle Dateien samt Unterordnern ins bestehende Website-Projekt
+hochladen, gleichnamige Dateien ersetzen.
+Website: https://shirtbox.ch
+Bildgenerator: https://black-snow-2fdf.r-n.workers.dev
+
+DESIGNER UND BESTELLUNG
+1. Wunschshirt schreiben oder direkt beim Feld „Idee einsprechen“ verwenden.
+2. Rechte bestätigen und „Jetzt Shirt generieren“ anklicken.
+   Währenddessen: animierte Sanduhr und Generierungsstatus.
+3. „Neues Design erstellen“ erzeugt einen leeren Platz für einen weiteren
+   Entwurf. Bis zu fünf Entwürfe bleiben verfügbar.
+4. Für Änderungen das entsprechende Design ansehen, den Änderungswunsch
+   eingeben und wieder „Jetzt Shirt generieren“ wählen. Ein vorhandenes Bild
+   wird als Grundlage für die Änderung benutzt.
+5. „Neu anfangen“ leert nur das aktuell angezeigte Design und den Text.
+   Andere Designs bleiben erhalten.
+6. Bei genau einem fertigen Entwurf: unten „Dieses Shirt bestellen“ wählen.
+   Bei mehreren: gewünschte Designs unten ankreuzen, dann „Ausgewählte Shirts
+   bestellen“. Nur die gewählten Designs werden automatisch übernommen.
+7. Im Bestellformular Grössen und Stückzahlen je Design wählen sowie Kontakt,
+   Lieferadresse, Bildrechte und AGB ausfüllen/bestätigen.
+8. Maximal fünf Shirts insgesamt pro Bestellung, auch über mehrere Designs
+   und Grössen verteilt. Erstes Shirt CHF 89.–, jedes weitere Shirt CHF 80.10 (10 % Rabatt).
+   Alle Preise inklusive Mehrwertsteuer und Versand.
+   1 Shirt: CHF 89.00; 2: CHF 169.10; 3: CHF 249.20; 4: CHF 329.30; 5: CHF 409.40.
+9. Bestellübersicht prüfen, absenden und TWINT-Zahlung separat vornehmen.
+
+Jedes gewählte Design wird als eigener JPEG-Anhang mitgesendet, kein Bild-ZIP.
+Die Bilder bleiben für die Übernahme 30 Minuten in diesem Browser gespeichert.
+Grössen: S, M, L, XL, XXL, 3XL, 4XL, 5XL.
+Asiatische Grössen: Empfehlung S → L, M → XL, L → XXL.
+Kontakt Fusszeile: 076 469 01 00. TWINT: ShirtBOX, 079 915 48 24.
+Lieferzeit: bis zu vier Wochen.
+Waschen: maximal 30 °C, Handwäsche empfohlen, alternativ Schonwaschgang.
+Navigation: Startseite und FAQs. index.html ist die Startseite.
+
+BILDGENERATOR
+Die Website allein enthält keinen geheimen API-Schlüssel.
+Der separate Cloudflare-Worker black-snow-2fdf braucht OPENAI_API_KEY als Secret.
+Eine Datenbank oder ein WEBSITE-Service-Binding ist nicht mehr erforderlich.
+Bei Code-Update: _einrichtung/worker.mjs im Bildgenerator-Worker einsetzen.
+Die Website-Adresse im Code ist auf shirtbox.ch eingestellt.
+Der mitgelieferte Worker verwendet die Website-URL zum Laden der Vorlage.
+Keine Tages- oder Monatslimits und kein Versuchszähler.
+/health zeigt die Konfiguration und die Versionskennung 20261010-ohne-limit.
+Die maximal fünf Designs und fünf Shirts pro Bestellung bleiben bestehen.
+
+SPRACHEINGABE UND VERSAND
+Spracheingabe erfordert HTTPS, Browserunterstützung, Mikrofonfreigabe und
+Erreichbarkeit des Sprachdienstes. Texte nach dem Diktat prüfen.
+FormSubmit versendet Bestellung und Bestätigung. Betreff: Bestellbestätigung.
+Die englische Kopfzeile der FormSubmit-Mailvorlage wird vom Dienst bestimmt.
+
+PRÜFUNGEN
+Lokale Tests mit simulierten Antworten: fünf Entwürfe, gezielte Auswahl
+(z.B. nur Design 2 und 5), automatische JPEG-Übernahme, Mengen- und Preislimits,
+Einzelbestellung, Änderungen und Neu anfangen, Generierungsstatus.
+Zehn Testgruppen zur Spracheingabe erfolgreich. Kein echter Mikrofontest,
+keine kostenpflichtige Bildgenerierung und keine echte Bestellung durch Codex.
+Nach Veröffentlichung Generierung und Mailzustellung auf Zielgeräten prüfen.
+
+STARTSEITEN-VORSCHAU
+Neun wechselnde Beispiele inklusive Darts Europe und Darts Basel 2026.
+Die neuen Originalbilder werden beim Anklicken in der Grossansicht geöffnet.
+Beim Veröffentlichen den bestehenden Website-Worker mute-silence-0ef0
+aktualisieren, damit die Adresse unverändert bleibt.
+
+AKTUALISIERUNG – WICHTIG
+1. Website-Dateien im bestehenden Website-Worker mute-silence-0ef0 aktualisieren.
+2. Im separaten Bildgenerator black-snow-2fdf Edit code öffnen, neueste Version
+   auswählen und den gesamten Code durch _einrichtung/worker-code.txt ersetzen.
+3. Deploy klicken. Das Website-ZIP allein aktualisiert den Bildgenerator nicht.
+Der bestehende Secret OPENAI_API_KEY bleibt erhalten. Die alten DB- und
+WEBSITE-Bindings werden vom neuen Code nicht verwendet. Ein neues WEBSITE-
+Binding oder eine Datenbank muss nicht angelegt werden. Die neue Website-Adresse
+mute-silence-0ef0 sowie shirtbox.ch und www.shirtbox.ch sind freigegeben.
+Die Vorlage wird über die Website geladen; falls shirtbox.ch nicht erreichbar
+ist, wird automatisch die Vorlage des aktuellen Website-Workers verwendet.
+Bei Problemen /health öffnen: Version muss 20261010-ohne-limit lauten.
+Ein erfolgreiches /health bestätigt nur, dass ein Schlüssel gesetzt ist,
+nicht dessen Gültigkeit, Guthaben oder Modellberechtigung.
+
+EIGENE BILDER – EINFACHER DESIGNER
+Links „Bild generieren“ führt zum KI-Designer designhilfe.html.
+Rechts „Eigenes Bild auf Ihr Shirt“ öffnet eigenes-bild.html.
+
+1. Shirt-Farbe auswählen.
+2. Vier feste Upload-Felder: Vorderseite, Rückseite, linker Ärmel, rechter Ärmel.
+   Je Bereich ein PNG-, JPG- oder WebP-Bild, maximal 2 MB. Ein neuer Upload
+   ersetzt das Bild desselben Bereichs. Bereiche dürfen frei bleiben.
+   Links und rechts gelten aus Sicht des Trägers. Ein Ärmelbild ist automatisch
+   auf Vorder- und Rückansicht desselben Arms zu sehen.
+3. Auf der Vorschau das Bild anklicken und ziehen zum Verschieben.
+   Einen Eckpunkt ziehen für die Grösse; runden Punkt oberhalb ziehen zum Drehen.
+   Funktioniert auch mit dem Finger. Tastatur: Pfeile verschieben, +/- skalieren,
+   R dreht. Der passende Knopf im Upload-Feld wählt das Bild ebenfalls aus.
+4. Unter der Vorschau: Transparenz-Regler und Effektknöpfe.
+   Bildrand: Klar, Weich oder Sehr weich. Weitere Effekte aufklappen für
+   Helligkeit, Kontrast, Farbstärke, Spiegeln, weissen Hintergrund entfernen
+   oder mit Stofffarbe mischen. „Zentrieren“ und „Zurücksetzen“ für Korrekturen.
+5. Bildrechte bestätigen, „Bildgestaltung übernehmen – ohne KI“ anklicken.
+   Danach weitere Designs erstellen oder gewählte Designs bestellen.
+
+Die Rahmen und Anfasser werden nicht in das fertige JPEG gespeichert.
+Originalbilder bleiben unverändert. Vorschau, Originalbilder, Shirt-Farbe und
+Bearbeitungseinstellungen werden in die Bestellung übertragen. Maximal 9 MB
+zusammen pro Bestellung. Die Bildplatzierung ist eine Designvorschau; die
+Druckqualität hängt von den Originalbildern ab.
+Diese Seite nutzt keine KI.
+Für dieses Update nur den Website-Worker mute-silence-0ef0 mit dem ZIP aktualisieren.
+
+PRÜFUNG DES EINFACHEN DESIGNERS
+Vier Upload-Felder, Bild ersetzen, direkte Auswahl, Verschieben, Eckpunkt-
+Skalierung, Drehpunkt, Bearbeitung in beiden Ärmelansichten, Effektknöpfe,
+Transparenz, Bildrechte und Export ohne Anfasser mit Canvas automatisiert geprüft.
+Vor Verwendung auf eigenen Zielgeräten die Bedienung und Mailzustellung prüfen.

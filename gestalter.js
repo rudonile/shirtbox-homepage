@@ -127,11 +127,11 @@
     return new Blob([bytes], {type: 'image/jpeg'});
   }
 
-  // T-Shirt-Vorschau mittig in den sichtbaren Bereich zwischen fixem Kopf und Fuss scrollen.
+  // T-Shirt-Vorschau mittig in den sichtbaren Bereich unter der fixen Kopfzeile scrollen.
   function showPreview() {
     const figure = picture.closest('figure'); if (!figure) return;
     const top = document.querySelector('.masthead')?.getBoundingClientRect().bottom || 0;
-    const bottom = window.innerHeight - (document.querySelector('.site-footer')?.offsetHeight || 0);
+    const bottom = window.innerHeight;
     const box = figure.getBoundingClientRect(), room = bottom - top;
     const target = box.height + 16 > room ? top + 8 : top + (room - box.height) / 2;
     window.scrollBy({top: box.top - target, behavior: 'smooth'});
