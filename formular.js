@@ -182,7 +182,7 @@
       document.querySelectorAll('.missing-required').forEach(el=>el.classList.remove('missing-required'));
       const missing=[...form.querySelectorAll('[required]')].find(el=>!el.validity.valid);
       const target=missing || (result.order.errors.length ? list.querySelector('.design-size-row') || list : null);
-      if(target){const box=target.closest('.agb-consent,.design-size-row,.field')||target;box.classList.add('missing-required');box.scrollIntoView({behavior:'smooth',block:'center'});if(missing)missing.focus({preventScroll:true});}
+      if(target){const box=target.closest('.agb-consent,.design-size-row,.field')||target;box.classList.add('missing-required');box.scrollIntoView({behavior:'smooth',block:'center'});if(missing){try{missing.focus({preventScroll:true});}catch(e){missing.focus();}}}
       else if(!result.order.valid){list.classList.add('missing-required');list.scrollIntoView({behavior:'smooth',block:'center'});}
       return;
     }
@@ -190,7 +190,8 @@
     try { sessionStorage.setItem('shirtbox-order-pending', JSON.stringify({quantity:result.order.quantity, at:Date.now()})); } catch(e) {}
     const progress=document.getElementById('order-submit-progress');
     if(progress){progress.hidden=false;progress.scrollIntoView({behavior:'smooth',block:'center'});}
-    submit.disabled=true;
+    // Safari/iOS can cancel a native form submission when its submitter is
+    // disabled synchronously in the submit event. Keep it enabled until navigation.
     submit.setAttribute('aria-busy','true');
     submit.textContent='⏳ Bestellung wird übermittelt …';
     message('Ihre Bestellung wird übermittelt. Bitte warten und die Seite nicht schliessen.');

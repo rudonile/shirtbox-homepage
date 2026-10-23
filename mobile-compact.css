@@ -35,3 +35,6 @@ body.simple-home .masthead nav{order:3!important;display:flex!important;flex-wra
 body.simple-home .masthead nav a{padding:3px 1px!important;white-space:nowrap!important}
 body.simple-home .masthead nav .order-return-link{display:none!important}
 }
+
+/* Checkout shortcut only when a saved order exists, including mobile overrides. */
+.mobile-order-shortcut[hidden]{display:none!important}

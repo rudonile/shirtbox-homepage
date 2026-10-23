@@ -19,7 +19,10 @@
         if(!input)throw Error('Das Bestellformular konnte kein Designfeld erstellen.');
         const number=item.number||i+1;
         const file=new File([blob],`shirtbox-design-${number}.jpg`,{type:'image/jpeg'});
-        const transfer=new DataTransfer();transfer.items.add(file);input.files=transfer.files;
+        const transfer=typeof DataTransfer==='function' ? new DataTransfer() : null;
+        if(!transfer)throw Error('Dieser Browser unterstützt die automatische Dateiübernahme nicht. Bitte aktualisieren Sie Safari oder wählen Sie das Design direkt als Datei aus.');
+        transfer.items.add(file);input.files=transfer.files;
+        if(!input.files || !input.files.length)throw Error('Die Dateiübernahme wurde vom Browser blockiert.');
         input.dispatchEvent(new Event('change',{bubbles:true}));
         window.ShirtboxOrderDesigns.attachOriginals(input,item.originals||[],item.placement||'');
         window.ShirtboxOrderDesigns.restoreDetails?.(input,number);

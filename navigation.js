@@ -49,6 +49,7 @@
     let has=false;
     try{has=await hasSavedOrder();}catch{}
     if(current!==sequence)return;
+    document.querySelectorAll('.mobile-order-shortcut').forEach(el=>{el.hidden=!has;el.setAttribute('aria-hidden',String(!has));});
     let link=nav.querySelector('.order-return-link');
     if(has&&!link){
       link=document.createElement('a');link.href='bestellen.html#bestellen';
