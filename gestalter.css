@@ -1,0 +1,136 @@
+/* ShirtBOX Gestalter – eine Seite: Eingabe, Vorschau, Auswahl, Bestellung. */
+.studio{--gold:#e5c68b;--ink:#0b1825;--panel:#12283a;--line:#ffffff1f;--muted:#b9c6cf;max-width:1180px;margin:22px auto 34px;padding:0 4px;color:#f5f7f9}
+.studio *{box-sizing:border-box}
+.studio-head{text-align:center;margin:6px 0 24px}
+.studio-head h1{margin:0;font-size:clamp(30px,4.6vw,52px)!important;line-height:1.05!important;letter-spacing:-.035em!important;text-shadow:none}
+.studio-head p{margin:10px 0 0;color:var(--muted);font-size:clamp(15px,1.6vw,18px)}
+.studio-grid{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:22px;align-items:start}
+
+/* Eingabe */
+.studio-panel{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 18px 50px #0003}
+.studio-field{display:block;margin:0 0 14px}
+.studio-field>span{display:block;font-size:13px;font-weight:700;letter-spacing:.02em;color:var(--gold);margin:0 0 6px}
+.studio-field>span small{color:var(--muted);font-weight:500;letter-spacing:0}
+.studio input[type=text]{width:100%;min-height:50px;padding:12px 14px;border:1px solid #ffffff33;border-radius:12px;background:#fff;color:#14263a;font-family:inherit;font-size:16px;line-height:1.4}
+.studio input[type=text]:focus{outline:3px solid var(--gold);outline-offset:1px}
+.studio-field textarea{display:block;width:100%;min-height:76px;padding:12px 14px;border:1px solid #ffffff33;border-radius:12px;background:#fff;color:#14263a;font-family:inherit;font-size:16px;line-height:1.4;resize:vertical}
+.studio-field textarea:focus{outline:3px solid var(--gold);outline-offset:1px}
+/* Designstil-Knöpfe */
+.studio-styles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+.studio .studio-styles button{font-size:12px!important;padding:0 4px!important;letter-spacing:0!important;display:inline-flex;align-items:center;justify-content:center;width:100%;min-height:0;height:28px;margin:0;border:1px solid #ffffff2b;border-radius:999px;background:#0d2131;color:#f5f7f9;font-size:12.5px;font-weight:600;line-height:1;box-shadow:none;transition:border-color .15s,background .15s}
+.studio .studio-styles button b{font-size:12px;font-weight:400;line-height:1}
+.studio .studio-styles button:hover{border-color:#e5c68b99;background:#132d42;transform:none}
+/* Aktiver Stil: gold gefüllt mit Häkchen, klar erkennbar. */
+.studio .studio-styles button[aria-pressed=true],.studio .studio-styles button[aria-pressed=true]:hover{border-color:var(--gold);background:var(--gold);color:#102536;font-weight:800;box-shadow:0 0 0 2px #e5c68b55}
+.studio .studio-styles button[aria-pressed=true]::before{content:'✓';margin-right:3px;font-weight:900}
+.studio-hint{display:block;margin-top:6px;font-size:12.5px;line-height:1.4;color:var(--muted)}
+.studio-photo{position:relative;display:flex;align-items:center;gap:12px;min-height:58px;padding:10px 14px;border:1.5px dashed #e5c68b88;border-radius:12px;background:#0d2131;cursor:pointer;transition:border-color .2s,background .2s}
+.studio-photo:hover{border-color:var(--gold);background:#132d42}
+.studio-photo input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.studio-photo img{display:none;width:42px;height:42px;object-fit:cover;border-radius:8px}
+.studio-photo.has-photo{border-style:solid}.studio-photo.has-photo img{display:block}.studio-photo.has-photo .studio-photo-icon{display:none}
+.studio-photo-icon{font-size:22px}
+.studio-photo-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
+.studio-photo-label small{display:block;font-weight:400;font-size:12px;color:var(--muted)}
+.studio .studio-photo-remove{position:relative;z-index:1;width:auto;min-height:0;margin:0;padding:6px 10px;border:1px solid #ffffff33;border-radius:8px;background:transparent;color:#fff;font-size:13px;font-weight:600}
+.studio .studio-photo-remove:hover{background:#ffffff14;transform:none}
+.studio-rights{display:flex;gap:10px;align-items:flex-start;margin:4px 0 16px;padding:10px;border-radius:10px;font-size:13px;line-height:1.45;color:var(--muted);cursor:pointer}
+.studio-rights input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--gold)}
+.studio-rights a{color:var(--gold)}
+.studio-rights.attention{outline:2px solid #ffcf45;background:#ffcf4514;color:#fff}
+.studio .studio-surprise{display:flex;justify-content:center;width:100%;min-height:62px;margin:0;padding:14px 18px;border:0;border-radius:16px;background:linear-gradient(110deg,#fa5e7b,#ffd36d,#67d5c0,#fa5e7b);background-size:250% 100%;color:#102536;font-size:clamp(19px,2vw,22px);font-weight:900;text-align:center;box-shadow:0 10px 26px #fa5e7b40;animation:studioShine 8s linear infinite;transition:transform .15s,filter .15s}
+.studio .studio-surprise:hover{background:linear-gradient(110deg,#fa5e7b,#ffd36d,#67d5c0,#fa5e7b);background-size:250% 100%;transform:translateY(-2px);filter:saturate(1.15)}
+.studio .studio-surprise:disabled{filter:grayscale(.85);opacity:.55;cursor:not-allowed;transform:none;animation:none}
+@keyframes studioShine{to{background-position:250% 0}}
+@media(prefers-reduced-motion:reduce){.studio .studio-surprise{animation:none}}
+.studio-quota{margin:9px 0 0;text-align:center;font-size:12.5px;color:var(--muted)}
+.studio-error{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:#7a1d2a;color:#fff;font-size:14px;font-weight:600}
+.studio-error[hidden],.studio [hidden]{display:none!important}
+
+/* Vorschau */
+.studio-stage{display:flex;flex-direction:column;gap:14px;min-width:0;scroll-margin-top:110px}
+.studio-preview{position:relative;margin:0;border:1px solid var(--line);border-radius:22px;overflow:hidden;background:#747474;box-shadow:0 18px 50px #0003}
+.studio-preview img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:contain}
+.studio-preview figcaption{display:flex;justify-content:space-around;padding:8px;background:var(--ink);color:var(--muted);font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.studio-loader{position:absolute;inset:0 0 33px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:#0b1825cc;backdrop-filter:blur(3px);text-align:center}
+.studio-loader span{font-size:46px;animation:studioTurn 2.1s ease-in-out infinite}
+.studio-loader strong{font-size:18px}.studio-loader small{color:var(--muted)}
+@keyframes studioTurn{0%,20%{transform:rotate(0)}45%,65%{transform:rotate(180deg)}90%,100%{transform:rotate(360deg)}}
+.studio-status{margin:0;min-height:0;text-align:center;color:var(--gold);font-weight:700}
+.studio-status:empty{display:none}
+.studio-edit{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:16px 18px}
+.studio-edit-label{display:block;margin:0 0 10px;cursor:pointer}
+.studio-edit-label strong{display:block;font-size:16px;color:#fff}
+.studio-edit-label span{display:block;margin-top:3px;font-size:13.5px;color:var(--muted)}
+.studio-edit-row{display:flex;gap:10px;align-items:stretch}
+.studio-edit textarea{flex:1;min-width:0;min-height:54px;padding:12px 14px;border:1px solid #ffffff33;border-radius:12px;background:#fff;color:#14263a;font-family:inherit;font-size:16px;line-height:1.4;resize:vertical}
+.studio-edit textarea:focus{outline:3px solid var(--gold);outline-offset:1px}
+.studio .studio-edit button{width:auto;min-height:54px;margin:0;padding:0 20px;border:1px solid var(--gold);border-radius:12px;background:transparent;color:var(--gold);font-size:15px;font-weight:800;justify-content:center}
+.studio .studio-edit button:hover:not(:disabled){background:#e5c68b1a;transform:none}
+.studio .studio-edit button:disabled{opacity:.45;cursor:not-allowed}
+
+/* Designs + Bestellung */
+.studio-collection{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:16px 18px}
+.studio-collection h2{display:flex;justify-content:space-between;margin:0 0 12px;font-size:15px;font-weight:800;color:#fff;letter-spacing:.01em}
+.studio-collection h2 span{color:var(--muted);font-weight:600}
+.studio-designs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.studio-designs:empty::before{content:'Ihre T-Shirt-Designs erscheinen hier.';grid-column:1/-1;color:var(--muted);font-size:14px;padding:6px 0}
+.studio-card{border:2px solid transparent;border-radius:14px;background:#0d2131;padding:5px;transition:border-color .2s}
+.studio-card.is-selected{border-color:#e5c68b66}.studio-card.is-active{border-color:var(--gold)}
+.studio .studio-card-view{display:block;width:100%;min-height:0;margin:0;padding:0;border:0;border-radius:10px;background:#747474;overflow:hidden}
+.studio .studio-card-view:hover{background:#747474;transform:none}
+.studio-card-view img{display:block;width:100%;aspect-ratio:3/2;object-fit:cover}
+.studio-card-pick{display:flex;align-items:center;gap:6px;padding:6px 3px 2px;font-size:12.5px;font-weight:700;cursor:pointer}
+.studio-card-pick input{width:17px;height:17px;margin:0;accent-color:var(--gold)}
+.studio-order{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.studio-order p{margin:0;font-size:13px;color:var(--muted)}
+.studio-order strong{display:block;font-size:18px;color:#fff}
+.studio .studio-order button{width:auto;min-height:54px;margin:0;padding:0 26px;border:0;border-radius:14px;background:var(--gold);color:#102536;font-size:17px;font-weight:900;justify-content:center;box-shadow:0 9px 22px #0003}
+.studio .studio-order button:hover:not(:disabled){background:#f0d6a3}
+.studio .studio-order button:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.studio-order-actions{display:flex;gap:10px;flex-wrap:wrap}
+.studio .studio-order .studio-another{border:1px solid var(--gold);background:transparent;color:var(--gold);font-size:15px;font-weight:800;box-shadow:none}
+.studio .studio-order .studio-another:hover:not(:disabled){background:#e5c68b1a}
+
+@media(max-width:860px){
+ .studio-grid{grid-template-columns:minmax(0,1fr)}
+ .studio{margin-top:12px}
+ .studio-head{margin-bottom:16px}
+ .studio-panel{padding:18px}
+}
+/* Handy: eine klare Spalte, grosse Tippflächen, nur das Nötige sichtbar. */
+@media(max-width:600px){
+ .studio{margin:8px auto 18px;padding:0}
+ .studio-head{margin:0 0 14px}
+ .studio-head .hero-kicker{display:none}
+ .studio-head h1{font-size:28px!important}
+ .studio-head p{margin-top:6px;font-size:14.5px}
+ .studio-grid{gap:14px}
+ .studio-panel{padding:16px;border-radius:18px;box-shadow:none}
+ .studio-field{margin-bottom:12px}
+ .studio-field>span{font-size:14px;letter-spacing:0;color:#fff}
+ .studio-hint{font-size:12px}
+ .studio .studio-styles button{height:30px}
+ .studio-photo{min-height:52px}
+ .studio-rights{margin:2px 0 12px;padding:6px 0}
+ .studio .studio-surprise{min-height:58px;border-radius:14px;font-size:19px}
+ /* Vor dem ersten Design keine leere Vorlage und keine leere Liste zeigen. */
+ .studio-stage.is-empty .studio-preview,.studio-stage.is-empty .studio-collection{display:none}
+ .studio-stage{gap:12px;scroll-margin-top:84px}
+ .studio-preview{border-radius:18px;box-shadow:none}
+ .studio-preview figcaption{padding:6px;font-size:11px}
+ .studio-loader{inset:0 0 29px}
+ .studio-edit{padding:14px;border-radius:18px}
+ .studio-edit-label strong{font-size:15px}
+ .studio-edit-row{flex-direction:column}
+ .studio .studio-edit button{width:100%}
+ .studio-collection{padding:14px;border-radius:18px}
+ /* Designs als wischbare Leiste statt Raster. */
+ .studio-designs{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -14px;padding:0 14px 4px;scrollbar-width:none}
+ .studio-designs::-webkit-scrollbar{display:none}
+ .studio-card{flex:0 0 44%;scroll-snap-align:start}
+ .studio-order{flex-direction:column;align-items:stretch;text-align:center;gap:10px}
+ .studio-order-actions{flex-direction:column-reverse;gap:8px}
+ .studio .studio-order button{width:100%;min-height:54px}
+ .studio .studio-order .studio-another{min-height:48px}
+}

@@ -28,10 +28,9 @@
       rows.forEach(row => row.querySelector('.remove-size').disabled = rows.length === 1);
       const used = new Set();
       for (const row of rows) {
-        const size = row.querySelector('select'), quantity = row.querySelector('input');
+        const size = row.querySelector('select');
         size.setCustomValidity(size.value && used.has(size.value) ? 'Diese Grösse ist bei diesem Design bereits vorhanden.' : '');
         if (size.value) used.add(size.value);
-        quantity.setCustomValidity(order.quantity > api.MAX_TOTAL ? 'Maximal fünf Shirts insgesamt pro Bestellung.' : '');
       }
       state.card.querySelector('.design-data').value = `Datei: ${item.filename || 'fehlt'}\n${item.rows.map(row => `${row.size ? row.size : 'Grösse fehlt'}: ${row.quantity || 0} Stück`).join(', ')}\nZwischensumme: ${money(item.subtotal)}`;
       const tr = document.createElement('tr');
@@ -69,7 +68,7 @@
   function addSize(state, values = {}) {
     if (state.card.querySelectorAll('.design-size-row').length >= api.SIZES.length) return;
     const row = document.createElement('div'); row.className = 'design-size-row';
-    row.innerHTML = `<div class="field"><label>Gewohnte Grösse *<select required><option value="">Bitte wählen</option>${api.SIZES.map(size => `<option value="${size}">${size}</option>`).join('')}</select></label></div><div class="field"><label>Stückzahl *<input type="number" min="1" max="5" step="1" required inputmode="numeric" placeholder="Anzahl"></label></div><button class="remove-size" type="button" aria-label="Diese Grössenzeile entfernen">×</button>`;
+    row.innerHTML = `<div class="field"><label>Gewohnte Grösse *<select required><option value="">Bitte wählen</option>${api.SIZES.map(size => `<option value="${size}">${size}</option>`).join('')}</select></label></div><div class="field"><label>Stückzahl *<input type="number" min="1" step="1" required inputmode="numeric" placeholder="Anzahl"></label></div><button class="remove-size" type="button" aria-label="Diese Grössenzeile entfernen">×</button>`;
     // The named design summary carries all size rows together with the matching file slot.
     row.querySelector('select').value = values.size || '';
     
@@ -105,7 +104,6 @@
     if(typeof modal.showModal==='function') modal.showModal();
   }
   function addDesign() {
-    if (designs.size >= api.MAX_DESIGNS) return;
     const slot = ++nextSlot;
     const card = document.createElement('section'); card.className = 'order-design'; card.setAttribute('aria-labelledby', `design-${slot}-title`);
     card.innerHTML = `<div class="design-heading-row"><h3 class="design-title" id="design-${slot}-title">Ihr Shirt</h3><div class="design-heading-actions" hidden><button type="button" class="design-heading-zoom">🔍 Vergrössern</button><a class="design-heading-edit" href="designhilfe.html">✏️ Hier T-Shirt ändern</a></div></div><input id="design-${slot}-file" name="attachment_design_${slot}" type="file" accept="image/jpeg" hidden tabindex="-1" aria-hidden="true"><div class="design-file-preview"><img hidden alt="Ihr übernommener Shirt-Entwurf"><p class="design-filename">Bitte zuerst Ihren Entwurf im Shirt-Designer übernehmen.</p><button type="button" class="order-inline-view" hidden aria-hidden="true" tabindex="-1">🔍 Design gross ansehen</button><a class="order-inline-edit" href="designhilfe.html" hidden aria-hidden="true" tabindex="-1">✎ Mit KI weiterbearbeiten</a></div><div class="design-size-list"></div><button class="add-size" type="button">+ Weitere Grösse</button><div class="design-subtotal"></div><div class="agb-consent"><input id="design-${slot}-rights" name="Design_${slot}_Rechte_und_Inhalte" type="checkbox" value="Ja – erforderliche Rechte vorhanden und Inhaltsvorgaben eingehalten" required><label for="design-${slot}-rights">Ich bestätige die erforderlichen Nutzungs- und Bildrechte sowie zulässige Inhalte für meinen Entwurf. *</label></div><textarea class="design-data" name="Design_${slot}_Datei_und_Stückzahlen" hidden></textarea>`;

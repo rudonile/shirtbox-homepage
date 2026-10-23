@@ -1,167 +1,97 @@
 <!DOCTYPE html>
-
 <html lang="de-CH">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
-<meta content="ShirtBOX – individuell bedruckte Shirts für Sport, Freizeit und Vereine. Eigenes Motiv hochladen und Ihr persönliches Shirt bestellen." name="description"/>
-<title>Shirt erstellen · ShirtBOX.ch</title>
+<meta content="ShirtBOX – Stichwort, Text oder Foto eingeben und Ihr individuelles 360°-Shirt mit KI gestalten." name="description"/>
+<title>Designen Sie Ihr T-Shirt · ShirtBOX.ch</title>
 <link href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23172638'/%3E%3Ccircle cx='32' cy='32' r='23' fill='none' stroke='%23dbc5a2' stroke-width='5'/%3E%3Ccircle cx='32' cy='32' r='8' fill='%23dbc5a2'/%3E%3C/svg%3E" rel="icon" type="image/svg+xml"/>
 <link href="style.css" rel="stylesheet"/>
 <link href="startseite.css?v=20261015-bestellansicht-fix" rel="stylesheet"/>
-<link href="shirtbox-bildgenerator.css?v=20261015-bestellansicht-fix" rel="stylesheet"/>
+<link href="mobile-compact.css?v=20261018b" rel="stylesheet"/>
+<link href="layout-unified.css?v=20261018" rel="stylesheet"/>
+<link href="sticky-navigation.css?v=20261018sticky2" rel="stylesheet"/>
+<link href="shirtbox-2.css?v=3" rel="stylesheet"/>
+<link href="gestalter.css?v=20261023j" rel="stylesheet"/>
 <script>if ("scrollRestoration" in history) history.scrollRestoration = "manual";</script>
-<style>
-.shirt-entry-gate{margin:20px 0 26px;padding:24px;border:2px solid #e3232d;border-radius:16px;background:#fff8f6;color:#172638}
-.shirt-entry-gate h2{margin:0 0 16px;font-size:clamp(21px,3vw,28px)}
-.shirt-entry-gate .ai-consent{display:flex;align-items:flex-start;gap:12px;margin:0 0 18px;padding:15px;border:2px solid #d9656b;border-radius:12px;background:rgba(185,39,51,.13)}
-.shirt-entry-gate .ai-consent input{width:24px;height:24px;flex:none;margin-top:3px;accent-color:#ba1020}
-.shirt-entry-gate .ai-consent label{font-weight:700;line-height:1.5}
-#shirt-entry-next{display:block;width:100%;padding:17px 16px;border:0;border-radius:10px;background:#b6091c;color:#fff;font-size:clamp(18px,2.5vw,24px);font-weight:800;cursor:pointer}
-#shirt-entry-next:disabled{opacity:.48;cursor:not-allowed}
-#ai-design-prompt,#ai-selection{scroll-margin-top:100px}.ai-design-buttons{display:flex;flex-wrap:wrap;gap:12px}.ai-design-buttons button{flex:1 1 210px}.ai-design-buttons{margin:12px 0 16px}#ai-create{background:#c20b22;color:white;font-weight:800;font-size:1.12rem;padding:16px;border-radius:12px}#ai-jump-result{background:#b6091c;color:white;border:0;border-radius:10px;padding:14px;font-weight:700;cursor:pointer}
-/* ShirtBOX navy / champagne buttons instead of red */
-.shirt-entry-gate{border-color:#c9b48c!important;background:#172b3b!important;color:#fff!important}
-.shirt-entry-gate h2,.shirt-entry-gate .ai-consent label{color:#fff!important;opacity:1!important;text-shadow:none!important}
-#shirt-entry-next,.ai-design #ai-create,#ai-jump-result,.ai-design #ai-reset,.ai-design #ai-add-design,.ai-design #ai-speech{background:#263f50!important;color:#fff!important;border:2px solid #d7be91!important;border-radius:12px!important;box-shadow:0 3px 12px #0003!important}
-#shirt-entry-next:hover,.ai-design #ai-create:hover,.ai-design #ai-reset:hover,.ai-design #ai-add-design:hover,.ai-design #ai-speech:hover{background:#36586a!important}
-.ai-design #ai-create{background:#bca073!important;color:#152b3a!important;font-weight:800!important}
-.ai-design #ai-speech{margin:10px 0 5px;min-height:48px}
-.ai-selection .ai-quick-actions{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0 20px}
-.ai-selection .ai-quick-actions>button,.ai-selection .ai-new-design-actions{flex:1 1 210px;min-width:0;margin:0}
-.ai-selection .ai-new-design-actions button{width:100%}
-@media(max-width:600px){.ai-selection .ai-quick-actions{flex-direction:column}.ai-selection .ai-quick-actions>button{flex:auto}}
-.wunschshirt-heading{display:block;text-align:center;font-weight:800;font-size:clamp(1.1rem,2.3vw,1.45rem);margin:18px 0 10px;color:inherit}
-</style>
-<link href="mobile-compact.css?v=20261018b" rel="stylesheet"/><link href="layout-unified.css?v=20261018" rel="stylesheet"><link href="sticky-navigation.css?v=20261018sticky2" rel="stylesheet"/><style>.prompt-heading-video{justify-content:center!important}.wunschshirt-heading{color:#dbc5a2!important;text-align:center!important}.shirt-video-dialog{background:#172b3b!important;border:2px solid #dbc5a2!important}.shirt-video-top button{background:#dbc5a2!important;color:#172638!important}@media(max-width:600px){.designer-paths{margin:3px auto!important;padding:0!important;min-height:0!important}.designer-paths a{padding:5px 9px!important;min-height:0!important;gap:2px!important}.designer-paths strong{font-size:12px!important;line-height:1.1!important}.designer-paths span{font-size:10px!important;line-height:1.1!important}.prompt-heading-video{scroll-margin-top:110px!important}} </style></link><link rel="stylesheet" href="shirtbox-2.css?v=2"><style>.surprise-dialog.surprise-exhausted #surprise-home{display:block!important;background:#ffcc48!important;color:#172638!important;border:3px solid white!important;font-size:1.25rem!important;padding:20px 24px!important;box-shadow:0 0 0 5px #ffcc4840,0 8px 26px #0008!important}.surprise-dialog.surprise-exhausted #surprise-keyword-toggle,.surprise-dialog.surprise-exhausted .surprise-photo,.surprise-dialog.surprise-exhausted .surprise-actions,.surprise-dialog.surprise-exhausted #surprise-keyword-wrap,.surprise-dialog.surprise-exhausted #surprise-close,.surprise-dialog.surprise-exhausted #surprise-error{display:none!important}</style><style id="sb-centre-loader-style">.ai-design-preview{position:relative}.sb-centre-loader{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);z-index:10;display:flex;flex-direction:column;align-items:center;gap:8px;width:min(230px,35%);padding:14px 10px;background:#142638ee;border:2px solid #ffce60;border-radius:16px;color:#fff;text-align:center;box-shadow:0 8px 30px #0008;pointer-events:none}.sb-centre-loader[hidden]{display:none!important}.sb-centre-loader-icon{font-size:clamp(32px,6vw,64px);animation:sb-hourglass-turn 2.1s ease-in-out infinite}.sb-centre-loader strong{font-size:clamp(12px,1.6vw,17px)}.sb-centre-loader small{font-size:clamp(10px,1.2vw,13px);line-height:1.3}@keyframes sb-hourglass-turn{0%,20%{transform:rotate(0)}45%,65%{transform:rotate(180deg)}90%,100%{transform:rotate(360deg)}}@media(max-width:600px){.sb-centre-loader{width:38%;padding:8px 5px;gap:3px;border-radius:10px}.sb-centre-loader small{font-size:9px}}</style></head>
+<link rel="stylesheet" href="site.css?v=20261023c"></head>
 <body class="simple-home design-page">
 <main class="shell">
 <header class="masthead">
 <a aria-label="ShirtBOX.ch – Startseite" class="brand" href="index.html"><img alt="ShirtBOX.ch" class="brand-logo" src="shirtbox-logo-ch.png"/></a>
 <nav aria-label="Hauptnavigation"><a href="index.html">Startseite</a><a href="faq.html">FAQs</a><a href="shirts-live.html">Shirts live</a><a aria-current="page" href="designhilfe.html">Shirt erstellen</a><a href="ueber-uns.html">Über uns</a></nav>
 <a class="mobile-order-shortcut" href="bestellen.html#bestellen" hidden aria-hidden="true">Zur Bestellung</a><div aria-label="Sprache / Language" class="language-switch"><button data-lang="de" type="button">DE</button><button data-lang="en" type="button">EN</button></div></header>
-<div class="single-help screenshot-guide">
-<a class="back-home" href="index.html">← Zur Startseite</a>
 
-
-<section aria-labelledby="ai-design-title" class="ai-design">
-<p class="hero-kicker">DEIN SHIRT. DEINE IDEE.</p>
-
-
-<div class="ai-design-layout">
-<form id="ai-design-form" tabindex="-1">
-<div class="prompt-heading-video"><button hidden id="surprise-open" type="button">🎲 Überrasch mich!</button><button aria-haspopup="dialog" class="shirt-video-link" id="shirt-video-open" type="button">▶ So gestalten Sie Ihr Shirt mit KI – Video ansehen</button></div>
-<label class="wunschshirt-heading" for="ai-design-prompt">Designwunsch</label>
-<div id="sb-change-hint" hidden role="status">✏️ <strong>HIER DEINE ÄNDERUNGSWÜNSCHE EINGEBEN</strong><br>Dein bisheriges T-Shirt bleibt erhalten. Schreibe nur, was du ändern möchtest.</div>
-<textarea id="ai-design-prompt" maxlength="2000" minlength="3" placeholder="Zum Beispiel: Ein dunkelblaues Dart-Polo mit goldenen Akzenten. Vorne eine grosse, detailreiche Dartscheibe mit drei Dartpfeilen, auf der Rückseite der Teamname in goldener Schrift. Die Ärmel dunkelblau mit feinen goldenen Streifen. Hochwertiges, sportliches Design mit durchgehendem Muster bis zum Saum." required="" rows="6"></textarea>
-<div id="sb-rights-reminder" class="sb-rights-reminder" role="group" aria-label="Inhalts- und Bildrechte"><strong>⚠️ Wichtig: Bitte bestätigen Sie Ihre Inhalts- und Bildrechte!</strong><label class="sb-rights-confirm"><input form="ai-design-form" id="ai-rights" type="checkbox" required> Ich bestätige, dass ich nur Inhalte verwende, für die ich die erforderlichen Rechte habe, und die Inhaltsvorgaben von ShirtBOX einhalte.</label></div>
-<div class="ai-design-buttons"><button id="ai-create" type="submit">Generieren</button><button hidden="" id="ai-jump-result" type="button">↓ Zum fertigen Shirt</button></div>
-<details class="ai-photo-dropdown"><summary>Foto hinzufügen</summary><fieldset class="ai-photo-fields"><legend>Eigene Fotos hochladen</legend><p>Sie können auch Ihr eigenes hochgeladenes Foto mit KI bearbeiten. Laden Sie dafür optional ein Foto für die Vorderseite und/oder Rückseite hoch.</p><label for="ai-photo-front">Foto Vorderseite (optional)</label><input accept="image/png,image/jpeg,image/webp" id="ai-photo-front" type="file"/><label for="ai-photo-back">Foto Rückseite (optional)</label><input accept="image/png,image/jpeg,image/webp" id="ai-photo-back" type="file"/><p aria-live="polite" id="ai-photo-status" role="status"></p></fieldset></details>
-
-<div class="ai-preview-below">
-<figure class="ai-design-preview"><div id="sb-centre-loader" class="sb-centre-loader" role="status" aria-live="polite" hidden><span class="sb-centre-loader-icon" aria-hidden="true">⏳</span><strong>KI gestaltet Ihr Shirt …</strong><small>Bitte warten, bis zu 3 Minuten.</small></div><img alt="Weisse Polo-Vorlage mit Vorderseite und Rückseite" height="1228" id="ai-design-image" src="anleitung/polo-api-vorlage.jpg" width="1536"/><figcaption>Ihr Designentwurf: Vorderseite links, Rückseite rechts.</figcaption></figure>
+<section class="studio" aria-labelledby="studio-title">
+<div class="studio-head">
+<p class="hero-kicker">KI-SHIRT-GESTALTER</p>
+<h1 id="studio-title">Designen Sie Ihr T-Shirt</h1>
+<p>Beschreiben Sie Ihr Wunsch-Design – die KI gestaltet Ihr persönliches T-Shirt.</p>
 </div>
-<p aria-live="polite" id="ai-design-status" role="status"></p>
-<section aria-labelledby="ai-selection-title" class="ai-selection" hidden="" id="ai-selection"><h2 id="ai-selection-title">Welche Designs möchten Sie bestellen?</h2><div class="ai-quick-actions"><button class="ai-red-action" disabled="" id="ai-reset" type="button">Neu anfangen</button><div class="ai-new-design-actions" hidden="" id="ai-new-design-actions"><button class="ai-red-action" disabled="" id="ai-add-design" type="button">+ Ein weiteres Design erstellen</button></div></div><p>Bei mehreren Designs kreuzen Sie die gewünschten Shirts an. Jedes ausgewählte Design wird automatisch als JPEG in das Bestellformular eingefügt.</p><div aria-label="Ihre bis zu fünf Designs" class="ai-design-slots" id="ai-design-slots"></div><p aria-live="polite" id="ai-selection-total" role="status"></p><button disabled="" id="ai-order" type="button">Dieses Shirt bestellen ↗</button></section>
+
+<div class="studio-grid">
+<form class="studio-panel" id="studio-form" novalidate>
+<div class="studio-field"><span id="studio-style-title">Designstil <small>(optional)</small></span>
+<div class="studio-styles" id="studio-styles" role="group" aria-labelledby="studio-style-title">
+<button type="button" data-style="modern" aria-pressed="false">Modern</button>
+<button type="button" data-style="realistisch" aria-pressed="false">Realistisch</button>
+<button type="button" data-style="comic" aria-pressed="false">Comic</button>
+<button type="button" data-style="retro" aria-pressed="false">Retro</button>
+<button type="button" data-style="sportlich" aria-pressed="false">Sportlich</button>
+<button type="button" data-style="minimal" aria-pressed="false">Minimal</button>
+<button type="button" data-style="graffiti" aria-pressed="false">Graffiti</button>
+<button type="button" data-style="elegant" aria-pressed="false">Elegant</button>
+</div></div>
+<label class="studio-field"><span>Wie soll Ihr T-Shirt aussehen?</span><textarea id="studio-keyword" rows="2" maxlength="200" placeholder="z. B. sportlich in Blau und Weiss mit dynamischen Streifen" autocomplete="off"></textarea><small class="studio-hint">Farben, Stil und Motive – ganz in Ihren eigenen Worten.</small></label>
+<label class="studio-field"><span>Text, der auf das T-Shirt gedruckt wird <small>(optional)</small></span><input id="studio-text" type="text" maxlength="160" placeholder="z. B. Ihr Name, ein Spruch oder Ihr Verein" autocomplete="off"/><small class="studio-hint">Genau dieser Text erscheint gut lesbar auf Ihrem T-Shirt.</small></label>
+<div class="studio-field"><span>Foto <small>(optional)</small></span>
+<div class="studio-photo" id="studio-photo-box">
+<input id="studio-photo" type="file" accept="image/png,image/jpeg,image/webp" aria-label="Foto hochladen"/>
+<span class="studio-photo-icon" aria-hidden="true">📷</span><img id="studio-photo-thumb" alt=""/>
+<span class="studio-photo-label"><span id="studio-photo-name">Foto hochladen</span><small>JPG, PNG oder WebP · max. 5 MB</small></span>
+<button class="studio-photo-remove" id="studio-photo-remove" type="button" hidden>Entfernen</button>
+</div></div>
+<label class="studio-rights"><input id="studio-rights" type="checkbox"/><span>Ich habe die Rechte an meinen Inhalten und akzeptiere die <a href="agb.html" target="_blank">AGB</a>.</span></label>
+<button class="studio-surprise" id="studio-surprise" type="submit">✨ T-Shirt designen</button>
+<p class="studio-quota" id="studio-quota"></p>
+<p class="studio-error" id="studio-error" role="alert" hidden></p>
 </form>
+
+<div class="studio-stage">
+<figure class="studio-preview">
+<img id="studio-image" src="anleitung/polo-api-vorlage.jpg" width="1536" height="1228" alt="Weisse Polo-Vorlage, Vorderseite und Rückseite"/>
+<div class="studio-loader" id="studio-loader" role="status" aria-live="polite" hidden><span aria-hidden="true">⏳</span><strong>Ihr Shirt wird gestaltet …</strong><small>Das dauert bis zu 3 Minuten.</small></div>
+<figcaption><span>Vorne</span><span>Hinten</span></figcaption>
+</figure>
+<p class="studio-status" id="studio-status" role="status" aria-live="polite"></p>
+<div class="studio-edit" id="studio-edit" hidden>
+<label class="studio-edit-label" for="studio-edit-input"><strong>Sie wollen noch Änderungen anbringen?</strong><span>Bitte beschreiben Sie die Änderungen hier. Die KI passt Ihr T-Shirt anschliessend an.</span></label>
+<div class="studio-edit-row">
+<textarea id="studio-edit-input" rows="2" maxlength="300" placeholder="z. B. Hintergrund dunkler, Schriftzug grösser, Ärmel in Blau"></textarea>
+<button id="studio-edit-button" type="button" disabled>Änderungen übernehmen</button>
 </div>
-
-<noscript><p>Bitte aktivieren Sie JavaScript für die direkte Bildgestaltung.</p></noscript>
-</section>
-<section aria-labelledby="help-title" class="design-help guide-contact">
-
-
-
+</div>
+<section class="studio-collection" aria-labelledby="studio-collection-title">
+<h2 id="studio-collection-title">Ihre T-Shirts <span id="studio-count"></span></h2>
+<div class="studio-designs" id="studio-designs"></div>
+<div class="studio-order" id="studio-order" hidden>
+<div><strong id="studio-total"></strong><p>inkl. MwSt. und Versand · Grössen und Stückzahlen im nächsten Schritt</p></div>
+<div class="studio-order-actions">
+<button class="studio-another" id="studio-another" type="button">+ Weiteres T-Shirt designen</button>
+<button id="studio-order-button" type="button">T-Shirt zur Bestellung →</button>
+</div>
+</div>
 </section>
 </div>
-<footer><strong>ShirtBOX.ch</strong><span>·</span><a href="mailto:r-n@gmx.ch">r-n@gmx.ch</a><span>·</span><a href="agb.html">AGB</a><span>·</span><a href="impressum.html">Impressum</a><span>·</span><a href="https://wa.me/41764690100" rel="noopener" target="_blank" style="font-size:12px">WhatsApp Hilfe 0764 69 01 00</a></footer>
+</div>
+</section>
+
+<footer class="site-footer"><strong>ShirtBOX.ch</strong><span aria-hidden="true">·</span><a href="https://wa.me/41764690100" target="_blank" rel="noopener">WhatsApp 076 469 01 00</a><span aria-hidden="true">·</span><a href="mailto:r-n@gmx.ch">r-n@gmx.ch</a><span aria-hidden="true">·</span><a href="agb.html">AGB</a><span aria-hidden="true">·</span><a href="impressum.html">Impressum</a></footer>
 </main>
-<script defer="" src="design-uebernahme.js?v=20261019-fix2"></script>
-<script defer="" src="bestell-logik.js?v=20261015-bestellansicht-fix"></script>
-<script defer="" src="shirtbox-bildgenerator.js?v=20261023-clear-after-generate"></script>
-<script defer="" src="spracheingabe.js"></script>
-<script defer src="sb-surprise-entry.js"></script><script defer src="surprise-ui-fix.js"></script>
-<script defer="" src="navigation.js"></script>
-<script defer="" src="language.js"></script><script>
-(function(){
- const checkbox=document.getElementById('ai-rights');
- const button=document.getElementById('shirt-entry-next');
- const prompt=document.getElementById('ai-design-prompt');
- const jump=document.getElementById('ai-jump-result');const selection=document.getElementById('ai-selection');const result=document.getElementById('ai-design-image');
- if(jump){jump.addEventListener('click',()=>{const target=selection&&!selection.hidden?selection:result;target?.scrollIntoView({behavior:'smooth',block:'start'});});const observer=new MutationObserver(()=>{jump.hidden=!(selection&&!selection.hidden);});if(selection){observer.observe(selection,{attributes:true,attributeFilter:['hidden']});jump.hidden=selection.hidden;}}
- if(!checkbox||!button||!prompt)return;
- const update=()=>{button.disabled=!checkbox.checked;};
- checkbox.addEventListener('change',update);update();
- button.addEventListener('click',()=>{if(!checkbox.checked)return;const destination=window.matchMedia('(max-width:600px)').matches?document.querySelector('.prompt-heading-video'):prompt;destination.scrollIntoView({behavior:'smooth',block:'start'});if(!window.matchMedia('(max-width:600px)').matches)setTimeout(()=>prompt.focus({preventScroll:true}),450);});
- if(location.hash==='#ai-design-prompt'){history.replaceState(null,'',location.pathname+location.search);window.scrollTo(0,0);}
-})();
-</script><dialog aria-label="Videoanleitung Shirt gestalten" class="shirt-video-dialog" id="shirt-video-dialog"><div class="shirt-video-top"><strong>So gestalten Sie Ihr Shirt mit KI – Schritt für Schritt</strong><button aria-label="Video schliessen" id="shirt-video-close" type="button">✕</button></div><video controls="" id="shirt-video-player" playsinline="" poster="anleitung/film-poster.jpg" preload="metadata"><source src="anleitung/ShirtBOX-Drachen-Demo-Neu.mp4" type="video/mp4"/>Ihr Browser unterstützt dieses Video nicht.</video><p>Beispiel: Drachen auf der Vorderseite gestalten, einen zweiten hinzufügen und ein kleines Schloss auf der Rückseite ergänzen.</p></dialog>
-<style>
-.prompt-heading-video{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.prompt-heading-video label{margin:0}.shirt-video-link{border:0;background:none;color:#f15b60;text-decoration:underline;text-underline-offset:3px;font-weight:700;cursor:pointer;padding:4px 0;font-size:.9rem}.shirt-video-link:hover,.shirt-video-link:focus-visible{color:#ff9295}.shirt-video-dialog{width:min(780px,94vw);max-height:90vh;border:1px solid #666;border-radius:14px;padding:16px;background:#171c26;color:white;box-shadow:0 20px 70px #0009}.shirt-video-dialog::backdrop{background:#000b}.shirt-video-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.shirt-video-top button{background:#a91d29;color:white;border:0;border-radius:7px;padding:8px 13px;cursor:pointer}.shirt-video-dialog video{width:100%;max-height:65vh;background:#000;border-radius:8px}.shirt-video-dialog p{font-size:.9rem;line-height:1.5}
-</style>
-<script>
-(function(){const open=document.getElementById('shirt-video-open'),dialog=document.getElementById('shirt-video-dialog'),close=document.getElementById('shirt-video-close'),video=document.getElementById('shirt-video-player');if(!open||!dialog)return;open.addEventListener('click',()=>{dialog.showModal();video.currentTime=0;video.play().catch(()=>{});});function stop(){video.pause();dialog.close()}close.addEventListener('click',stop);dialog.addEventListener('close',()=>video.pause());dialog.addEventListener('click',e=>{if(e.target===dialog)stop()});})();
-</script>
-<dialog aria-labelledby="surprise-title" class="surprise-dialog" id="surprise-dialog"><form method="dialog"><div class="shirt-video-top"><strong id="surprise-title">🎲 Überrasch mich!</strong><button aria-label="Verlassen und zur Startseite" id="surprise-close" type="button">Verlassen</button></div><button type="button" id="surprise-keyword-toggle" aria-expanded="false">Stichwörter</button><div id="surprise-keyword-wrap" hidden><input id="surprise-keyword" maxlength="80" placeholder="z. B. Wind, Meer, Feuer – als Motiv gestalten" type="text"/></div><div class="surprise-text"><label for="surprise-text-input">Text (optional – wird auf das Shirt geschrieben)</label><input id="surprise-text-input" maxlength="160" placeholder="Gewünschten Text auf dem T-Shirt eingeben" type="text"/></div><div class="surprise-photo"><label for="surprise-photo-input" class="surprise-upload-button">Foto aus Datei hochladen (max. 5 MB)</label><input accept="image/png,image/jpeg,image/webp" id="surprise-photo-input" type="file"/></div><div class="surprise-actions"><button id="surprise-with" type="button">Jetzt generieren</button></div><p hidden="" id="surprise-error" role="alert" style="color:#ffd6d6;font-weight:700">Das Foto darf maximal 5 MB gross sein.</p><a id="surprise-home" href="index.html" hidden style="display:none;margin:14px auto 0;padding:13px 18px;border-radius:9px;background:#f7f1e6;color:#14263a;font-weight:800;text-align:center;text-decoration:none">Zurück zur Startseite</a><p class="surprise-hint" id="surprise-remaining">5 Überraschungen pro Tag.</p></form></dialog>
-<style>
-/* Auffaelliger, aber gut lesbarer Regenbogen-Button */
-.surprise-link{position:relative;isolation:isolate;display:inline-flex!important;align-items:center;justify-content:center;min-height:44px;padding:10px 19px!important;border:2px solid #fff9!important;border-radius:999px!important;background:linear-gradient(110deg,#ff315d,#ff9b25,#ffe24a,#33d6a6,#3989ff,#b454ed,#ff315d)!important;background-size:300% 100%!important;color:#101729!important;font-weight:900!important;font-size:1rem!important;letter-spacing:.01em;box-shadow:0 4px 0 #081727,0 0 0 3px #fff2,0 6px 20px #f27c9b77!important;text-decoration:none!important;text-shadow:0 1px 1px #ffffff88;cursor:pointer;animation:surpriseRainbow 7s linear infinite,surprisePulse 2.8s ease-in-out infinite;transition:transform .2s,filter .2s}
-.surprise-link:hover{transform:translateY(-2px) scale(1.06);filter:saturate(1.25) brightness(1.07)}
-.surprise-link:active{transform:scale(.96)}
-.surprise-link:focus-visible{outline:3px solid #fff;outline-offset:4px}
-@keyframes surpriseRainbow{to{background-position:100% 50%}}
-@keyframes surprisePulse{0%,100%{box-shadow:0 4px 0 #081727,0 0 0 3px #fff2,0 6px 20px #f27c9b77}50%{box-shadow:0 4px 0 #081727,0 0 0 5px #fff5,0 6px 26px #ffe44c99}}
-@media(prefers-reduced-motion:reduce){.surprise-link{animation:none;transition:none}}
-.surprise-dialog{max-width:min(95vw,510px);width:100%;background:#14263a;color:#fff;border:1px solid #d8b87b;border-radius:16px;padding:24px;box-shadow:0 18px 70px #0009}.surprise-dialog::backdrop{background:#000a}.surprise-dialog p{line-height:1.5}.surprise-dialog label{display:block;font-weight:700;margin:12px 0 8px}.surprise-dialog input{box-sizing:border-box;width:100%;padding:14px;font-size:17px;border-radius:8px;border:2px solid #d8b87b;background:white;color:#172638}.surprise-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}.surprise-actions button{flex:1 1 180px;cursor:pointer;background:#e6c993;color:#152638;border:0;border-radius:9px;padding:13px;font-weight:800}.surprise-actions button:last-child{background:#fff;color:#152638}.surprise-hint{font-size:13px;opacity:.85}
-</style>
-<style>.surprise-limit-note{font-size:12px;color:#fff;opacity:.9;margin-left:6px;white-space:nowrap}.surprise-link:disabled{filter:grayscale(1);opacity:.55;cursor:not-allowed;animation:none}</style>
-<script defer="" src="surprise.js?v=20261023-motiv-text"></script>
-<script>window.addEventListener("DOMContentLoaded",()=>{if(new URLSearchParams(location.search).has("surprise")){const b=document.getElementById("surprise-open");if(b)setTimeout(()=>b.click(),350)}})</script><style>
-/* Simplified initial experience; original AI inputs remain available for revisions. */
-
-
-.sb-simple-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:14px 0}
-.sb-simple-actions button,.sb-simple-actions a{background:#e6c993;color:#14263a;padding:13px 20px;border-radius:12px;font-weight:800;border:0;cursor:pointer;text-decoration:none}
-</style>
-<script>document.addEventListener('DOMContentLoaded',()=>{const form=document.getElementById('ai-design-form'),preview=document.querySelector('.ai-preview-below');if(!form||!preview)return;const bar=document.createElement('div');bar.className='sb-simple-actions';bar.innerHTML='<button type="button" id="sb-edit-design">✏️ Änderung vornehmen – Shirt weiterbearbeiten</button><button type="button" id="sb-order-now">🛒 Jetzt bestellen</button>';preview.after(bar);document.getElementById('sb-edit-design').addEventListener('click',()=>{form.classList.add('sb-editing');document.querySelector('.shirt-video-link')?.setAttribute('hidden','');const t=document.getElementById('ai-design-prompt');t.placeholder='✏️ HIER DEINE ÄNDERUNGSWÜNSCHE EINGEBEN …';history.replaceState(null,'',location.pathname);t.scrollIntoView({behavior:'smooth',block:'center'});t.focus()});const updateOrderText=()=>{const editing=new URLSearchParams(location.search).has('weiterbearbeiten');const label=editing?'✓ Änderungen übernehmen und Bestellung fortsetzen':'🛒 Jetzt bestellen';document.getElementById('sb-order-now').textContent=label;const orderButton=document.getElementById('ai-order');if(orderButton&&editing)orderButton.textContent='Änderungen übernehmen und Bestellung fortsetzen ↗';};updateOrderText();document.getElementById('sb-order-now').addEventListener('click',()=>{const b=document.getElementById('ai-order');if(b&&!b.disabled){b.click()}else{const section=document.getElementById('ai-selection');if(section&&!section.hidden)section.scrollIntoView({behavior:'smooth',block:'center'});else alert('Bitte zuerst ein Shirt generieren.')}})});</script>
-<style>
-.surprise-dialog .surprise-actions{justify-content:center}.surprise-dialog #surprise-with{max-width:340px;min-height:52px}.ai-design-preview{width:100%;margin:0 auto;text-align:center}.ai-design-preview img{display:block;max-width:min(100%,1000px);max-height:68vh;width:auto;height:auto;object-fit:contain;margin:0 auto}.ai-preview-below{scroll-margin-top:90px}.sb-simple-actions{display:flex;justify-content:center;flex-wrap:wrap;gap:12px}.sb-simple-actions button{min-height:48px}
-</style><script>
-document.addEventListener('DOMContentLoaded',()=>{const photo=document.getElementById('surprise-photo-input');const error=document.getElementById('surprise-error');photo?.addEventListener('change',()=>{const f=photo.files?.[0];if(f&&f.size>5*1024*1024){photo.value='';if(error){error.textContent='Das Foto darf maximal 5 MB gross sein.';error.hidden=false;}}else if(error){error.textContent='Das Foto darf maximal 5 MB gross sein.';error.hidden=true;}});const preview=document.querySelector('.ai-preview-below');const create=document.getElementById('ai-create');create?.addEventListener('click',()=>{if(preview)setTimeout(()=>preview.scrollIntoView({behavior:'smooth',block:'center'}),130);});if(new URLSearchParams(location.search).has('weiterbearbeiten')){document.getElementById('ai-design-prompt')?.scrollIntoView({behavior:'smooth',block:'center'});}});
-</script><style>
-.sb-rights-reminder{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 16px;margin:14px 0;border:3px solid #c91d27;border-radius:12px;background:#fff0df;color:#8d1420;font-size:1rem;box-shadow:0 2px 10px #0002}
-.sb-rights-reminder button{border:2px solid #a91622;border-radius:9px;background:#b61927;color:#fff;font-weight:800;padding:11px 14px;cursor:pointer}
-.sb-rights-reminder.sb-confirmed{border-color:#247c48;background:#e8f8ed;color:#16582f}.sb-rights-reminder.sb-confirmed button{display:none}
-.shirt-entry-gate .ai-consent.sb-rights-attention{outline:5px solid #ffcf45;outline-offset:5px;box-shadow:0 0 22px #ffcf45aa}
-.sb-surprise-mode #sb-rights-reminder{display:none!important}
-.sb-rights-confirm{display:flex;align-items:center;gap:12px;font-weight:800;cursor:pointer;line-height:1.5}.sb-rights-confirm input{width:25px;height:25px;flex:none;accent-color:#247c48}.sb-rights-reminder.sb-rights-attention{outline:5px solid #ffcf45;outline-offset:3px}
-</style>
-<script>
-document.addEventListener('DOMContentLoaded',()=>{
- const checkbox=document.getElementById('ai-rights'),reminder=document.getElementById('sb-rights-reminder'),create=document.getElementById('ai-create');
- if(!checkbox||!reminder)return;
- const update=()=>{reminder.classList.toggle('sb-confirmed',checkbox.checked);reminder.querySelector('strong').textContent=checkbox.checked?'✓ Inhalts- und Bildrechte bestätigt. Sie können jetzt generieren.':'⚠️ Wichtig: Bitte bestätigen Sie Ihre Inhalts- und Bildrechte!';};
- const highlight=()=>{reminder.classList.add('sb-rights-attention');reminder.scrollIntoView({behavior:'smooth',block:'center'});checkbox.focus({preventScroll:true});setTimeout(()=>reminder.classList.remove('sb-rights-attention'),4500);};
- checkbox.addEventListener('change',update);update();
- create?.addEventListener('click',event=>{if(!checkbox.checked){event.preventDefault();event.stopImmediatePropagation();highlight();}},true);
-});
-</script>
-<script>(function(){function setup(){const form=document.getElementById('ai-design-form'),loader=document.getElementById('sb-centre-loader');if(!form||!loader)return;const observer=new MutationObserver(()=>{loader.hidden=form.getAttribute('aria-busy')!=='true'});observer.observe(form,{attributes:true,attributeFilter:['aria-busy']});loader.hidden=form.getAttribute('aria-busy')!=='true';}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);else setup();})();</script></body>
+<script defer src="design-uebernahme.js?v=20261023c"></script>
+<script defer src="bestell-logik.js?v=20261023-unbegrenzt"></script>
+<script defer src="gestalter.js?v=20261023j"></script>
+<script defer src="navigation.js"></script>
+<script defer src="language.js?v=20261023e"></script>
+</body>
 </html>
-
-<style>.surprise-dialog #surprise-keyword-toggle,.surprise-dialog .surprise-upload-button{display:block;width:100%;box-sizing:border-box;text-align:center;border:1px solid #d8b87b;border-radius:9px;background:#f7f1e6;color:#14263a;font-weight:800;padding:14px;cursor:pointer;margin:12px 0}.surprise-dialog #surprise-photo-input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}.surprise-dialog #surprise-keyword-wrap[hidden]{display:none!important}.surprise-dialog #surprise-with{max-width:none;width:100%}.surprise-dialog .surprise-photo{margin:0}</style>
-<script>document.addEventListener("DOMContentLoaded",()=>{const b=document.getElementById("surprise-keyword-toggle"),w=document.getElementById("surprise-keyword-wrap");if(b&&w)b.addEventListener("click",()=>{w.hidden=!w.hidden;b.setAttribute("aria-expanded",String(!w.hidden));if(!w.hidden)document.getElementById("surprise-keyword")?.focus()});});</script>
-<style>
-.surprise-dialog.surprise-exhausted{border:3px solid #f6bd60}
-.surprise-dialog.surprise-exhausted #surprise-remaining{padding:12px;border-radius:10px;background:#743e16;color:#fff;font-weight:800;font-size:1rem;opacity:1}
-.ai-preview-below{scroll-margin-top:72px;display:flex;flex-direction:column;align-items:center;text-align:center}
-.ai-preview-below .ai-design-preview{width:100%;display:flex;flex-direction:column;align-items:center}
-.ai-preview-below .ai-design-preview img{max-width:100%;max-height:70vh;object-fit:contain}
-</style>
-
-<script>document.addEventListener('DOMContentLoaded',()=>{if(!new URLSearchParams(location.search).has('surprise'))return;document.documentElement.classList.add('sb-surprise-mode');});</script>
-<style>#sb-change-hint{margin:10px 0;padding:15px 17px;border:3px solid #ffce57;border-radius:12px;background:#fff2c2;color:#172638;font-size:1.08rem;line-height:1.55}#sb-change-hint[hidden]{display:none!important}.sb-has-design #ai-design-prompt{border:3px solid #ffce57!important;box-shadow:0 0 0 3px #ffce5730!important}.sb-has-design .wunschshirt-heading{font-size:1.25rem!important;color:#ffdf78!important}</style><style>.sb-surprise-mode #ai-design-form:not(.sb-editing) .wunschshirt-heading,.sb-surprise-mode #ai-design-form:not(.sb-editing) #ai-design-prompt,.sb-surprise-mode #ai-design-form:not(.sb-editing) .ai-design-buttons{display:none!important}</style>
-
-<style>.surprise-dialog.surprise-exhausted #surprise-home{display:block!important}.surprise-dialog:not(.surprise-exhausted) #surprise-home{display:none!important}</style>
-
-<style>.surprise-dialog #surprise-close{width:auto;min-width:100px;padding:9px 13px;font-size:15px;font-weight:800;border-radius:8px;background:#f7f1e6;color:#14263a}.surprise-dialog #surprise-with{background:linear-gradient(110deg,#ffb72b,#ff6b35,#ffcf52)!important;color:#1c2030!important;border:2px solid #fff!important;box-shadow:0 5px 20px #ff9b3580!important;font-size:19px!important}.surprise-dialog .surprise-text label{font-weight:800;color:#fff}.surprise-dialog .surprise-text{margin:12px 0}</style>

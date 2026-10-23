@@ -1,6 +1,7 @@
 // Transfer der Shirt-Entwuerfe vom KI-Designer zur Bestellung (IndexedDB).
 (() => {
-  function database(){return new Promise((resolve,reject)=>{const r=indexedDB.open('shirtbox-design-transfer',1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('designs'))r.result.createObjectStore('designs');};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
+  // Fehlt der Speicherbereich (alte oder leere Datenbank), wird er mit einer höheren Version neu angelegt.
+  function database(version){return new Promise((resolve,reject)=>{const r=version?indexedDB.open('shirtbox-design-transfer',version):indexedDB.open('shirtbox-design-transfer');r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('designs'))r.result.createObjectStore('designs');};r.onsuccess=()=>{const db=r.result;if(db.objectStoreNames.contains('designs'))return resolve(db);const next=db.version+1;db.close();database(next).then(resolve,reject);};r.onerror=()=>reject(r.error);});}
   async function transaction(mode,operation){const db=await database();return new Promise((resolve,reject)=>{const tx=db.transaction('designs',mode);const request=operation(tx.objectStore('designs'));tx.oncomplete=()=>{const result=request?.result;db.close();resolve(result);};tx.onerror=tx.onabort=()=>{db.close();reject(tx.error);};});}
   window.ShirtboxDesignTransfer={save:blobs=>transaction('readwrite',s=>s.put({blobs:Array.isArray(blobs)?blobs:[blobs],savedAt:Date.now()},'latest')),load:()=>transaction('readonly',s=>s.get('latest')),clear:()=>transaction('readwrite',s=>s.delete('latest'))};
   const form=document.getElementById('bestellung');if(!form)return;
@@ -8,7 +9,7 @@
   (async()=>{
     try{
       const saved=await window.ShirtboxDesignTransfer.load();
-      if(!saved){note('Noch kein Shirt in der Bestellung. Bitte im KI-Designer Ihr Shirt auswählen und auf „Ausgewählte Shirts bestellen“ klicken.',true);return;}
+      if(!saved){note('Noch kein Shirt in der Bestellung. Bitte im Shirt-Gestalter Ihr Shirt auswählen und auf „T-Shirt zur Bestellung“ klicken.',true);return;}
       const blobs=saved.blobs||[saved.blob];
       if(!blobs.length||blobs.length>100)throw Error('Ungültige Anzahl Designs');
       let count=0;
@@ -30,6 +31,6 @@
       }
       note('');
       document.getElementById('design-list')?.scrollIntoView({block:'start',behavior:'smooth'});
-    }catch(error){console.error('ShirtBOX Design-Übernahme:',error);note('Das Shirt konnte nicht übernommen werden: '+(error?.message||'Unbekannter Fehler')+'. Bitte im KI-Designer erneut auf „Ausgewählte Shirts bestellen“ klicken.',true);}
+    }catch(error){console.error('ShirtBOX Design-Übernahme:',error);note('Das Shirt konnte nicht übernommen werden: '+(error?.message||'Unbekannter Fehler')+'. Bitte im Shirt-Gestalter erneut auf „T-Shirt zur Bestellung“ klicken.',true);}
   })();
 })();

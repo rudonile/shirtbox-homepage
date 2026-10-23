@@ -1,6 +1,7 @@
 (() => {
   'use strict';
-  const PRICE = 89, MAX_DESIGNS = 5, MAX_PER_DESIGN = 5, MAX_TOTAL = 5;
+  // Keine Obergrenze für Designs oder Stückzahlen pro Bestellung.
+  const PRICE = 89, MAX_DESIGNS = Infinity, MAX_PER_DESIGN = Infinity, MAX_TOTAL = Infinity;
   const PRICE_CENTS = 8900, DISCOUNTED_PRICE_CENTS = 8010;
   const money = amount => `CHF ${Number(amount).toFixed(2)}`;
   function totalForQuantity(quantity) { return quantity > 0 ? (PRICE_CENTS + (quantity - 1) * DISCOUNTED_PRICE_CENTS) / 100 : 0; }
@@ -21,10 +22,9 @@
         if (!ORDER_SIZE[row.size]) errors.push(`Design ${index + 1}: Bitte eine Grösse auswählen.`);
         if (sizes.has(row.size) && row.size) errors.push(`Design ${index + 1}: Jede Grösse nur einmal wählen.`);
         sizes.add(row.size);
-        if (!Number.isInteger(count) || count < 1 || count > MAX_PER_DESIGN) errors.push(`Design ${index + 1}: Stückzahl muss zwischen 1 und 5 liegen.`);
+        if (!Number.isInteger(count) || count < 1) errors.push(`Design ${index + 1}: Bitte eine Stückzahl von mindestens 1 eingeben.`);
         else quantity += count;
       }
-      if (quantity > MAX_PER_DESIGN) errors.push(`Design ${index + 1}: Höchstens fünf Shirts pro Design bestellen.`);
       const standardQuantity = quantity > 0 && !standardShirtAssigned ? 1 : 0;
       if (standardQuantity) standardShirtAssigned = true;
       const discountedQuantity = quantity - standardQuantity;
@@ -32,7 +32,6 @@
       return {number: index + 1, slot: design.slot, filename: design.filename || '', rows: design.rows || [], quantity, standardQuantity, discountedQuantity, subtotal};
     });
     const quantity = items.reduce((sum, item) => sum + item.quantity, 0);
-    if (quantity > MAX_TOTAL) errors.push('Maximal fünf Shirts insgesamt pro Bestellung. Bitte reduzieren Sie die Stückzahlen.');
     return {valid: !errors.length, errors: [...new Set(errors)], designs: items, quantity, total: totalForQuantity(quantity), discount: Math.max(0,quantity-1)*8.9};
   }
   function description(order) {

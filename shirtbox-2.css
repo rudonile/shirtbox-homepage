@@ -24,4 +24,15 @@
 #surprise-open[hidden],#shirt-video-open[hidden]{display:none!important}
 .sb-surprise-entry{justify-content:center!important;text-align:center!important;margin:14px auto!important}
 .sb-surprise-entry #surprise-open{font-size:1.3rem!important;padding:15px 26px!important;border-radius:16px!important;background:#e5c68b!important;color:#102536!important;font-weight:800!important}
+/* Startseite: ein Hauptbutton, kompakte Fakten */
+.simple-home .sb-hero-sub{margin:12px auto 22px;max-width:560px;color:#c9d4db;font-size:clamp(15px,1.7vw,19px);line-height:1.5}
+.simple-home .sb-hero-cta{display:inline-flex;align-items:center;justify-content:center;min-height:64px;padding:16px 42px;border-radius:18px;background:linear-gradient(110deg,#fa5e7b,#ffd36d,#67d5c0,#fa5e7b);background-size:250% 100%;color:#102536!important;font-size:clamp(19px,2.2vw,24px);font-weight:900;text-decoration:none;box-shadow:0 12px 30px #fa5e7b40;animation:sbShine 8s linear infinite;transition:transform .15s,filter .15s}
+.simple-home .sb-hero-cta:hover{transform:translateY(-3px);filter:saturate(1.15)}
+.simple-home .sb-hero-cta:focus-visible{outline:3px solid #fff;outline-offset:4px}
+@keyframes sbShine{to{background-position:250% 0}}
+@media(prefers-reduced-motion:reduce){.simple-home .sb-hero-cta{animation:none}}
+.simple-home .sb-hero-facts{margin:16px 0 26px;color:#b9c6cf;font-size:14px}
+.simple-home .sb-hero-facts strong{color:#e5c68b;font-size:16px}
+.simple-home .sb-hero-facts span{margin:0 8px;opacity:.5}
+@media(max-width:600px){.simple-home .sb-hero-sub,.simple-home .sb-hero-cta,.simple-home .sb-hero-facts{order:1!important}.simple-home .sb-hero-sub{margin:8px auto 14px;font-size:14px}.simple-home .sb-hero-cta{width:100%;min-height:56px;padding:12px 18px}.simple-home .sb-hero-facts{margin:10px 0 12px;font-size:12px;line-height:1.6}.simple-home .sb-hero-facts span{margin:0 4px}}
 @media(max-width:680px){.simple-home .sb-home-choices{grid-template-columns:1fr 1fr!important;gap:8px}.simple-home .sb-home-choices a{font-size:13px!important;padding:10px 6px!important;min-height:60px!important}.simple-home .welcome h1{font-size:clamp(1.65rem,7vw,2.65rem)!important}.simple-home .sb-hero-logo{width:115px}}
