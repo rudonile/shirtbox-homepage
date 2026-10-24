@@ -1,0 +1,98 @@
+/* ShirtBOX Startseite – dunkel, sportlich, laut. Baut auf shirtbox.css und marke.css auf. */
+body.home{
+  --night:#090c13;--night-2:#121826;--paper:#f4f1ea;--muted:#9aa3b2;--muted-2:#c9cfd8;
+  --fire:linear-gradient(100deg,#ff3d2e,#ff7a2b 55%,#ffb43a);
+  background:var(--night);color:var(--paper)}
+/* Feine Körnung über der ganzen Seite gegen den "sterilen" Look. */
+body.home::before{content:"";position:fixed;inset:0;z-index:200;pointer-events:none;opacity:.07;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.home h1,.home h2,.home h3{color:var(--paper)}
+
+/* Kopfzeile auf dunklem Grund */
+.home .masthead{background:#090c13b8;border-bottom-color:#ffffff12}
+.home .brand{color:var(--paper)}
+.home .masthead nav a{color:#b9c0cc}
+.home .masthead nav a:hover{background:#ffffff12;color:#fff}
+.home .masthead nav a[aria-current=page]{background:var(--paper);color:var(--night)}
+.home .language-switch{background:#ffffff12}
+.home .language-switch button{color:#b9c0cc}
+.home .language-switch button.active{background:var(--paper);color:var(--night)}
+.home .head-cta{background:var(--fire);color:var(--night)}
+@media(max-width:860px){.home .masthead nav a{background:#ffffff0d}}
+
+/* Hero */
+.hx{position:relative;overflow:hidden;padding:clamp(40px,6vw,84px) 0 clamp(64px,8vw,110px)}
+.hx-glow{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(42% 52% at 78% 34%,#ff5b2e3d,transparent 70%),radial-gradient(38% 46% at 8% 92%,#3b5bff2e,transparent 70%),radial-gradient(30% 30% at 55% 110%,#ff2e8a1f,transparent 70%)}
+.hx-glow::after{content:"";position:absolute;inset:0;background-image:linear-gradient(#ffffff0a 1px,transparent 1px),linear-gradient(90deg,#ffffff0a 1px,transparent 1px);background-size:56px 56px;-webkit-mask-image:radial-gradient(70% 60% at 60% 40%,#000,transparent 75%);mask-image:radial-gradient(70% 60% at 60% 40%,#000,transparent 75%)}
+.hx-grid{position:relative;z-index:1;display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(28px,4vw,56px);align-items:center;max-width:1240px;margin:0 auto;padding:0 var(--gutter)}
+.hx-kicker{display:inline-flex;align-items:center;gap:10px;margin:0 0 22px;padding:8px 16px 8px 12px;border-radius:999px;background:#ffffff0a;border:1px solid #ffffff1f;color:#ffb48f;font-size:12.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.hx-dot{width:8px;height:8px;border-radius:50%;background:#ff5b2e;box-shadow:0 0 0 0 #ff5b2e99;animation:hxPulse 2s infinite}
+@keyframes hxPulse{70%{box-shadow:0 0 0 10px #ff5b2e00}100%{box-shadow:0 0 0 0 #ff5b2e00}}
+.hx h1{margin:0 0 26px;font-family:"Unbounded","Segoe UI",system-ui,sans-serif;font-size:clamp(36px,5.1vw,74px);font-weight:800;line-height:1.02;letter-spacing:-.05em}
+.hx h1 span{display:block}
+.hx-grad{background:var(--fire);-webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:.06em}
+.hx-outline{margin-top:.18em;font-size:.5em;font-weight:700;letter-spacing:-.02em;color:transparent;-webkit-text-stroke:1.4px #f4f1eab3}
+.hx-lead{max-width:540px;margin:0 0 30px;color:#aab2c0;font-size:clamp(16px,1.45vw,19px)}
+.hx-actions{display:flex;flex-wrap:wrap;gap:12px;margin:0 0 28px}
+.hx-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;min-height:58px;padding:0 30px;border-radius:999px;font-size:17px;font-weight:800;text-decoration:none;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.hx-btn-main{background:var(--fire);color:var(--night);box-shadow:0 12px 40px #ff5b2e59}
+.hx-btn-main::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,#ffffff8c 50%,transparent 70%);transform:translateX(-120%);transition:transform .7s}
+.hx-btn-main:hover{color:var(--night);transform:translateY(-3px);box-shadow:0 18px 50px #ff5b2e80}
+.hx-btn-main:hover::after{transform:translateX(120%)}
+.hx-btn-ghost{color:var(--paper);box-shadow:inset 0 0 0 2px #ffffff33}
+.hx-btn-ghost:hover{color:var(--paper);box-shadow:inset 0 0 0 2px var(--paper);transform:translateY(-3px)}
+.hx-facts{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
+.hx-facts li{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:#ffffff08;border:1px solid #ffffff14;color:var(--muted-2);font-size:13.5px;font-weight:650}
+.hx-facts li::before{content:"✓";color:#7ff0a8;font-weight:900}
+
+/* Shirt-Bühne: drei Karten im Fächer, schweben leicht, fächern beim Darüberfahren auf. */
+.hx-stage{position:relative;height:clamp(380px,42vw,560px)}
+.hx-360{position:absolute;left:50%;top:50%;translate:-50% -54%;font-family:"Unbounded",sans-serif;font-size:clamp(120px,17vw,250px);font-weight:900;letter-spacing:-.06em;line-height:1;color:transparent;-webkit-text-stroke:2px #ffffff17;white-space:nowrap;user-select:none}
+.hx-card{position:absolute;width:56%;margin:0;border-radius:26px;overflow:hidden;background:#6f6f6f;border:1px solid #ffffff26;box-shadow:0 30px 80px #000000b3;transition:rotate .5s cubic-bezier(.3,1.4,.5,1),left .5s cubic-bezier(.3,1.4,.5,1),right .5s cubic-bezier(.3,1.4,.5,1);animation:hxFloat 6s ease-in-out infinite}
+.hx-card img{display:block;width:100%;aspect-ratio:1/1;object-fit:cover}
+.hx-card.k1{left:0;top:9%;rotate:-9deg;animation-delay:-2s}
+.hx-card.k2{right:0;top:0;rotate:8deg;animation-delay:-4s}
+.hx-card.k3{left:22%;bottom:0;width:58%;z-index:2;rotate:-1deg;border:0;box-shadow:0 0 0 2px #ff7a2b,0 30px 90px #ff5b2e59,0 30px 80px #000000b3}
+.hx-stage:hover .k1{left:-4%;rotate:-14deg}
+.hx-stage:hover .k2{right:-4%;rotate:13deg}
+@keyframes hxFloat{50%{translate:0 -12px}}
+.hx-badge{position:absolute;z-index:3;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 12px;border-radius:18px;background:#121826d9;border:1px solid #ffffff1f;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:0 18px 40px #0009;color:var(--paper);font-size:14px;font-weight:750;line-height:1.25;animation:hxFloat 5s ease-in-out infinite}
+.hx-badge span{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:var(--fire);font-size:18px}
+.hx-badge small{display:block;color:#8f98a8;font-size:12px;font-weight:600}
+.hx-badge.q1{left:-5%;bottom:14%}
+.hx-badge.q2{right:-3%;top:44%;animation-delay:-2.5s}
+
+/* Laufband mit Anlässen */
+.ticker{position:relative;z-index:2;margin:0 -2vw;padding:18px 0;rotate:-2deg;background:var(--fire);color:var(--night);overflow:hidden;box-shadow:0 20px 60px #ff5b2e40}
+.ticker-track{display:flex;width:max-content;animation:tick 45s linear infinite}
+.ticker ul{display:flex;margin:0;padding:0;list-style:none}
+.ticker li{display:flex;align-items:center;font-family:"Unbounded",sans-serif;font-size:clamp(15px,1.9vw,23px);font-weight:700;letter-spacing:-.02em;text-transform:uppercase;white-space:nowrap}
+.ticker li::after{content:"✦";padding:0 1.1em;font-size:.8em;opacity:.55}
+.ticker:hover .ticker-track{animation-play-state:paused}
+@keyframes tick{to{transform:translateX(-50%)}}
+
+/* Beispiele */
+.showcase{position:relative;padding:clamp(80px,10vw,130px) 0 clamp(64px,8vw,104px);overflow:hidden}
+.showcase::before{content:"";position:absolute;left:50%;top:52%;width:min(1100px,120vw);height:520px;translate:-50% -50%;border-radius:50%;background:radial-gradient(closest-side,#ff5b2e2b,transparent);pointer-events:none}
+.showcase-head{position:relative;max-width:720px;margin:0 auto clamp(20px,3vw,36px);padding:0 var(--gutter);text-align:center}
+.showcase-head h2{margin:0 0 12px;font-family:"Unbounded",sans-serif;font-size:clamp(28px,4.2vw,56px);font-weight:800;letter-spacing:-.045em}
+.showcase-head p{margin:0;color:var(--muted)}
+.home .box-stage{max-width:1100px}
+.home .box-item img{filter:drop-shadow(0 26px 30px #000000d9)}
+.showcase-cta{position:relative;display:flex;justify-content:center;margin-top:clamp(-40px,-3vw,0px);padding:0 var(--gutter)}
+
+/* Tablet und Handy */
+@media(max-width:900px){
+  .hx-grid{grid-template-columns:1fr}
+  .hx-copy{text-align:center}
+  .hx-lead{margin-left:auto;margin-right:auto}
+  .hx-actions,.hx-facts{justify-content:center}
+  .hx-stage{width:100%;max-width:460px;height:min(92vw,420px);margin:0 auto}
+}
+@media(max-width:520px){
+  .hx h1{font-size:clamp(32px,10vw,44px)}
+  .hx-actions .hx-btn{width:100%}
+  .hx-badge.q1{left:0}.hx-badge.q2{right:0}
+  .hx-badge{font-size:13px;padding:9px 12px 9px 9px}
+}
+@media(prefers-reduced-motion:reduce){.hx-card,.hx-badge,.hx-dot,.ticker-track{animation:none}}

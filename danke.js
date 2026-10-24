@@ -3,6 +3,9 @@
   const api = window.ShirtboxOrder;
   if (!el || !api) return;
   const menge = Number(new URLSearchParams(location.search).get('anzahl'));
+  const nummer = new URLSearchParams(location.search).get('bestellung') || '';
+  const nummerFeld = document.getElementById('danke-nummer');
+  if (nummerFeld && /^SB-\d{6}-[A-Z0-9]{4}$/.test(nummer)) { nummerFeld.querySelector('strong').textContent = nummer; nummerFeld.hidden = false; }
   // Nur ein echter Redirect nach einem gueltigen Bestell-Submit leert den Warenkorb.
   // Direkter Aufruf von danke.html darf bestehende Designs nicht loeschen.
   let pending = null;

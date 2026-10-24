@@ -5,7 +5,7 @@
 .simple-home .masthead{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:5px 7px!important;padding:8px 9px!important;margin:0!important;border-radius:8px!important}
 .simple-home .masthead .brand{order:0!important;flex:0 0 auto!important;margin:0!important}
 .simple-home .masthead .brand-logo{width:78px!important;height:auto!important}
-.simple-home .masthead .mobile-order-shortcut{display:inline-flex!important;order:1!important;margin-left:auto!important;font-size:10px!important;font-weight:800!important;color:#172638!important;background:#dbc5a2!important;padding:6px 7px!important;border-radius:5px!important;text-decoration:none!important;white-space:nowrap!important}
+.simple-home .masthead .mobile-order-shortcut{display:inline-flex!important;order:1!important;margin-left:auto!important;font-size:10px!important;font-weight:800!important;color:#121826!important;background:#ff7a2b!important;padding:6px 7px!important;border-radius:5px!important;text-decoration:none!important;white-space:nowrap!important}
 .simple-home .masthead .language-switch{display:flex!important;order:2!important;margin:0!important;gap:3px!important}
 .simple-home .masthead .language-switch button{font-size:10px!important;min-height:27px!important;padding:4px 5px!important}
 .simple-home .masthead nav{order:3!important;display:flex!important;flex-wrap:wrap!important;justify-content:center!important;align-items:center!important;width:100%!important;gap:3px 10px!important;padding:3px 0 0!important;margin:0!important;font-size:10px!important;line-height:1.2!important}

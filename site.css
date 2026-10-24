@@ -1,7 +1,7 @@
 /* ShirtBOX – gemeinsamer Feinschliff für alle Seiten (zuletzt laden). */
-:root{--sb-gold:#e5c68b;--sb-muted:#b9c6cf;--sb-line:#ffffff1f;--sb-panel:#12283a}
+:root{--sb-gold:#ffb43a;--sb-muted:#b9c6cf;--sb-line:#ffffff1f;--sb-panel:#12283a}
 body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-::selection{background:#e5c68b;color:#102536}
+::selection{background:#ffb43a;color:#0f141f}
 a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:3px solid var(--sb-gold);outline-offset:3px}
 .hero-kicker{font-size:12px!important}
 /* Kopfzeile fest oben (navigation.js setzt Position, Breite und Platzhalter). */
@@ -9,7 +9,7 @@ body.simple-home .masthead.is-pinned{position:fixed!important;top:0!important;z-
 .masthead-spacer{flex:none}
 
 /* Fusszeile bleibt wie der Kopf immer sichtbar (unten fixiert). */
-footer.site-footer{position:sticky;bottom:0;z-index:890;box-sizing:border-box;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px 10px;max-width:1176px;margin:28px auto 0!important;padding:11px 20px calc(11px + env(safe-area-inset-bottom))!important;border:1px solid var(--sb-line)!important;border-bottom:0!important;border-radius:18px 18px 0 0!important;background:#0b1b2af2!important;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 -10px 30px #0003;color:var(--sb-muted);font-size:13px!important;line-height:1.6!important}
+footer.site-footer{position:sticky;bottom:0;z-index:890;box-sizing:border-box;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px 10px;max-width:1176px;margin:28px auto 0!important;padding:11px 20px calc(11px + env(safe-area-inset-bottom))!important;border:1px solid var(--sb-line)!important;border-bottom:0!important;border-radius:18px 18px 0 0!important;background:#090c13f2!important;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 -10px 30px #0003;color:var(--sb-muted);font-size:13px!important;line-height:1.6!important}
 footer.site-footer strong{color:#fff}
 footer.site-footer span{opacity:.5}
 footer.site-footer a{color:var(--sb-muted)!important;text-decoration:none!important;white-space:nowrap}
@@ -25,15 +25,15 @@ footer.site-footer a:hover{color:var(--sb-gold)!important}
 /* ---------- Shirts live: Hochformat-Video ---------- */
 .live{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:clamp(28px,5vw,64px);align-items:center;max-width:1040px;margin:34px auto 10px;padding:clamp(22px,3.5vw,44px);border:1px solid var(--sb-line);border-radius:24px;background:#12283af0;box-shadow:0 18px 55px #0003}
 .live-video{position:relative;width:min(400px,calc(76vh * .745),100%);margin:0 auto}
-.live-video::before{content:'';position:absolute;inset:-14px;border-radius:30px;background:radial-gradient(circle at 50% 40%,#e5c68b33,transparent 70%);z-index:0}
-.live-video video{position:relative;z-index:1;display:block;width:100%;height:auto;aspect-ratio:720/966;object-fit:cover;border-radius:20px;border:1px solid #e5c68b55;background:#0b1825;box-shadow:0 24px 60px #0007}
+.live-video::before{content:'';position:absolute;inset:-14px;border-radius:30px;background:radial-gradient(circle at 50% 40%,#ffb43a33,transparent 70%);z-index:0}
+.live-video video{position:relative;z-index:1;display:block;width:100%;height:auto;aspect-ratio:720/966;object-fit:cover;border-radius:20px;border:1px solid #ffb43a55;background:#090c13;box-shadow:0 24px 60px #0007}
 .live-copy h1{margin:8px 0 14px!important;font-size:clamp(32px,4.4vw,54px)!important;line-height:1.05!important;letter-spacing:-.035em!important;text-shadow:none!important}
 .live-lead{margin:0 0 26px;max-width:460px;color:#d4dde3;font-size:clamp(16px,1.5vw,18px);line-height:1.6}
 .live-facts{list-style:none;margin:0 0 30px;padding:0;display:grid;gap:10px;max-width:460px}
-.live-facts li{display:flex;flex-direction:column;gap:2px;padding:13px 16px;border:1px solid var(--sb-line);border-left:3px solid var(--sb-gold);border-radius:12px;background:#0d2131}
+.live-facts li{display:flex;flex-direction:column;gap:2px;padding:13px 16px;border:1px solid var(--sb-line);border-left:3px solid var(--sb-gold);border-radius:12px;background:#0b0f17}
 .live-facts strong{color:#fff;font-size:15px}
 .live-facts span{color:var(--sb-muted);font-size:13.5px}
-.live-cta{display:inline-flex;align-items:center;justify-content:center;min-height:58px;padding:14px 30px;border-radius:16px;background:linear-gradient(110deg,#fa5e7b,#ffd36d,#67d5c0);color:#102536!important;font-size:18px;font-weight:900;text-decoration:none;box-shadow:0 12px 28px #fa5e7b40;transition:transform .15s,filter .15s}
+.live-cta{display:inline-flex;align-items:center;justify-content:center;min-height:58px;padding:14px 30px;border-radius:16px;background:linear-gradient(110deg,#fa5e7b,#ffd36d,#67d5c0);color:#0f141f!important;font-size:18px;font-weight:900;text-decoration:none;box-shadow:0 12px 28px #fa5e7b40;transition:transform .15s,filter .15s}
 .live-cta:hover{transform:translateY(-2px);filter:saturate(1.15)}
 @media(max-width:760px){
  .live{grid-template-columns:minmax(0,1fr);text-align:center;margin-top:14px;padding:18px 16px 24px;border-radius:18px}
@@ -56,8 +56,8 @@ html[lang=en] [data-only=de],html:not([lang=en]) [data-only=en]{display:none!imp
 .faq-panel{background:var(--sb-panel);border:1px solid var(--sb-line);border-radius:22px;padding:18px 22px;box-shadow:0 18px 50px #0003}
 .faq-panel+.faq-panel{margin-top:22px}
 .faq-panel h2{margin:4px 0 12px!important;font-size:13px!important;font-weight:700!important;letter-spacing:.08em!important;text-transform:uppercase;color:var(--sb-gold)!important}
-.faq details{margin:10px 0 0;border:1px solid var(--sb-line);border-radius:14px;background:#0d2131;transition:border-color .2s,background .2s}
-.faq details:hover{border-color:#e5c68b55}
+.faq details{margin:10px 0 0;border:1px solid var(--sb-line);border-radius:14px;background:#0b0f17;transition:border-color .2s,background .2s}
+.faq details:hover{border-color:#ffb43a55}
 .faq details[open]{border-color:var(--sb-gold);background:#102739}
 .faq summary{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 18px;list-style:none;cursor:pointer;font-size:16px;font-weight:700;line-height:1.4;color:#fff}
 .faq summary::-webkit-details-marker{display:none}
@@ -68,24 +68,24 @@ html[lang=en] [data-only=de],html:not([lang=en]) [data-only=en]{display:none!imp
 .faq-aside{position:sticky;top:110px;display:flex;flex-direction:column;gap:12px;background:var(--sb-panel);border:1px solid var(--sb-line);border-radius:22px;padding:22px;box-shadow:0 18px 50px #0003}
 .faq-aside h2{margin:0!important;font-size:20px!important;color:#fff!important}
 .faq-aside p{margin:0;color:var(--sb-muted);font-size:14.5px;line-height:1.55}
-.faq-aside .faq-cta{display:flex;align-items:center;justify-content:center;min-height:58px;padding:14px 18px;border-radius:16px;background:linear-gradient(110deg,#fa5e7b,#ffd36d,#67d5c0);color:#102536!important;font-size:18px;font-weight:900;text-decoration:none;box-shadow:0 10px 26px #fa5e7b40;transition:transform .15s,filter .15s}
+.faq-aside .faq-cta{display:flex;align-items:center;justify-content:center;min-height:58px;padding:14px 18px;border-radius:16px;background:linear-gradient(110deg,#fa5e7b,#ffd36d,#67d5c0);color:#0f141f!important;font-size:18px;font-weight:900;text-decoration:none;box-shadow:0 10px 26px #fa5e7b40;transition:transform .15s,filter .15s}
 .faq-aside .faq-cta:hover{transform:translateY(-2px);filter:saturate(1.15)}
 .faq-aside .faq-contact{display:flex;align-items:center;justify-content:center;min-height:50px;border:1px solid var(--sb-gold);border-radius:12px;color:var(--sb-gold)!important;font-weight:800;text-decoration:none}
-.faq-aside .faq-contact:hover{background:#e5c68b1a}
-.faq-price{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-left:3px solid var(--sb-gold);border-radius:12px;background:#0d2131}
+.faq-aside .faq-contact:hover{background:#ffb43a1a}
+.faq-price{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-left:3px solid var(--sb-gold);border-radius:12px;background:#0b0f17}
 .faq-price strong{font-size:22px;color:#fff}.faq-price span{font-size:13px;color:var(--sb-muted)}
 @media(max-width:860px){.faq-grid{grid-template-columns:minmax(0,1fr)}.faq-aside{position:static}.faq{margin-top:12px}}
 @media(max-width:600px){.faq-panel,.faq-aside{border-radius:16px;padding:14px}.faq summary{padding:13px 14px;font-size:15px}.faq details p{padding:0 14px 14px}}
 
 /* ---------- Rechtliche Seiten & Danke: gleicher Kopf wie die Hauptseiten ---------- */
-.legal-nav-wrap{position:sticky;top:0;z-index:1000;box-sizing:border-box;max-width:1176px!important;margin:0 auto!important;padding:14px 22px!important;justify-content:space-between;background:#0b1b2af2!important;backdrop-filter:blur(18px);border:1px solid var(--sb-line);border-top:0;border-radius:0 0 18px 18px!important;box-shadow:0 10px 30px #0003}
+.legal-nav-wrap{position:sticky;top:0;z-index:1000;box-sizing:border-box;max-width:1176px!important;margin:0 auto!important;padding:14px 22px!important;justify-content:space-between;background:#090c13f2!important;backdrop-filter:blur(18px);border:1px solid var(--sb-line);border-top:0;border-radius:0 0 18px 18px!important;box-shadow:0 10px 30px #0003}
 .legal-nav-brand img{width:180px!important}
 .legal-nav-wrap nav{flex:1;justify-content:center;gap:6px 10px!important}
 .legal-nav-wrap nav a{padding:8px 12px;border-radius:999px;font-size:14px!important}
 .legal-nav-wrap nav a:hover{background:#ffffff18;color:var(--sb-gold)!important}
 .legal-page{border-radius:22px!important;border-top:3px solid var(--sb-gold)!important;padding:clamp(24px,4vw,48px)!important;box-shadow:0 18px 55px #0003}
 .legal-page .seller-address{border-radius:10px}
-.legal-back{color:#315d69;font-size:14px;text-decoration:none!important}
+.legal-back{color:#2a3346;font-size:14px;text-decoration:none!important}
 .legal-actions{display:flex;flex-wrap:wrap;gap:6px 16px;padding-top:18px;border-top:1px solid #d9d5cc}
 .result{border-radius:24px!important;border:1px solid var(--sb-line)!important;border-top:3px solid var(--sb-gold)!important;box-shadow:0 18px 55px #0003;text-align:center}
 .result h1{font-size:clamp(32px,5vw,50px)!important;line-height:1.1!important;letter-spacing:-.03em!important;text-shadow:none!important;margin:10px 0 20px!important}

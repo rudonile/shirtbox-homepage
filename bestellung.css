@@ -14,7 +14,7 @@
 /* Schritte */
 .order-step{margin:0 0 18px;padding:24px;border-radius:24px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
 .order-step-title{display:flex;align-items:center;gap:12px;margin:0 0 8px;font-size:22px;letter-spacing:-.02em}
-.order-step-title span{display:grid;place-items:center;flex:none;width:34px;height:34px;border-radius:50%;background:var(--ink);color:#fff;font-family:var(--font);font-size:15px;font-weight:850}
+.order-step-title span{display:grid;place-items:center;flex:none;width:34px;height:34px;border-radius:50%;background:var(--solid);color:#fff;font-family:var(--font);font-size:15px;font-weight:850}
 .order-step-intro{margin:0 0 16px;color:var(--ink-2);font-size:15px}
 
 /* Eingabefelder */
@@ -31,12 +31,12 @@
 #design-list:empty~.order-empty{display:block}
 .order-empty p{margin:0 0 14px;color:var(--ink-2);font-size:17px;font-weight:600}
 .order-empty a,.order-more{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 22px;border-radius:999px;font-weight:800;text-decoration:none}
-.order-empty a{background:var(--accent);color:var(--ink)}
-.order-empty a:hover{background:var(--accent-hover);color:var(--ink)}
+.order-empty a{background:var(--fire);color:var(--on-accent)}
+.order-empty a:hover{background:var(--fire);color:var(--on-accent)}
 .order-more{margin-top:4px;color:var(--ink);box-shadow:inset 0 0 0 2px var(--line-2)}
 .order-more:hover{color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)}
 #design-list:empty~.order-more{display:none}
-.file-check-status{padding:12px 16px;border-radius:12px;background:#fde8e6;border:1px solid #f3b9b2;color:var(--error);font-size:14.5px;overflow-wrap:anywhere}
+.file-check-status{padding:12px 16px;border-radius:12px;background:#3a1a1c;border:1px solid #7a2b2b;color:var(--error);font-size:14.5px;overflow-wrap:anywhere}
 /* Sammelfehler erst nach dem ersten Bestellversuch zeigen; die Felder werden dann ohnehin markiert. */
 #design-validation{display:none}
 form.was-submitted #design-validation:not([hidden]){display:block;margin:12px 0}
@@ -52,10 +52,10 @@ form.was-submitted #design-validation:not([hidden]){display:block;margin:12px 0}
 .order-design .order-inline-view:not([hidden]){display:inline-flex;justify-content:center;padding:7px 10px;border:1px solid var(--line-2);border-radius:999px;background:var(--surface);color:var(--ink-2);font-size:13px;font-weight:650;cursor:pointer}
 .order-design .order-inline-view:hover{border-color:var(--ink);color:var(--ink)}
 .order-design .order-design-actions{grid-area:head;display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 4px}
-.order-design .order-inline-edit{display:inline-flex;align-items:center;min-height:38px;padding:0 14px;border-radius:999px;background:var(--blue-soft);color:#1b3d9e;font-size:14px;font-weight:750;text-decoration:none}
-.order-design .order-inline-edit:hover{background:#d3e0ff;color:#1b3d9e}
+.order-design .order-inline-edit{display:inline-flex;align-items:center;min-height:38px;padding:0 14px;border-radius:999px;background:var(--blue-soft);color:#a9bdff;font-size:14px;font-weight:750;text-decoration:none}
+.order-design .order-inline-edit:hover{background:#26346a;color:#a9bdff}
 .order-design .remove-design{min-height:38px;margin-left:auto;padding:0 12px;border:0;border-radius:999px;background:transparent;color:var(--error);font-size:13.5px;font-weight:700;cursor:pointer}
-.order-design .remove-design:hover{background:#fde8e6}
+.order-design .remove-design:hover{background:#3a1a1c}
 .order-size-help{grid-area:help;display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin:8px 0 12px}
 .asian-size-notice{color:var(--ink-2);font-size:13.5px;font-weight:600;line-height:1.4}
 .asian-size-notice::before{content:"ℹ︎ ";color:var(--blue)}
@@ -80,7 +80,7 @@ form.was-submitted #design-validation:not([hidden]){display:block;margin:12px 0}
 .agb-consent{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line-2);background:var(--surface);font-size:14px;line-height:1.45;color:var(--ink-2)}
 .agb-consent label{cursor:pointer}
 .agb-consent input{flex:none;width:20px;height:20px;margin:0}
-.agb-consent:has(input:checked){border-color:#9fd9bb;background:var(--mint-soft)}
+.agb-consent:has(input:checked){border-color:#2f7a55;background:var(--mint-soft)}
 .order-design .agb-consent{grid-area:rights;margin:16px 0 0;font-size:13.5px}
 
 /* Zusammenfassung + Bestellknopf */
@@ -96,12 +96,12 @@ form.was-submitted #design-validation:not([hidden]){display:block;margin:12px 0}
 .summary-total{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;color:var(--ink-2);font-size:15px}
 .summary-total strong{font-family:var(--display);font-size:30px;font-weight:850;letter-spacing:-.03em;color:var(--ink)}
 .order-summary>p{margin:8px 0 0;color:var(--ink-3);font-size:12.5px;line-height:1.45}
-#absenden{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:60px;padding:0 16px;border:0;border-radius:999px;background:var(--accent);color:var(--ink);font-size:18px;font-weight:850;white-space:nowrap;cursor:pointer;box-shadow:0 10px 26px #ff5b2e4d;transition:transform .15s,background .15s}
-#absenden:hover{background:var(--accent-hover);transform:translateY(-2px)}
-#formular-status{margin:0;padding:12px 14px;border-radius:12px;background:#fff6dc;border:1px solid #f1d58a;color:#6b5207;font-size:14px}
+#absenden{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:60px;padding:0 16px;border:0;border-radius:999px;background:var(--fire);color:var(--on-accent);font-size:18px;font-weight:850;white-space:nowrap;cursor:pointer;box-shadow:0 10px 26px #ff5b2e4d;transition:transform .15s,background .15s}
+#absenden:hover{background:var(--fire);transform:translateY(-2px)}
+#formular-status{margin:0;padding:12px 14px;border-radius:12px;background:#3a2f12;border:1px solid #7a6420;color:#ffd67a;font-size:14px}
 .order-trust{display:grid;gap:6px;margin:0;padding:0;list-style:none;color:var(--ink-2);font-size:13.5px}
 .order-trust li::before{content:"✓ ";color:var(--mint);font-weight:900}
-.order-submit-progress{margin:0;padding:12px 14px;border-radius:12px;background:var(--blue-soft);color:#1b3d9e;font-weight:700;line-height:1.45}
+.order-submit-progress{margin:0;padding:12px 14px;border-radius:12px;background:var(--blue-soft);color:#a9bdff;font-weight:700;line-height:1.45}
 .order-submit-progress::before{content:"⏳";display:inline-block;margin-right:8px;animation:shirtbox-spin 1.4s ease-in-out infinite}
 @keyframes shirtbox-spin{50%{transform:rotate(180deg)}}
 
@@ -117,10 +117,10 @@ form.was-submitted #design-validation:not([hidden]){display:block;margin:12px 0}
 .order-design-modal{width:min(1000px,96vw);max-height:92vh;padding:18px;border:0;border-radius:24px;background:var(--surface);box-shadow:var(--shadow-lg);text-align:center}
 .order-design-modal::backdrop{background:#0e1a2bd9;backdrop-filter:blur(4px)}
 .order-design-modal form{display:flex;justify-content:flex-end;margin:0 0 8px}
-.order-design-modal .modal-close{min-height:42px;padding:0 18px;border:0;border-radius:999px;background:var(--ink);color:#fff;font-weight:700;cursor:pointer}
+.order-design-modal .modal-close{min-height:42px;padding:0 18px;border:0;border-radius:999px;background:var(--solid);color:#fff;font-weight:700;cursor:pointer}
 .order-design-modal img{display:block;max-width:100%;max-height:65vh;margin:0 auto;object-fit:contain;border-radius:12px}
 .order-design-modal p{margin:12px 0 0;color:var(--ink-2)}
-.order-design-edit{display:inline-flex;align-items:center;min-height:48px;margin-top:12px;padding:0 20px;border-radius:999px;background:var(--blue-soft);color:#1b3d9e;font-weight:750;text-decoration:none}
+.order-design-edit{display:inline-flex;align-items:center;min-height:48px;margin-top:12px;padding:0 20px;border-radius:999px;background:var(--blue-soft);color:#a9bdff;font-weight:750;text-decoration:none}
 .order-design-modal .modal-note{font-size:13.5px;color:var(--ink-3)}
 
 @media(max-width:940px){

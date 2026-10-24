@@ -8,6 +8,8 @@
   const phone = document.getElementById('telefon');
   const prefix = document.getElementById('vorwahl');
   const online = ['https:', 'http:'].includes(location.protocol);
+  // Gestaltete Kundenbestätigung mit Shirt-Bildern; bei Fehler übernimmt die FormSubmit-Autoantwort.
+  const MAIL_API = 'https://black-snow-2fdf.r-n.workers.dev/bestaetigung';
   const designs = new Map();
   let nextSlot = 0;
   const money = api.money;
@@ -133,6 +135,38 @@
     originals.forEach((item,i)=>{const file=item.file;if(!(file instanceof Blob))throw Error('Originalbild fehlt');const field=document.createElement('input');field.type='file';field.hidden=true;field.className='print-original';field.name=`attachment_original_${state.slot}_${i+1}`;const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';const transfer=new DataTransfer();transfer.items.add(new File([file],`design-${state.designNumber}-original-${i+1}.${ext}`,{type:file.type}));field.files=transfer.files;state.card.append(field);});
     const note=document.createElement('p');note.className='print-original';note.textContent=originals.length?`${originals.length} Originalbild${originals.length===1?'':'er'} und Platzierungsangaben für den Druck beigefügt.`:'Shirt-Farbe und Gestaltungseinstellungen für den Druck beigefügt.';state.card.append(note);
   }
+  // Verkleinerte Kopie des Entwurfs für die Bestätigungsmail (die Druckdatei bleibt unverändert).
+  async function mailImage(file) {
+    const bitmap = await createImageBitmap(file), scale = Math.min(1, 1100 / bitmap.width);
+    const canvas = document.createElement('canvas'); canvas.width = Math.round(bitmap.width * scale); canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height); bitmap.close();
+    return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(Error('Bild')), 'image/jpeg', .85));
+  }
+  // Schickt Bestellung, Druckdateien und Originalbilder an den Worker. Er versendet die interne Mail und die Kundenbestätigung.
+  async function sendConfirmation(order) {
+    const states = [...designs.values()], value = id => document.getElementById(id).value.trim();
+    const body = new FormData();
+    body.set('bestellung', JSON.stringify({
+      kunde: {vorname: value('vorname'), nachname: value('nachname'), email: value('email'), telefon: value('telefon-komplett'), strasse: value('strasse'), plz: value('plz'), ort: value('ort'), land: value('land')},
+      agb: document.getElementById('agb-zustimmung').checked ? document.getElementById('agb-zustimmung').value : '',
+      designs: order.designs.map((item, i) => ({nummer: states[i].designNumber || item.number, rechte: states[i].rights.checked, platzierung: states[i].card.querySelector('textarea.print-original')?.value || '', groessen: item.rows.map(row => ({groesse: row.size, anzahl: Number(row.quantity)}))}))
+    }));
+    let size = 0;
+    for (const [i, state] of states.entries()) {
+      const file = state.file.files[0];
+      if (file) { body.set(`druck_${i}`, file, file.name); size += file.size; body.set(`bild_${i}`, await mailImage(file), `design-${i + 1}.jpg`); }
+      for (const input of state.card.querySelectorAll('input.print-original')) { const original = input.files[0]; if (original) { body.append(`original_${i}`, original, original.name); size += original.size; } }
+    }
+    if (size > 24 * 1024 * 1024) throw Error('Zu gross für den Mailversand');
+    const response = await fetch(MAIL_API, {method: 'POST', body, signal: AbortSignal.timeout(60000)});
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.bestellnummer) throw Error(result.error || 'Bestellung nicht versendet');
+    return result;
+  }
+  function fallbackNumber() {
+    const d = new Date(), pad = n => String(n).padStart(2, '0');
+    return `SB-${String(d.getFullYear()).slice(2)}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+  }
   // Preserve each design's sizes, quantities and rights independently across editing trips.
   const detailKey='shirtbox-design-order-details';
   function saveDetails(){
@@ -187,15 +221,31 @@
       else if(!result.order.valid){list.classList.add('missing-required');list.scrollIntoView({behavior:'smooth',block:'center'});}
       return;
     }
+    // Normalfall: Der Worker verschickt interne Mail und Kundenbestätigung, danach direkt zur Danke-Seite.
+    // Ersatzweg: FormSubmit wie bisher (form.submit löst kein weiteres submit-Ereignis aus).
+    event.preventDefault();
+    if (submit.getAttribute('aria-busy') === 'true') return;
     // Nur nach Rueckkehr auf die Danke-Seite als abgeschlossen behandeln.
     try { sessionStorage.setItem('shirtbox-order-pending', JSON.stringify({quantity:result.order.quantity, at:Date.now()})); } catch(e) {}
     const progress=document.getElementById('order-submit-progress');
     if(progress){progress.hidden=false;progress.scrollIntoView({behavior:'smooth',block:'center'});}
-    // Safari/iOS can cancel a native form submission when its submitter is
-    // disabled synchronously in the submit event. Keep it enabled until navigation.
     submit.setAttribute('aria-busy','true');
     submit.textContent='⏳ Bestellung wird übermittelt …';
     message('Ihre Bestellung wird übermittelt. Bitte warten und die Seite nicht schliessen.');
+    (async () => {
+      const autoresponse = document.getElementById('antwort-mail');
+      const next = document.getElementById('weiter');
+      let number, sent = null;
+      try { sent = await sendConfirmation(result.order); number = sent.bestellnummer; } catch { number = fallbackNumber(); }
+      const thanks = new URL(next.value || new URL('danke.html', location.href).href); thanks.searchParams.set('bestellung', number);
+      if (sent?.kunde) { location.href = thanks.href; return; }
+      // Ersatzweg FormSubmit: interne Mail mit Anhängen plus Text-Bestätigung an den Kunden.
+      autoresponse.disabled = false; autoresponse.value = `Bestellnummer: ${number}\n\n${autoresponse.value}`;
+      document.getElementById('bestellnummer').value = number;
+      document.getElementById('betreff').value = `Neue ShirtBOX-Bestellung ${number} – ${money(result.order.total)}`;
+      next.value = thanks.href;
+      form.submit();
+    })();
   });
   window.addEventListener('pageshow', () => { const progress=document.getElementById('order-submit-progress');if(progress)progress.hidden=true;submit.disabled=false;submit.removeAttribute('aria-busy');submit.innerHTML='Zahlungspflichtig bestellen <span aria-hidden="true">↗</span>';refresh(); });
   // Empty orders stay empty until a new design is added from the designer.

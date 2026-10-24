@@ -5,12 +5,12 @@
   const effects=window.ShirtboxImageEffects,tools=document.getElementById('upload-tools');
   const colour=document.getElementById('shirt-colour'),colourControls=document.getElementById('shirt-colour-controls'),presets=document.getElementById('shirt-colour-presets');
   const template='anleitung/polo-api-vorlage.jpg',W=1536,H=1228;
-  // Coordinates follow the blank front/back photograph; sleeves use wearer's left/right.
+  // Coordinates follow the blank front/back photograph (shirts 900 px high, sleeves touching); sleeves use wearer's left/right.
   const regions={
-    front:{name:'Vorderseite',center:[375,650],width:360,polygons:[[[199,206],[268,172],[460,172],[548,203],[647,260],[595,500],[600,740],[617,1060],[601,1083],[542,1097],[445,1105],[318,1102],[208,1090],[151,1075],[131,1060],[148,940],[161,770],[162,631],[146,500],[99,260]]]},
-    back:{name:'Rückseite',center:[1160,630],width:380,polygons:[[[1042,170],[1076,154],[1244,154],[1295,175],[1415,250],[1378,496],[1370,700],[1397,1059],[1374,1081],[1312,1095],[1208,1103],[1085,1104],[984,1093],[930,1077],[916,1061],[934,887],[942,689],[927,499],[885,252]]]},
-    left:{name:'Linker Ärmel',center:[656,370],width:135,polygons:[[[646,250],[680,281],[697,333],[726,486],[730,516],[693,531],[631,548],[603,551],[595,517],[602,452],[625,338]],[[906,250],[871,282],[850,335],[811,485],[805,518],[856,536],[914,549],[938,546],[942,513],[932,430]]]},
-    right:{name:'Rechter Ärmel',center:[84,380],width:135,polygons:[[[105,249],[69,285],[50,342],[22,485],[18,514],[51,530],[110,546],[141,549],[151,520],[141,427]],[[1415,249],[1451,282],[1474,338],[1510,487],[1517,515],[1485,532],[1424,548],[1391,550],[1379,518],[1390,420]]]}
+    front:{name:'Vorderseite',center:[447,653],width:327,polygons:[[[287,249],[349,219],[524,219],[604,247],[694,298],[647,517],[651,735],[667,1025],[652,1046],[598,1059],[510,1066],[395,1064],[295,1053],[243,1039],[225,1025],[240,916],[252,762],[253,636],[239,517],[196,298]]]},
+    back:{name:'Rückseite',center:[1092,635],width:345,polygons:[[[985,217],[1016,202],[1168,202],[1215,221],[1324,289],[1290,513],[1283,698],[1307,1024],[1287,1044],[1230,1057],[1136,1064],[1024,1065],[932,1055],[883,1041],[870,1026],[887,868],[894,688],[880,516],[842,291]]]},
+    left:{name:'Linker Ärmel',center:[702,398],width:123,polygons:[[[693,289],[724,318],[739,365],[766,504],[769,531],[736,545],[679,560],[654,563],[647,532],[653,473],[674,369]],[[861,289],[830,318],[810,367],[775,503],[770,533],[816,549],[869,561],[890,558],[894,528],[885,453]]]},
+    right:{name:'Rechter Ärmel',center:[182,408],width:123,polygons:[[[201,288],[169,321],[151,373],[126,503],[122,529],[152,544],[206,558],[234,561],[243,535],[234,450]],[[1324,288],[1357,318],[1377,369],[1410,505],[1416,530],[1387,546],[1332,560],[1302,562],[1291,533],[1301,444]]]}
   };
   let design=null,activeRegion='front',base=null,garmentMask=null,version=0,locked=false,loading=false,dirty=false,callbacks={},drag=null,tintCanvas=null,tintColour='';
   const layers=()=>design?.uploads||[];

@@ -1,0 +1,32 @@
+/* ShirtBOX Marke – Logo und Fusszeile, auf allen Seiten gleich. */
+@font-face{font-family:"Unbounded";font-style:normal;font-weight:500 900;font-display:swap;src:url(schrift/unbounded-latin.woff2) format("woff2")}
+
+/* Logo: Symbol + Wortmarke. Farbe der Wortmarke folgt dem Hintergrund (currentColor). */
+.brand{display:inline-flex;align-items:center;gap:10px;flex:none;color:#f4f1ea;text-decoration:none!important}
+.brand:hover{color:inherit}
+.logo-icon{display:block;width:40px;height:40px;flex:none;border-radius:12px;box-shadow:0 6px 18px #ff5b2e55;transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
+.brand:hover .logo-icon{transform:rotate(-8deg) scale(1.06)}
+.logo-word{font-family:"Unbounded","Segoe UI",system-ui,sans-serif;font-size:21px;font-weight:800;letter-spacing:-.04em;line-height:1;white-space:nowrap}
+.logo-word b{font-weight:800;background:linear-gradient(100deg,#ff3d2e,#ff7a2b 55%,#ffb43a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.logo-word small{margin-left:1px;font-size:.62em;font-weight:600;letter-spacing:0;opacity:.55}
+/* Ältere dunkle Seite (Eigenes Bild): helle Wortmarke, Fremdstile der alten Fusszeile neutralisieren. */
+body.simple-home .brand{color:#f4f1ea!important}
+body.simple-home .site-footer{position:relative!important;bottom:auto!important;display:block!important;max-width:none!important;margin:40px 0 0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#090c13!important;font-size:inherit!important}
+body.simple-home{background:radial-gradient(900px 600px at 85% -10%,#ff5b2e26,transparent 70%),radial-gradient(800px 600px at -10% 105%,#3b5bff1f,transparent 70%) fixed,#090c13!important}
+body.simple-home .site-footer .brand,body.simple-home .site-footer .logo-word{color:#f4f1ea!important;opacity:1!important}
+body.simple-home .footer-inner{justify-content:space-between!important;text-align:left!important}
+body.simple-home .footer-legal{text-align:left!important}
+body.simple-home [data-lang].active{background:#ff7a2b!important;border-color:#ff7a2b!important;color:#090c13!important}
+@media(max-width:860px){.logo-icon{width:34px;height:34px;border-radius:10px}.logo-word{font-size:18px}}
+
+/* Fusszeile: eine schlanke Zeile – Logo, Kontakt, Rechtliches. */
+.site-footer{position:relative;margin:0;background:#090c13;color:#9aa3b2;overflow:hidden}
+.site-footer::before{content:"";position:absolute;inset:0 0 auto;height:1px;background:linear-gradient(90deg,transparent,#ff5b2e88,transparent)}
+.footer-inner{display:flex;align-items:center;justify-content:space-between;gap:20px 32px;flex-wrap:wrap;max-width:1180px;margin:0 auto;padding:34px clamp(16px,4vw,32px) 22px}
+.site-footer .brand{color:#f4f1ea}
+.footer-links{display:flex;flex-wrap:wrap;gap:6px}
+.footer-links a{display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:999px;background:#ffffff0d;border:1px solid #ffffff14;color:#d9dde4;font-size:14px;font-weight:650;text-decoration:none;transition:background .15s,border-color .15s,color .15s}
+.footer-links a:hover{background:#ff5b2e;border-color:#ff5b2e;color:#090c13}
+.footer-links .wa{background:#25d36622;border-color:#25d36655;color:#7ff0a8}
+.footer-legal{max-width:1180px;margin:0 auto;padding:0 clamp(16px,4vw,32px) 28px;color:#5f6879;font-size:12.5px}
+@media(max-width:700px){.footer-inner{flex-direction:column;align-items:flex-start}.footer-links a{padding:8px 13px;font-size:13.5px}}

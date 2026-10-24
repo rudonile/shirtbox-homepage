@@ -4,8 +4,14 @@
   const $ = id => document.getElementById(id);
   const form = $('studio-form'); if (!form) return;
   const API = 'https://black-snow-2fdf.r-n.workers.dev';
-  const TEMPLATE = 'anleitung/polo-api-vorlage.jpg';
   const MAX_PHOTO = 5 * 1024 * 1024;
+  // Shirt-Modelle: leere Vorlage (links vorne, rechts hinten) und Schnittbeschreibung für die KI.
+  const MODELS = {
+    polo: {label: 'Polo-Shirt', template: 'anleitung/polo-api-vorlage.jpg', cut: 'Sportpolo mit Polo-Kragen und Knopfleiste'},
+    zip: {label: 'Zip-Shirt', template: 'anleitung/zip-api-vorlage.jpg', cut: 'Sport-Jersey mit niedrigem Stehkragen und kurzem Reissverschluss vorne (kein Polo-Kragen, keine Knöpfe)'}
+  };
+  let model = '';
+  const TEMPLATE = () => MODELS[model]?.template || MODELS.polo.template;
 
   const keyword = $('studio-keyword'), shirtText = $('studio-text'), photo = $('studio-photo'), rights = $('studio-rights');
   const surprise = $('studio-surprise'), error = $('studio-error');
@@ -23,8 +29,8 @@
 
   function render() {
     const d = designs[active];
-    picture.src = d?.url || TEMPLATE;
-    picture.alt = d ? `Design ${active + 1}: Vorderseite und Rückseite` : 'Weisse Polo-Vorlage, Vorderseite und Rückseite';
+    picture.src = d?.url || TEMPLATE();
+    picture.alt = d ? `Design ${active + 1}: Vorderseite und Rückseite` : model === 'zip' ? 'Weisse Zip-Shirt-Vorlage, Vorderseite und Rückseite' : 'Weisse Polo-Vorlage, Vorderseite und Rückseite';
     editRow.hidden = !d;
     list.replaceChildren();
     designs.forEach((item, i) => {
@@ -71,8 +77,14 @@
   });
   photoRemove.addEventListener('click', () => { photo.value = ''; photo.dispatchEvent(new Event('change')); });
 
+  async function template() {
+    const response = await fetch(TEMPLATE());
+    if (!response.ok) throw Error('Die Shirt-Vorlage konnte nicht geladen werden.');
+    return response.blob();
+  }
+
   async function withPhoto(file) {
-    const base = await createImageBitmap(await (await fetch(TEMPLATE)).blob()), pic = await createImageBitmap(file);
+    const base = await createImageBitmap(await template()), pic = await createImageBitmap(file);
     const canvas = document.createElement('canvas'); canvas.width = base.width; canvas.height = base.height;
     const ctx = canvas.getContext('2d'); ctx.drawImage(base, 0, 0);
     const half = canvas.width / 2, scale = Math.min(half * .48 / pic.width, canvas.height * .40 / pic.height);
@@ -97,7 +109,7 @@
 
   // Hilft der Kundeneingabe nach: ergänzt Aufbau, Farben, Schrift und Druckqualität zu einem vollständigen Briefing.
   function surprisePrompt(word, text, hasPhoto) {
-    let p = 'Gestalte als erfahrener Designer ein hochwertiges, rundum bedrucktes 360-Grad-Sportpolo auf der Vorlage (links Vorderseite, rechts Rückseite) mit zusammenhängendem Design über Vorderseite, Rückseite, Kragen und Ärmel. ';
+    let p = `Gestalte als erfahrener Designer ein hochwertiges, rundum bedrucktes 360-Grad-${MODELS[model].cut} auf der Vorlage (links Vorderseite, rechts Rückseite) mit zusammenhängendem Design über Vorderseite, Rückseite, Kragen und Ärmel. `;
     const wish = word ? `Kundenwunsch: "${word}". Treu umsetzen und fehlende Details (Farben, Motive, Muster, Komposition) professionell ergänzen. Diese Beschreibung NICHT als Schrift drucken. ` : '';
     if (hasPhoto) p += `Das hochgeladene Foto ist die verbindliche Referenz für das Hauptmotiv (Person, Tier oder Objekt): gut erkennbar übernehmen, freistellen und harmonisch integrieren, nicht ersetzen. ${wish}`;
     else if (word) p += wish;
@@ -106,8 +118,19 @@
     p += `Designstil: ${STYLES[styleChoice]?.brief || RANDOM_STYLES[Math.floor(Math.random() * RANDOM_STYLES.length)]} `;
     p += 'Aufbau: Vorderseite mit klarem Blickfang auf Brusthöhe, Rückseite mit dem grössten Hauptmotiv, Ärmel und Kragen mit passenden Akzenten oder Mustern, die alles verbinden. Höchstens 3–4 harmonische Hauptfarben mit gutem Kontrast. ';
     p += text ? `Schriftzug: genau "${text}" – Buchstabe für Buchstabe korrekt, gut lesbar und sichtbar platziert (z. B. gross auf der Rückseite oder auf der Brust). Keine weiteren Wörter. ` : 'Keine Schriftzüge oder Wörter auf das Shirt setzen, ausser sie sind Teil des Fotos. ';
-    return p + `Keine rechteckige Foto-Auflage, keine Marken-Logos, keine Wasserzeichen. Polo-Form, Perspektive und Vorlage beibehalten. Druckfertige, professionelle Qualität. Variante ${Date.now()}`;
+    return p + `Keine rechteckige Foto-Auflage, keine Marken-Logos, keine Wasserzeichen. Shirt-Schnitt (${MODELS[model].cut}), Perspektive und Vorlage beibehalten. Druckfertige, professionelle Qualität. Variante ${Date.now()}`;
   }
+
+  // Modell-Knöpfe: genau eines muss vor dem Generieren gewählt sein.
+  const modelField = $('studio-model-field'), modelButtons = [...document.querySelectorAll('#studio-models [data-model]')];
+  modelButtons.forEach(button => button.addEventListener('click', () => {
+    if (busy) return;
+    model = button.dataset.model;
+    modelButtons.forEach(b => b.setAttribute('aria-pressed', String(b === button)));
+    if (modelField.classList.contains('attention')) fail('');
+    modelField.classList.remove('attention');
+    if (active < 0) render();
+  }));
 
   // Stil-Knöpfe: einer aktiv, erneuter Klick hebt die Auswahl auf.
   const styleButtons = [...document.querySelectorAll('#studio-styles [data-style]')];
@@ -149,12 +172,14 @@
     event.preventDefault();
     if (busy) return;
     const word = keyword.value.trim(), text = shirtText.value.trim(), file = photo.files[0];
+    if (!model) { fail('Bitte wählen Sie zuerst ein Shirt-Modell (Polo-Shirt oder Zip-Shirt).'); modelField.classList.add('attention'); modelField.scrollIntoView({behavior: 'smooth', block: 'center'}); modelButtons[0].focus({preventScroll: true}); return; }
     if (!word && !text && !file && !styleChoice) { fail('Bitte wählen Sie einen Stil, beschreiben Sie Ihr Design, geben Sie einen Text ein oder laden Sie ein Foto hoch.'); keyword.focus(); return; }
     if (!rights.checked) { fail('Bitte bestätigen Sie Ihre Inhalts- und Bildrechte.'); rights.closest('label').classList.add('attention'); rights.focus(); return; }
     run(async () => {
-      const blob = await request(surprisePrompt(word, text, !!file), file ? await withPhoto(file) : null);
-      const summary = [styleChoice && `Stil: ${STYLES[styleChoice].label}`, word && `Design: ${word}`, text && `Text: ${text}`, file && 'mit eigenem Foto'].filter(Boolean).join(' · ');
-      designs.push({blob, url: URL.createObjectURL(blob), prompt: `KI-Design – ${summary}`, selected: true, number: editingOrder ? Math.max(0, ...designs.map(d => d.number || 0)) + 1 : null});
+      // Das Polo-Shirt holt der Worker selbst; alle anderen Modelle schicken ihre leere Vorlage mit.
+      const blob = await request(surprisePrompt(word, text, !!file), file ? await withPhoto(file) : model === 'polo' ? null : await template());
+      const summary = [`Modell: ${MODELS[model].label}`, styleChoice && `Stil: ${STYLES[styleChoice].label}`, word && `Design: ${word}`, text && `Text: ${text}`, file && 'mit eigenem Foto'].filter(Boolean).join(' · ');
+      designs.push({blob, url: URL.createObjectURL(blob), prompt: `KI-Design – ${summary}`, model, selected: true, number: editingOrder ? Math.max(0, ...designs.map(d => d.number || 0)) + 1 : null});
       active = designs.length - 1;
       say(`Design ${active + 1} ist fertig. Sie können es unten noch ändern oder direkt bestellen.`);
     });
@@ -176,7 +201,8 @@
     const d = designs[active], change = editInput.value.trim();
     if (busy || !d || !change) return;
     run(async () => {
-      const blob = await request(`Bisheriges Shirt und Gestaltung beibehalten. Ändere nur Folgendes: ${change}\nErhalte alle anderen Merkmale.`, d.blob);
+      const cut = MODELS[d.model]?.cut;
+      const blob = await request(`Bisheriges Shirt und Gestaltung beibehalten${cut ? ` (Schnitt: ${cut})` : ''}. Ändere nur Folgendes: ${change}\nErhalte alle anderen Merkmale.`, d.blob);
       URL.revokeObjectURL(d.url); d.blob = blob; d.url = URL.createObjectURL(blob);
       d.prompt = `${d.prompt}\nÄnderung: ${change}`.slice(-1500); editInput.value = '';
       say(`Design ${active + 1} wurde angepasst. Weitere Änderungen sind jederzeit möglich.`);
@@ -210,7 +236,7 @@
       const items = (await window.ShirtboxDesignTransfer.load())?.blobs || [];
       const index = items.findIndex((x, i) => String(x.number || i + 1) === number);
       if (index < 0) throw Error();
-      items.forEach((e, i) => { const blob = e.blob || e; if (blob instanceof Blob) designs.push({blob, url: URL.createObjectURL(blob), prompt: e.prompt || '', selected: true, number: e.number || i + 1}); });
+      items.forEach((e, i) => { const blob = e.blob || e; if (blob instanceof Blob) designs.push({blob, url: URL.createObjectURL(blob), prompt: e.prompt || '', model: /Modell: Zip-Shirt/.test(e.prompt || '') ? 'zip' : 'polo', selected: true, number: e.number || i + 1}); });
       editingOrder = true; active = designs.findIndex(d => String(d.number) === number);
       say('Ihr Design wurde geladen. Beschreiben Sie unten die gewünschte Änderung.');
       render(); editInput.focus({preventScroll: true});
