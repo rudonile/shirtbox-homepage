@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#131c30">
+<title>ShirtBOX Verwaltung</title>
+<link rel="icon" href="https://shirtbox.ch/shirtbox-icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<div id="login" class="login" hidden>
+  <form id="login-form" class="login-card" autocomplete="on">
+    <div class="brand"><img src="https://shirtbox.ch/shirtbox-icon.svg" alt="" width="44" height="44"><span>shirt<b>box</b><small>.ch</small></span></div>
+    <h1>Verwaltung</h1>
+    <p class="muted">Nur für ShirtBOX. Bitte Passwort und den 6-stelligen Code aus Ihrer Authenticator-App eingeben.</p>
+    <label>Passwort<input id="login-passwort" type="password" autocomplete="current-password" required></label>
+    <label>Code aus der App<input id="login-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]{6,7}" maxlength="7" required placeholder="123 456"></label>
+    <button class="btn btn-main" type="submit">Anmelden</button>
+    <p id="login-fehler" class="error" role="alert" hidden></p>
+  </form>
+</div>
+
+<div id="app" class="app" hidden>
+  <aside class="side" id="side">
+    <div class="brand"><img src="https://shirtbox.ch/shirtbox-icon.svg" alt="" width="36" height="36"><span>shirt<b>box</b><small>.ch</small></span></div>
+    <nav id="menu" aria-label="Verwaltung">
+      <a href="#/dashboard" data-nav="dashboard"><i>📊</i>Dashboard</a>
+      <a href="#/kunden" data-nav="kunden"><i>👥</i>Kunden</a>
+      <a href="#/bestellungen" data-nav="bestellungen"><i>📦</i>Bestellungen</a>
+      <a href="#/umsatz" data-nav="umsatz"><i>💰</i>Umsatz</a>
+      <a href="#/newsletter" data-nav="newsletter"><i>📬</i>Newsletter</a>
+      <a href="#/newsletter-erstellen" data-nav="newsletter-erstellen"><i>✏️</i>Newsletter erstellen</a>
+      <a href="#/einstellungen" data-nav="einstellungen"><i>⚙️</i>Einstellungen</a>
+    </nav>
+    <button class="logout" id="logout" type="button">Abmelden</button>
+  </aside>
+  <header class="topbar">
+    <button class="menu-btn" id="menu-btn" type="button" aria-controls="side" aria-expanded="false">☰ Menü</button>
+    <span class="topbar-title" id="topbar-title">Dashboard</span>
+  </header>
+  <main class="content" id="content" tabindex="-1"></main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<dialog id="dialog" class="dialog"><form method="dialog" id="dialog-form"><div id="dialog-body"></div><div class="dialog-actions" id="dialog-actions"></div></form></dialog>
+<script src="/app.js"></script>
+</body>
+</html>

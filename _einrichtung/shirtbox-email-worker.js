@@ -1,6 +1,8 @@
 // ShirtBOX dedicated order-mail Worker. Deploy ONLY to shirtbox-email.
 // Required secrets: RESEND_API_KEY, TURNSTILE_SECRET_KEY.
 // Required KV binding: ORDER_KV (for duplicate protection).
+// Optional (Verwaltung): D1 binding DB (shirtbox-verwaltung), R2 binding BILDER (shirtbox-bilder),
+// secret RESEND_WEBHOOK_SECRET. Ohne DB/BILDER laufen Bestellungen unverändert weiter, es wird nur nichts gespeichert.
 // Public site must configure Turnstile site key in bestellen.html.
 const ALLOWED_SITES = new Set(['https://shirtbox.ch','https://www.shirtbox.ch']);
 function headers(origin) {
@@ -53,14 +55,19 @@ async function verifyTurnstile(token,request,env){
     return {ok:false, reason:'netzwerkfehler'};
   }
 }
-export default {async fetch(request,env){
-  const origin=request.headers.get('Origin')||'';const path=new URL(request.url).pathname;
+export default {async fetch(request,env,ctx){
+  const origin=request.headers.get('Origin')||'';const url=new URL(request.url),path=url.pathname;
+  // Ohne Website-Herkunft: Abmeldung per Mailprogramm (One-Click), Resend-Webhook, öffentliche Newsletter-Bilder.
+  if(path==='/newsletter/abmelden-direkt')return unsubscribeDirect(request,env,url);
+  if(path==='/resend/webhook')return resendWebhook(request,env);
+  if(path.startsWith('/bild/newsletter/'))return newsletterImage(request,env,path);
   if(request.method==='OPTIONS' && ALLOWED_SITES.has(origin))return new Response(null,{status:204,headers:{...headers(origin),'Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type','Access-Control-Max-Age':'600'}});
   if(!ALLOWED_SITES.has(origin))return reply(origin,403,'Nicht freigegeben.');
-  if(path!=='/bestaetigung')return reply(origin,404,'Nicht gefunden.');
   if(request.method!=='POST')return reply(origin,405,'Nur POST erlaubt.');
+  if(path.startsWith('/newsletter/'))return newsletterRoute(request,env,origin,path);
+  if(path!=='/bestaetigung')return reply(origin,404,'Nicht gefunden.');
   if(!env.RESEND_API_KEY||!env.TURNSTILE_SECRET_KEY||!env.ORDER_KV)return reply(origin,503,'Mail-Dienst noch nicht vollständig eingerichtet.');
-  return orderConfirmation(request,env,origin);
+  return orderConfirmation(request,env,origin,ctx);
 }};
 
 // ---------------------------------------------------------------------------
@@ -111,7 +118,8 @@ function readOrder(raw) {
       rights: design.rechte === true, placement: typeof design.platzierung === 'string' ? design.platzierung.replace(/\r/g, '').slice(0, 4000).trim() : ''};
   });
   if (quantity > 200) throw Error('Zu viele Shirts.');
-  return {customer, designs, quantity, total: PRICE_FIRST + (quantity - 1) * PRICE_MORE, agb: clean(data.agb, 80)};
+  return {customer, designs, quantity, total: PRICE_FIRST + (quantity - 1) * PRICE_MORE, agb: clean(data.agb, 80),
+    newsletter: data.newsletter === true, newsletterText: clean(data.newsletter_text, 400)};
 }
 
 // E-Mail-taugliches HTML: Tabellen-Layout, Inline-Styles, Bilder als cid-Anhänge.
@@ -312,7 +320,7 @@ const extension = type => type === 'image/png' ? 'png' : type === 'image/webp' ?
 
 // Ablauf: zuerst die interne Mail (mit Druckdateien), dann die Kundenmail.
 // Antwort {bestellnummer, kunde}: Ohne interne Mail -> Fehler, die Website nimmt dann FormSubmit.
-async function orderConfirmation(request, env, origin) {
+async function orderConfirmation(request, env, origin, ctx) {
   if (request.method !== 'POST') return reply(origin, 405, 'Bitte eine Bestellung senden.');
   if (!env.RESEND_API_KEY) return reply(origin, 503, 'Der Mailversand ist noch nicht eingerichtet.');
   if (!request.headers.get('Content-Type')?.startsWith('multipart/form-data')) return reply(origin, 415, 'Ungültige Anfrage.');
@@ -334,25 +342,26 @@ async function orderConfirmation(request, env, origin) {
   if(existing?.status==='sent')return new Response(JSON.stringify(existing.result),{headers:headers(origin)});
   if(existing?.status==='pending')return reply(origin,409,'Diese Bestellung wird bereits verarbeitet. Bitte warten.');
   await env.ORDER_KV.put(key,JSON.stringify({status:'pending'}),{expirationTtl:600});
-  const number = orderNumber(), shop = env.SHOP_EMAIL || 'r-n@gmx.ch';
-  const inline = [], imageIds = [], prints = [], printNames = [], originals = [], originalNames = [];
+  const number = orderNumber(), shop = env.SHOP_EMAIL || 'r-n@gmx.ch', contact = env.CONTACT_EMAIL || 'info@shirtbox.ch';
+  const inline = [], imageIds = [], prints = [], printNames = [], originals = [], originalNames = [], files = [];
   for (let i = 0; i < order.designs.length; i++) {
-    const d = order.designs[i], image = form.get(`bild_${i}`), print = form.get(`druck_${i}`);
+    const d = order.designs[i], image = form.get(`bild_${i}`), print = form.get(`druck_${i}`), stored = {originals: []};
     if (image && typeof image !== 'string' && image.size && image.size <= MAX_MAIL_IMAGE && IMAGE_TYPES.includes(image.type)) {
-      inline.push({filename: `vorschau-design-${d.number}.${extension(image.type)}`, content: base64(await image.arrayBuffer()), content_id: `design-${i + 1}`});
+      const buffer = await image.arrayBuffer(); stored.preview = {buffer, type: image.type};
+      inline.push({filename: `vorschau-design-${d.number}.${extension(image.type)}`, content: base64(buffer), content_id: `design-${i + 1}`});
       imageIds.push(`design-${i + 1}`);
     } else imageIds.push('');
     if (print && typeof print !== 'string' && print.size && print.size <= MAX_PRINT_FILE && IMAGE_TYPES.includes(print.type)) {
-      const name = `${number}-design-${d.number}.${extension(print.type)}`;
-      prints.push({filename: name, content: base64(await print.arrayBuffer())}); printNames.push(name);
+      const name = `${number}-design-${d.number}.${extension(print.type)}`, buffer = await print.arrayBuffer(); stored.print = {buffer, type: print.type, name};
+      prints.push({filename: name, content: base64(buffer)}); printNames.push(name);
     } else printNames.push('');
     const names = [];
     for (const [j, file] of form.getAll(`original_${i}`).entries()) {
       if (typeof file === 'string' || !file.size || file.size > MAX_PRINT_FILE || !IMAGE_TYPES.includes(file.type)) continue;
-      const name = `${number}-design-${d.number}-original-${j + 1}.${extension(file.type)}`;
-      originals.push({filename: name, content: base64(await file.arrayBuffer())}); names.push(name);
+      const name = `${number}-design-${d.number}-original-${j + 1}.${extension(file.type)}`, buffer = await file.arrayBuffer(); stored.originals.push({buffer, type: file.type, name});
+      originals.push({filename: name, content: base64(buffer)}); names.push(name);
     }
-    originalNames.push(names);
+    originalNames.push(names); files.push(stored);
   }
   const customerName = `${order.customer.vorname} ${order.customer.nachname}`;
   try {
@@ -363,9 +372,188 @@ async function orderConfirmation(request, env, origin) {
   let kunde = false;
   try {
     const confirmation = buildOrderMail(order, number, imageIds);
-    kunde = await sendMail(env, {to: [order.customer.email], reply_to: shop, subject: `Ihre ShirtBOX-Bestellung ${number} – ${chf(order.total)}`, ...confirmation, attachments: inline});
+    kunde = await sendMail(env, {to: [order.customer.email], reply_to: contact, subject: `Ihre ShirtBOX-Bestellung ${number} – ${chf(order.total)}`, ...confirmation, attachments: inline});
   } catch {}
   const result={bestellnummer:number,kunde,total:order.total/100};
   await env.ORDER_KV.put(key,JSON.stringify({status:'sent',result}),{expirationTtl:86400*14});
+  // Verwaltung: Speichern läuft nach der Antwort weiter. Ein Fehler hier betrifft nie die Bestellung selbst.
+  if (env.DB) ctx?.waitUntil((async () => {
+    try { await saveOrder(env, order, number, clientId, files); } catch (e) { console.error('Verwaltung: Bestellung nicht gespeichert', String(e?.message || e)); }
+    if (order.newsletter) try { await subscribe(env, {email: order.customer.email, vorname: order.customer.vorname, nachname: order.customer.nachname, quelle: `Bestellung ${number}`, text: order.newsletterText || NEWSLETTER_TEXT_ORDER}); } catch (e) { console.error('Verwaltung: Newsletter-Anmeldung fehlgeschlagen', String(e?.message || e)); }
+  })());
   return new Response(JSON.stringify(result),{headers:headers(origin)});
+}
+
+// ---------------------------------------------------------------------------
+// Verwaltung: Kunden und Bestellungen in D1 speichern, Bilder in R2.
+const zurichDay = (date = new Date()) => new Intl.DateTimeFormat('en-CA', {timeZone: 'Europe/Zurich', year: 'numeric', month: '2-digit', day: '2-digit'}).format(date);
+
+async function putImage(env, key, file) {
+  if (!env.BILDER || !file) return null;
+  await env.BILDER.put(key, file.buffer, {httpMetadata: {contentType: file.type}});
+  return key;
+}
+
+async function saveOrder(env, order, number, clientId, files) {
+  const now = new Date().toISOString(), c = order.customer;
+  const customer = await env.DB.prepare(`INSERT INTO kunden (email, vorname, nachname, telefon, strasse, plz, ort, land, erste_bestellung, aktualisiert)
+    VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?9)
+    ON CONFLICT(email) DO UPDATE SET vorname = excluded.vorname, nachname = excluded.nachname, telefon = COALESCE(NULLIF(excluded.telefon, ''), kunden.telefon),
+      strasse = excluded.strasse, plz = excluded.plz, ort = excluded.ort, land = excluded.land, aktualisiert = excluded.aktualisiert
+    RETURNING id`).bind(c.email.toLowerCase(), c.vorname, c.nachname, c.telefon || null, c.strasse, c.plz, c.ort, c.land, now).first();
+  const address = JSON.stringify({vorname: c.vorname, nachname: c.nachname, strasse: c.strasse, plz: c.plz, ort: c.ort, land: c.land, email: c.email, telefon: c.telefon});
+  const saved = await env.DB.prepare(`INSERT OR IGNORE INTO bestellungen (bestellnummer, client_id, kunde_id, erstellt, datum, anzahl, total_rappen, versand_rappen, lieferadresse, agb)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?) RETURNING id`).bind(number, clientId, customer.id, now, zurichDay(), order.quantity, order.total, address, order.agb || null).first();
+  if (!saved) return; // bereits gespeichert
+  for (const [i, d] of order.designs.entries()) {
+    const f = files[i] || {originals: []}, base = `bestellungen/${number}/design-${d.number}`;
+    const preview = await putImage(env, `${base}-vorschau.${extension(f.preview?.type)}`, f.preview);
+    const print = await putImage(env, `${base}-druck.${extension(f.print?.type)}`, f.print);
+    const originalKeys = [];
+    for (const [j, o] of f.originals.entries()) { const k = await putImage(env, `${base}-original-${j + 1}.${extension(o.type)}`, o); if (k) originalKeys.push(k); }
+    const design = await env.DB.prepare(`INSERT INTO bestell_designs (bestellung_id, design_nr, anzahl, einzelpreis_rappen, summe_rappen, farbe, details, bild_vorschau, bild_druck, bilder_original, rechte)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`).bind(saved.id, d.number, d.count, i === 0 ? PRICE_FIRST : PRICE_MORE, d.subtotal,
+      'Rundum-Druck gemäss Design', d.placement || null, preview, print, originalKeys.length ? JSON.stringify(originalKeys) : null, d.rights ? 1 : 0).first();
+    await env.DB.batch(d.rows.map(r => env.DB.prepare('INSERT INTO bestell_groessen (design_id, groesse, bestellgroesse, anzahl) VALUES (?, ?, ?, ?)').bind(design.id, r.size, r.ordered, r.count)));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Newsletter: Anmeldung mit Double-Opt-in, Bestätigung, Abmeldung, Zustellmeldungen von Resend.
+const SITE = 'https://shirtbox.ch';
+const NEWSLETTER_TEXT_ORDER = 'Ja, ich möchte den ShirtBOX-Newsletter mit Neuigkeiten, Aktionen und Angeboten per E-Mail erhalten. Ich kann mich jederzeit wieder abmelden.';
+const NEWSLETTER_TEXT_HOME = 'Anmeldung zum ShirtBOX-Newsletter (Neuigkeiten, Aktionen und Angebote per E-Mail) auf der Startseite. Abmeldung jederzeit möglich.';
+const EMAIL_PATTERN = /^[^\s@<>()",;:]+@[^\s@<>()",;:]+\.[^\s@<>()",;:]{2,}$/;
+const randomToken = () => [...crypto.getRandomValues(new Uint8Array(24))].map(b => b.toString(16).padStart(2, '0')).join('');
+const ok = (origin, data) => new Response(JSON.stringify(data), {headers: headers(origin)});
+
+async function newsletterRoute(request, env, origin, path) {
+  if (!env.DB) return reply(origin, 503, 'Der Newsletter ist noch nicht eingerichtet.');
+  let data;
+  try { const raw = new TextDecoder().decode(await readBody(request, 20000)); data = JSON.parse(raw); } catch { return reply(origin, 400, 'Ungültige Anfrage.'); }
+  if (path === '/newsletter/anmelden') {
+    if (data.website) return ok(origin, {status: 'gesendet'}); // Honigtopf: Bots erhalten scheinbar Erfolg
+    const email = clean(data.email, 254).toLowerCase(), vorname = clean(data.vorname, 80), nachname = clean(data.nachname, 80);
+    if (!EMAIL_PATTERN.test(email)) return reply(origin, 400, 'Bitte eine gültige E-Mail-Adresse eingeben.');
+    if (!vorname) return reply(origin, 400, 'Bitte Ihren Vornamen eingeben.');
+    const turnstile = await verifyTurnstile(data.turnstile, request, env);
+    if (!turnstile.ok) return reply(origin, 403, 'Sicherheitsprüfung fehlgeschlagen. Bitte erneut versuchen.');
+    return ok(origin, {status: await subscribe(env, {email, vorname, nachname, quelle: 'Startseite', text: NEWSLETTER_TEXT_HOME})});
+  }
+  const token = clean(data.token, 80);
+  if (!/^[a-f0-9]{48}$/.test(token)) return reply(origin, 400, 'Der Link ist ungültig.');
+  if (path === '/newsletter/bestaetigen') return ok(origin, {status: await confirmSubscription(env, token)});
+  if (path === '/newsletter/abmelden') return ok(origin, {status: await unsubscribe(env, token)});
+  return reply(origin, 404, 'Nicht gefunden.');
+}
+
+// Legt eine Anmeldung an (Status "ausstehend") und schickt den Bestätigungslink. Aktive Abonnenten bleiben unverändert.
+async function subscribe(env, {email, vorname, nachname, quelle, text}) {
+  email = email.toLowerCase();
+  const now = new Date(), iso = now.toISOString();
+  const existing = await env.DB.prepare('SELECT status, token, bestaetigung_gesendet FROM abonnenten WHERE email = ?').bind(email).first();
+  if (existing?.status === 'aktiv') return 'bereits';
+  if (existing?.status === 'ausstehend' && existing.bestaetigung_gesendet && now - new Date(existing.bestaetigung_gesendet) < 10 * 60000) return 'gesendet';
+  const token = existing?.token || randomToken();
+  await env.DB.prepare(`INSERT INTO abonnenten (email, vorname, nachname, status, angemeldet, einwilligung_quelle, einwilligung_text, bestaetigung_gesendet, token)
+    VALUES (?1, ?2, ?3, 'ausstehend', ?4, ?5, ?6, ?4, ?7)
+    ON CONFLICT(email) DO UPDATE SET vorname = excluded.vorname, nachname = COALESCE(NULLIF(excluded.nachname, ''), abonnenten.nachname), status = 'ausstehend',
+      angemeldet = excluded.angemeldet, einwilligung_quelle = excluded.einwilligung_quelle, einwilligung_text = excluded.einwilligung_text,
+      einwilligung_zeit = NULL, bestaetigung_gesendet = excluded.bestaetigung_gesendet`).bind(email, vorname, nachname || null, iso, quelle, text, token).run();
+  const link = `${SITE}/newsletter.html?bestaetigen=${token}`;
+  const sent = await sendMail(env, {from: env.NEWSLETTER_FROM || 'ShirtBOX <newsletter@shirtbox.ch>', to: [email], reply_to: env.CONTACT_EMAIL || 'info@shirtbox.ch',
+    subject: 'Bitte bestätigen Sie Ihre Newsletter-Anmeldung', ...confirmMail(vorname, link)});
+  if (!sent) throw Error('Bestätigungsmail nicht versendet');
+  return 'gesendet';
+}
+
+async function confirmSubscription(env, token) {
+  const row = await env.DB.prepare('SELECT status, bestaetigung_gesendet FROM abonnenten WHERE token = ?').bind(token).first();
+  if (!row) return 'unbekannt';
+  if (row.status === 'aktiv') return 'bereits';
+  if (row.status !== 'ausstehend') return 'unbekannt';
+  if (Date.now() - new Date(row.bestaetigung_gesendet) > 14 * 86400000) return 'abgelaufen';
+  await env.DB.prepare("UPDATE abonnenten SET status = 'aktiv', einwilligung_zeit = ?, abgemeldet = NULL WHERE token = ? AND status = 'ausstehend'").bind(new Date().toISOString(), token).run();
+  return 'bestaetigt';
+}
+
+async function unsubscribe(env, token) {
+  const row = await env.DB.prepare('SELECT id, status FROM abonnenten WHERE token = ?').bind(token).first();
+  if (!row) return 'unbekannt';
+  if (row.status === 'abgemeldet') return 'bereits';
+  await env.DB.batch([
+    env.DB.prepare("UPDATE abonnenten SET status = 'abgemeldet', abgemeldet = ? WHERE id = ? AND status IN ('aktiv', 'ausstehend')").bind(new Date().toISOString(), row.id),
+    env.DB.prepare("UPDATE newsletter_empfaenger SET status = 'uebersprungen' WHERE abonnent_id = ? AND status = 'wartend'").bind(row.id)
+  ]);
+  return 'abgemeldet';
+}
+
+// Mailprogramme (Gmail, Apple Mail …) melden per POST direkt ab (RFC 8058). Ein Klick im Browser führt zur Abmeldeseite.
+async function unsubscribeDirect(request, env, url) {
+  const token = url.searchParams.get('t') || '';
+  if (request.method === 'GET') return Response.redirect(`${SITE}/newsletter.html?abmelden=${encodeURIComponent(token)}`, 302);
+  if (request.method !== 'POST' || !env.DB || !/^[a-f0-9]{48}$/.test(token)) return new Response('Ungültig', {status: 400});
+  await unsubscribe(env, token);
+  return new Response('Abgemeldet', {headers: {'Content-Type': 'text/plain; charset=utf-8'}});
+}
+
+// Newsletter-Bilder sind öffentlich (sonst zeigen Mailprogramme sie nicht). Designbilder der Bestellungen bleiben privat.
+async function newsletterImage(request, env, path) {
+  const name = path.slice('/bild/newsletter/'.length);
+  if (!env.BILDER || !/^[a-z0-9-]+\.(jpg|png|webp|gif)$/.test(name)) return new Response('Nicht gefunden', {status: 404});
+  const object = await env.BILDER.get(`newsletter/${name}`);
+  if (!object) return new Response('Nicht gefunden', {status: 404});
+  return new Response(object.body, {headers: {'Content-Type': object.httpMetadata?.contentType || 'image/jpeg', 'Cache-Control': 'public, max-age=31536000, immutable', 'X-Content-Type-Options': 'nosniff'}});
+}
+
+// Resend-Webhook (Svix-Signatur): zugestellt, unzustellbar, Beschwerde. Bei Beschwerde/hartem Bounce keine weiteren Mails.
+async function resendWebhook(request, env) {
+  if (request.method !== 'POST' || !env.DB || !env.RESEND_WEBHOOK_SECRET) return new Response('Nicht eingerichtet', {status: 503});
+  const body = await request.text(), id = request.headers.get('svix-id'), time = request.headers.get('svix-timestamp'), signatures = request.headers.get('svix-signature') || '';
+  if (!id || !time || Math.abs(Date.now() / 1000 - Number(time)) > 300) return new Response('Ungültig', {status: 400});
+  const secret = Uint8Array.from(atob(String(env.RESEND_WEBHOOK_SECRET).trim().replace(/^whsec_/, '')), c => c.charCodeAt(0));
+  const key = await crypto.subtle.importKey('raw', secret, {name: 'HMAC', hash: 'SHA-256'}, false, ['sign']);
+  const expected = base64(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${id}.${time}.${body}`)));
+  if (!signatures.split(' ').some(s => s.split(',')[1] === expected)) return new Response('Signatur falsch', {status: 401});
+  const event = JSON.parse(body), emailId = event?.data?.email_id;
+  if (!emailId) return new Response('ok');
+  const row = await env.DB.prepare('SELECT id, abonnent_id, status FROM newsletter_empfaenger WHERE resend_id = ?').bind(emailId).first();
+  if (!row) return new Response('ok'); // z. B. Bestellmails
+  const set = (status, extra) => env.DB.prepare('UPDATE newsletter_empfaenger SET status = ?, fehler = COALESCE(?, fehler) WHERE id = ?').bind(status, extra || null, row.id).run();
+  if (event.type === 'email.delivered' && row.status === 'gesendet') await set('zugestellt');
+  else if (event.type === 'email.bounced') {
+    await set('unzustellbar', clean(event.data?.bounce?.message || 'Unzustellbar', 300));
+    if (!event.data?.bounce?.type || /permanent/i.test(event.data.bounce.type)) await env.DB.prepare("UPDATE abonnenten SET status = 'unzustellbar' WHERE id = ? AND status = 'aktiv'").bind(row.abonnent_id).run();
+  } else if (event.type === 'email.complained') {
+    await set('beschwerde');
+    await env.DB.prepare("UPDATE abonnenten SET status = 'beschwerde', abgemeldet = ? WHERE id = ?").bind(new Date().toISOString(), row.abonnent_id).run();
+  } else if (event.type === 'email.failed') await set('fehler', clean(event.data?.failed?.reason || 'Versand fehlgeschlagen', 300));
+  return new Response('ok');
+}
+
+function confirmMail(vorname, link) {
+  const font = "font-family:Arial,Helvetica,sans-serif;";
+  const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only"><title>Newsletter bestätigen</title></head>
+<body style="margin:0;padding:0;background:#ece8e0">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#ece8e0"><tr><td align="center" style="padding:24px 12px">
+<table role="presentation" width="600" cellspacing="0" cellpadding="0" style="width:100%;max-width:600px;background:#ffffff;border-radius:22px;overflow:hidden">
+  <tr><td style="background:#131c30;padding:22px 32px">
+    <table role="presentation" cellspacing="0" cellpadding="0"><tr>
+      <td style="padding-right:12px"><img src="${SITE}/shirtbox-icon-mail.png" width="44" height="44" alt="" style="display:block;border:0;border-radius:12px"></td>
+      <td style="${font}font-size:26px;font-weight:900;letter-spacing:-1px;color:#f4f1ea">shirt<span style="color:#ff6a2b">box</span><span style="font-size:15px;font-weight:bold;color:#8a94a6">.ch</span></td>
+    </tr></table>
+  </td></tr>
+  <tr><td style="height:5px;line-height:5px;font-size:0;background:#ff5b2e;background-image:linear-gradient(90deg,#ff3d2e,#ff7a2b,#ffb43a)">&nbsp;</td></tr>
+  <tr><td style="padding:34px 32px 10px">
+    <h1 style="${font}margin:0 0 12px;font-size:26px;line-height:1.2;color:#131c30">Fast geschafft, ${esc(vorname)}!</h1>
+    <p style="${font}margin:0 0 22px;font-size:16px;line-height:1.55;color:#3d4554">Bitte bestätigen Sie mit einem Klick, dass Sie den ShirtBOX-Newsletter mit Neuigkeiten, Aktionen und Angeboten erhalten möchten.</p>
+    <table role="presentation" cellspacing="0" cellpadding="0"><tr><td style="border-radius:999px;background:#ff5b2e"><a href="${link}" style="${font}display:inline-block;padding:15px 30px;font-size:16px;font-weight:bold;color:#131c30;text-decoration:none">Anmeldung bestätigen</a></td></tr></table>
+    <p style="${font}margin:22px 0 0;font-size:13px;line-height:1.55;color:#8a909c">Falls Sie sich nicht angemeldet haben, ignorieren Sie diese E-Mail einfach – ohne Bestätigung erhalten Sie keine Newsletter. Der Link ist 14 Tage gültig.</p>
+  </td></tr>
+  <tr><td style="background:#131c30;padding:18px 32px;${font}font-size:12px;line-height:1.6;color:#8a94a6">ShirtBOX.ch · Leinackerweg 19 · 5014 Gretzenbach · Schweiz · <a href="mailto:info@shirtbox.ch" style="color:#ff9a6e;text-decoration:none">info@shirtbox.ch</a></td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+  const text = `Fast geschafft, ${vorname}!\n\nBitte bestätigen Sie Ihre Anmeldung zum ShirtBOX-Newsletter:\n${link}\n\nFalls Sie sich nicht angemeldet haben, ignorieren Sie diese E-Mail. Der Link ist 14 Tage gültig.\n\nShirtBOX.ch · Leinackerweg 19 · 5014 Gretzenbach · info@shirtbox.ch`;
+  return {html, text};
 }

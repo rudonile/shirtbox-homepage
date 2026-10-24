@@ -1,0 +1,61 @@
+SHIRTBOX VERWALTUNGSZENTRALE – EINRICHTUNG (Übersicht)
+======================================================
+
+Claude führt Sie Schritt für Schritt durch – immer nur ein Schritt, dann kurz bestätigen.
+Diese Datei ist nur die Übersicht zum Nachschlagen.
+
+DATEIEN IN DIESEM ORDNER
+- 2-shirtbox-admin-worker.js   NEUER Worker "shirtbox-admin" (Verwaltung + Newsletter-Versand). Komplett einfügen.
+- ..\shirtbox-email-worker.js  Bestehender Bestell-Worker "shirtbox-email", erweitert (speichert Bestellungen,
+                               Newsletter-Anmeldung, Abmeldung, Zustellmeldungen). Komplett einfügen.
+- 1-datenbank.sql              Datenbank-Tabellen. Werden vom Verwaltungs-Worker automatisch angelegt;
+                               nur als Reserve, falls man sie von Hand in der D1-Konsole anlegen möchte.
+- sicherung-shirtbox-email-worker-vorher.js   Sicherung des bisherigen Bestell-Workers (zum Zurückwechseln).
+- quelle\                      Quelltexte der Verwaltung (nicht nötig für die Einrichtung).
+
+REIHENFOLGE
+ 1. D1-Datenbank "shirtbox-verwaltung" anlegen
+ 2. R2-Bildspeicher "shirtbox-bilder" anlegen
+ 3. Worker "shirtbox-admin" erstellen und Code 2-shirtbox-admin-worker.js einfügen, Deploy
+ 4. shirtbox-admin: Bindings DB (D1) und BILDER (R2)
+ 5. shirtbox-admin: Secrets RESEND_API_KEY, ADMIN_PASSWORD, ADMIN_TOTP_SECRET
+    (Zwei-Faktor-Schlüssel in der Authenticator-App hinterlegen: Google Authenticator, Microsoft Authenticator o. ä.)
+ 6. shirtbox-admin: eigene Adresse admin.shirtbox.ch (Custom Domain)
+ 7. shirtbox-admin: Cron-Trigger  */15 * * * *
+ 8. Cloudflare Zero Trust → Access: Anwendung admin.shirtbox.ch, nur Ihre E-Mail-Adresse erlaubt;
+    danach Variablen ACCESS_TEAM_DOMAIN und ACCESS_AUD im Worker eintragen
+ 9. TEST: admin.shirtbox.ch öffnen, anmelden, Einstellungen → Systemprüfung
+10. Worker "shirtbox-email": Bindings DB und BILDER ergänzen, neuen Code einfügen, Deploy
+11. Website-Dateien auf GitHub hochladen (ohne Ordner _einrichtung)
+12. TEST: Testbestellung → erscheint in der Verwaltung (Datenbank-Test)
+13. Resend → Webhooks: https://shirtbox-email.r-n.workers.dev/resend/webhook
+    (Ereignisse email.delivered, email.bounced, email.complained, email.failed);
+    Signing Secret als RESEND_WEBHOOK_SECRET im Worker shirtbox-email
+14. TEST: Newsletter-Anmeldung auf shirtbox.ch/newsletter.html, Bestätigung, Test-Newsletter, Versand
+
+SICHERHEIT
+- Drei Schutzschichten: Cloudflare Access (Code per E-Mail) → Passwort → 6-stelliger App-Code.
+- Automatische Abmeldung nach 30 Minuten ohne Aktivität (in Einstellungen änderbar).
+- Nach 5 Fehlversuchen 15 Minuten Sperre.
+- Kundendaten liegen nur in D1/R2 und sind nur nach Anmeldung abrufbar. Keine Kundendaten in Logs.
+- Schlüssel und Passwörter nur als "Secret" im Worker speichern, nie in Website-Dateien.
+
+DATENSCHUTZ (Schweiz, revDSG / UWG)
+- Newsletter nur mit ausdrücklicher Einwilligung + Bestätigung per E-Mail (Double-Opt-in).
+  Zeitpunkt, Herkunft und Wortlaut der Einwilligung werden gespeichert.
+- Abmeldelink in jedem Newsletter, zusätzlich One-Click-Abmeldung im Mailprogramm.
+- Kunde: Datenauskunft (JSON) und Löschung in der Verwaltung. Aufbewahrungspflicht für
+  Geschäftsunterlagen (10 Jahre) beachten.
+- Empfehlung: Datenschutzerklärung auf der Website ergänzen (Newsletter, Resend, Cloudflare).
+
+LIMITS RESEND (Gratis-Konto)
+- 100 Mails pro Tag und 3000 pro Monat – inklusive Bestellmails. Darum versendet die Verwaltung
+  Newsletter in Etappen (Standard 80/Tag). Mit Resend Pro in den Einstellungen höher stellen.
+
+DATENSICHERUNG
+- D1 "Time Travel": Wiederherstellung bis 30 Tage zurück (Cloudflare-Dashboard → D1 → Time Travel).
+- Zusätzlich monatlich die CSV-Exporte herunterladen (Einstellungen → Daten exportieren).
+
+ZURÜCK ZUM ALTEN STAND
+- Worker shirtbox-email: Code aus sicherung-shirtbox-email-worker-vorher.js einfügen, Deploy.
+  Bestellungen und Mails funktionieren damit wie vorher.

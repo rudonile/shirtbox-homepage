@@ -82,6 +82,7 @@ form.was-submitted #design-validation:not([hidden]){display:block;margin:12px 0}
 .agb-consent input{flex:none;width:20px;height:20px;margin:0}
 .agb-consent:has(input:checked){border-color:#2f7a55;background:var(--mint-soft)}
 .order-design .agb-consent{grid-area:rights;margin:16px 0 0;font-size:13.5px}
+.newsletter-consent{margin-top:10px;font-size:13.5px}
 
 /* Zusammenfassung + Bestellknopf */
 .order-side{position:sticky;top:90px;max-height:calc(100vh - 110px);overflow-y:auto;display:flex;flex-direction:column;gap:14px;padding:22px;border-radius:24px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow-lg)}

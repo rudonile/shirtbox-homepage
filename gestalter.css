@@ -1,13 +1,8 @@
 /* ShirtBOX Gestalter – Eingabe links, Vorschau rechts, Auswahl und Bestellung darunter. Baut auf shirtbox.css auf. */
-.studio{max-width:var(--wrap);margin:0 auto;padding:clamp(24px,4vw,48px) var(--gutter) clamp(48px,7vw,88px)}
-.studio-head{text-align:center;margin:0 0 clamp(22px,3vw,34px)}
+.studio{max-width:var(--wrap);margin:0 auto;padding:12px var(--gutter) clamp(48px,7vw,88px)}
+.studio-head{text-align:center;margin:0 0 clamp(14px,2vw,22px)}
 .studio-head h1{margin:0;font-size:clamp(32px,5vw,56px)}
 .studio-head>p{margin:10px auto 0;max-width:620px;color:var(--ink-2);font-size:clamp(16px,1.6vw,19px)}
-.studio-steps{display:flex;justify-content:center;flex-wrap:wrap;gap:8px 10px;margin:20px 0 0;padding:0;list-style:none}
-.studio-steps li{display:inline-flex;align-items:center;gap:8px;padding:7px 14px 7px 7px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:14.5px;font-weight:700}
-.studio-steps b{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--solid);color:#fff;font-size:13px}
-.studio-steps li:nth-child(2) b{background:var(--fire);color:var(--on-accent)}
-.studio-steps li:nth-child(3) b{background:var(--blue)}
 .studio-grid{display:grid;grid-template-columns:minmax(300px,400px) minmax(0,1fr);gap:24px;align-items:start}
 
 /* Eingabe */
@@ -27,7 +22,8 @@
 .studio-models{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .studio-models button{display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:6px 6px 10px;border:2px solid var(--line-2);border-radius:16px;background:var(--surface);color:var(--ink);text-align:left;cursor:pointer;transition:border-color .15s,background .15s}
 .studio-models button:hover{border-color:var(--ink)}
-.studio-models img{display:block;width:100%;aspect-ratio:1;object-fit:cover;object-position:22% 50%;border-radius:11px;background:#747474}
+/* Eigene quadratische Auswahlbilder (*-auswahl.jpg): nur die Vorderseite, mittig. */
+.studio-models img{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:cover;border-radius:11px;background:#6c6c6c}
 .studio-models span{padding:0 4px;font-size:15px;font-weight:800}
 .studio-models small{display:block;margin-top:1px;font-size:12.5px;font-weight:500;color:var(--ink-3)}
 .studio-models button[aria-pressed=true]{border-color:var(--ink);background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--ink)}
@@ -107,10 +103,8 @@ html[lang=en] .studio-designs:empty::before{content:"Your T-shirt designs will a
 }
 /* Handy: eine Spalte, grosse Tippflächen, vor dem ersten Design nur das Formular. */
 @media(max-width:600px){
-  .studio{padding-top:18px}
+  .studio{padding-top:10px}
   .studio-head>p{font-size:15px}
-  .studio-steps{gap:6px}
-  .studio-steps li{font-size:13px;padding:5px 11px 5px 5px}
   .studio-panel{padding:18px;border-radius:20px}
   .studio-styles button{height:40px}
   .studio-stage.is-empty .studio-preview,.studio-stage.is-empty .studio-collection,.studio-collection:has(.studio-designs:empty){display:none}

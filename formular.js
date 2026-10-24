@@ -152,6 +152,7 @@
     body.set('bestellung', JSON.stringify({
       kunde: {vorname: value('vorname'), nachname: value('nachname'), email: value('email'), telefon: value('telefon-komplett'), strasse: value('strasse'), plz: value('plz'), ort: value('ort'), land: value('land')},
       agb: document.getElementById('agb-zustimmung').checked ? document.getElementById('agb-zustimmung').value : '',
+      newsletter: document.getElementById('newsletter-zustimmung')?.checked === true, newsletter_text: document.getElementById('newsletter-text')?.textContent.trim() || '',
       designs: order.designs.map((item, i) => ({nummer: states[i].designNumber || item.number, rechte: states[i].rights.checked, platzierung: states[i].card.querySelector('textarea.print-original')?.value || '', groessen: item.rows.map(row => ({groesse: row.size, anzahl: Number(row.quantity)}))}))
     }));
     let size = 0;
