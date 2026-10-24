@@ -1,0 +1,40 @@
+SHIRTBOX – BESTELL-E-MAIL EINRICHTEN
+===================================
+
+WICHTIG: Diese ZIP ist vorbereitet, aber der Versand funktioniert erst nach
+Einrichtung von Turnstile und ORDER_KV. Vorher NICHT live schalten.
+
+1. Cloudflare -> Turnstile: neues Widget fuer shirtbox.ch und www.shirtbox.ch
+   anlegen. Den oeffentlichen SITE KEY in bestellen.html anstelle von
+   HIER_TURNSTILE_SITE_KEY_EINTRAGEN einsetzen.
+2. Cloudflare -> Worker shirtbox-email -> Settings -> Variables and Secrets:
+   TURNSTILE_SECRET als SECRET mit dem geheimen Turnstile-Schluessel anlegen.
+   RESEND_API_KEY ist bereits eingerichtet.
+3. Cloudflare -> Storage & databases -> KV: Namespace 'shirtbox-orders' anlegen.
+   Worker shirtbox-email -> Settings -> Bindings -> KV namespace binding:
+   Variable name ORDER_KV, Namespace shirtbox-orders.
+4. Worker shirtbox-email -> Edit code: gesamten Inhalt aus
+   _einrichtung/shirtbox-email-worker.js einsetzen und Deploy.
+   NICHT den KI-Worker black-snow-2fdf bearbeiten!
+5. Die Webseiten-Dateien auf GitHub veroeffentlichen (Backups und
+   _einrichtung nicht mitveroeffentlichen). Vorher Testbestellung machen.
+
+Der Worker sendet die Shop-Mail zuerst an r-n@gmx.ch, dann die Kunden-Mail.
+Kunden erhalten Vorschau-Bilder als eingebettete JPEGs; der Shop erhaelt
+zusaetzlich Druckdateien/Originale als einzelne Anhaenge, soweit die
+Dateigroessen-Grenzen eingehalten werden.
+
+HINWEISE:
+- Kein automatischer FormSubmit-Fallback mehr: verhindert doppelten Versand
+  nach unklaren Fehlern. Eine bereits eingegangene Bestellung darf nicht
+  ohne Pruefung erneut abgeschickt werden.
+- ORDER_KV reduziert doppelte Uebermittlungen; KV ist nicht atomar.
+  Fuer strikte Einmaligkeit waere ein Durable Object oder eine Datenbank
+  mit eindeutiger Bestell-ID notwendig.
+- Cloudflare Turnstile prueft menschliche Besucher. CORS allein ist KEIN
+  Missbrauchsschutz.
+- E-Mail-Anhaenge unterliegen Resend-Groessenlimits. Bei grossen Bildern
+  kann der Versand scheitern; das sollte mit echten Druckdateien getestet werden.
+- Ein separater, geschuetzter Speicher fuer grosse Druckdateien waere fuer
+  den Produktivbetrieb besser als Mail-Anhaenge.
+- Bitte nach dem Deploy erst eine Testbestellung mit kleinem JPEG ausfuehren.

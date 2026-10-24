@@ -9,7 +9,7 @@
   const prefix = document.getElementById('vorwahl');
   const online = ['https:', 'http:'].includes(location.protocol);
   // Gestaltete Kundenbestätigung mit Shirt-Bildern; bei Fehler übernimmt die FormSubmit-Autoantwort.
-  const MAIL_API = 'https://black-snow-2fdf.r-n.workers.dev/bestaetigung';
+  const MAIL_API = 'https://shirtbox-email.r-n.workers.dev/bestaetigung';
   const designs = new Map();
   let nextSlot = 0;
   const money = api.money;
@@ -143,9 +143,12 @@
     return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(Error('Bild')), 'image/jpeg', .85));
   }
   // Schickt Bestellung, Druckdateien und Originalbilder an den Worker. Er versendet die interne Mail und die Kundenbestätigung.
+  function getOrderId(){let id=sessionStorage.getItem('shirtbox-order-id');if(!id){id=crypto.randomUUID();sessionStorage.setItem('shirtbox-order-id',id);}return id;}
   async function sendConfirmation(order) {
     const states = [...designs.values()], value = id => document.getElementById(id).value.trim();
     const body = new FormData();
+    body.set('bestell-id', getOrderId());
+    body.set('cf-turnstile-response', window.turnstile?.getResponse() || '');
     body.set('bestellung', JSON.stringify({
       kunde: {vorname: value('vorname'), nachname: value('nachname'), email: value('email'), telefon: value('telefon-komplett'), strasse: value('strasse'), plz: value('plz'), ort: value('ort'), land: value('land')},
       agb: document.getElementById('agb-zustimmung').checked ? document.getElementById('agb-zustimmung').value : '',
@@ -233,18 +236,25 @@
     submit.textContent='⏳ Bestellung wird übermittelt …';
     message('Ihre Bestellung wird übermittelt. Bitte warten und die Seite nicht schliessen.');
     (async () => {
-      const autoresponse = document.getElementById('antwort-mail');
       const next = document.getElementById('weiter');
-      let number, sent = null;
-      try { sent = await sendConfirmation(result.order); number = sent.bestellnummer; } catch { number = fallbackNumber(); }
-      const thanks = new URL(next.value || new URL('danke.html', location.href).href); thanks.searchParams.set('bestellung', number);
-      if (sent?.kunde) { location.href = thanks.href; return; }
-      // Ersatzweg FormSubmit: interne Mail mit Anhängen plus Text-Bestätigung an den Kunden.
-      autoresponse.disabled = false; autoresponse.value = `Bestellnummer: ${number}\n\n${autoresponse.value}`;
-      document.getElementById('bestellnummer').value = number;
-      document.getElementById('betreff').value = `Neue ShirtBOX-Bestellung ${number} – ${money(result.order.total)}`;
-      next.value = thanks.href;
-      form.submit();
+      try {
+        const sent=await sendConfirmation(result.order);
+        if(!sent.kunde) {
+          message(`Bestellung ${sent.bestellnummer} ist eingegangen, aber die Kundenbestätigung konnte nicht versendet werden. Bitte ShirtBOX kontaktieren.`);
+          submit.textContent='Bestellung eingegangen';
+          return;
+        }
+        sessionStorage.removeItem('shirtbox-order-id');
+        const thanks=new URL(next.value || new URL('danke.html',location.href).href);
+        thanks.searchParams.set('bestellung',sent.bestellnummer);
+        location.href=thanks.href;
+      } catch(e) {
+        message(`Bestellung nicht bestätigt: ${e.message}. Bitte NICHT erneut bestellen, wenn bereits eine Bestellmail angekommen ist. Kontaktieren Sie ShirtBOX.`);
+        if(progress)progress.hidden=true;
+        submit.removeAttribute('aria-busy');
+        submit.textContent='Erneut versuchen';
+        window.turnstile?.reset();
+      }
     })();
   });
   window.addEventListener('pageshow', () => { const progress=document.getElementById('order-submit-progress');if(progress)progress.hidden=true;submit.disabled=false;submit.removeAttribute('aria-busy');submit.innerHTML='Zahlungspflichtig bestellen <span aria-hidden="true">↗</span>';refresh(); });
