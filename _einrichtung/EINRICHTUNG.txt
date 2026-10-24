@@ -1,3 +1,36 @@
+KUNDEN-BESTELLMAIL MIT SHIRT-BILDERN (seit 24.10.2026)
+
+Die Bestätigung an Kunden kommt jetzt als gestaltete Mail mit den Shirt-Bildern
+vom Bild-Worker (Route /bestaetigung) über den Maildienst Resend.
+Solange das nicht eingerichtet ist, verschickt FormSubmit wie bisher die alte
+Text-Bestätigung (automatischer Rückfall, keine Bestellung geht verloren).
+
+Einmalig einrichten:
+1. Konto auf https://resend.com anlegen (Gratis: 3000 Mails/Monat, 100/Tag).
+2. Resend -> Domains -> Add Domain -> shirtbox.ch. Die angezeigten DNS-Einträge
+   (TXT/MX für SPF und DKIM) beim Domain-Anbieter von shirtbox.ch eintragen und
+   in Resend "Verify" klicken, bis die Domain grün/verifiziert ist.
+3. Resend -> API Keys -> Create API Key (Berechtigung: Sending access).
+4. Cloudflare -> Workers & Pages -> black-snow-2fdf -> Settings -> Variables and
+   Secrets -> Add -> Typ "Secret", Name RESEND_API_KEY, Wert = der API-Key.
+5. Edit code -> gesamten Code durch _einrichtung/worker-code.txt ersetzen -> Deploy.
+6. Prüfen: https://black-snow-2fdf.r-n.workers.dev/health
+   muss version 20261024-bestellmail und mail: true zeigen.
+7. Eine Testbestellung mit der eigenen Adresse machen.
+
+Absender: ShirtBOX <bestellung@shirtbox.ch>. Antworten der Kunden gehen an r-n@gmx.ch.
+Optional anpassbar als Variablen im Worker: MAIL_FROM, SHOP_EMAIL.
+
+Interne Bestellmail (an r-n@gmx.ch), ebenfalls vom Worker:
+Betreff "🛒 Neue Bestellung SB-… – CHF … – Name". Enthält offene Zahlung,
+Kunde (Mail/Telefon/WhatsApp anklickbar), Lieferadresse, Lieferanten-Bestellliste
+mit umgerechneten asiatischen Grössen, Shirt-Bilder, Platzierungsangaben und als
+Anhang die Druckdateien in voller Auflösung (SB-…-design-1.jpg) plus Originalbilder.
+"Antworten" auf diese Mail schreibt direkt an den Kunden.
+
+Ersatzweg: Ist Resend nicht eingerichtet oder nicht erreichbar, läuft die Bestellung
+automatisch wie früher über FormSubmit (interne Tabellen-Mail + Text-Bestätigung).
+
 BILDGENERATOR AKTUALISIEREN – OHNE TAGESLIMIT
 
 1. Cloudflare: Workers & Pages -> black-snow-2fdf -> Edit code.
