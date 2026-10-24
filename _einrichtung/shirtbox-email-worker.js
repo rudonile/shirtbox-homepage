@@ -1,5 +1,5 @@
 // ShirtBOX dedicated order-mail Worker. Deploy ONLY to shirtbox-email.
-// Required secrets: RESEND_API_KEY, TURNSTILE_SECRET.
+// Required secrets: RESEND_API_KEY, TURNSTILE_SECRET_KEY.
 // Required KV binding: ORDER_KV (for duplicate protection).
 // Public site must configure Turnstile site key in bestellen.html.
 const ALLOWED_SITES = new Set(['https://shirtbox.ch','https://www.shirtbox.ch']);
@@ -15,12 +15,43 @@ async function readBody(request,limit){
   const body=new Uint8Array(total);let pos=0;for(const chunk of chunks){body.set(chunk,pos);pos+=chunk.byteLength;}return body;
 }
 async function verifyTurnstile(token,request,env){
-  if(!env.TURNSTILE_SECRET || !token)return false;
-  const form=new FormData();form.set('secret',env.TURNSTILE_SECRET);form.set('response',token);
-  const ip=request.headers.get('CF-Connecting-IP');if(ip)form.set('remoteip',ip);
-  const res=await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify',{method:'POST',body:form});
-  if(!res.ok)return false;const data=await res.json();
-  return data.success===true && (!data.hostname || ['shirtbox.ch','www.shirtbox.ch'].includes(data.hostname));
+  // Leerzeichen und Anführungszeichen aus dem Dashboard-Eintrag entfernen.
+  const secret = String(env.TURNSTILE_SECRET_KEY || '').trim().replace(/^["']|["']$/g, '');
+  if (!secret) {
+    console.error('Turnstile Diagnose: Secret fehlt');
+    return {ok:false, reason:'secret-fehlt'};
+  }
+  if (typeof token !== 'string' || !token.trim()) {
+    console.warn('Turnstile Diagnose: Token fehlt im Formular (cf-turnstile-response)');
+    return {ok:false, reason:'token-fehlt'};
+  }
+  try {
+    const form = new FormData();
+    form.set('secret', secret);
+    form.set('response', token);
+    const ip = request.headers.get('CF-Connecting-IP');
+    if (ip) form.set('remoteip', ip);
+    const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {method:'POST',body:form});
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('Turnstile Diagnose: HTTP', res.status, errorText);
+      let codes = '';
+      try { codes = (JSON.parse(errorText)['error-codes'] || []).join(','); } catch {}
+      return {ok:false, reason:`siteverify-http ${res.status} ${codes}`.trim()};
+    }
+    const data = await res.json();
+    // Keine Tokens, IP-Adressen oder Secrets protokollieren.
+    console.log('Turnstile Diagnose:', JSON.stringify({success:data.success,hostname:data.hostname,errors:data['error-codes']}));
+    if (data.success !== true) return {ok:false, reason:(data['error-codes'] || []).join(',') || 'siteverify-abgelehnt'};
+    if (data.hostname && !['shirtbox.ch','www.shirtbox.ch'].includes(data.hostname)) {
+      console.warn('Turnstile Diagnose: unerwarteter Hostname',data.hostname);
+      return {ok:false, reason:'hostname'};
+    }
+    return {ok:true};
+  } catch (error) {
+    console.error('Turnstile Diagnose: Anfrage fehlgeschlagen', String(error?.message || error));
+    return {ok:false, reason:'netzwerkfehler'};
+  }
 }
 export default {async fetch(request,env){
   const origin=request.headers.get('Origin')||'';const path=new URL(request.url).pathname;
@@ -28,7 +59,7 @@ export default {async fetch(request,env){
   if(!ALLOWED_SITES.has(origin))return reply(origin,403,'Nicht freigegeben.');
   if(path!=='/bestaetigung')return reply(origin,404,'Nicht gefunden.');
   if(request.method!=='POST')return reply(origin,405,'Nur POST erlaubt.');
-  if(!env.RESEND_API_KEY||!env.TURNSTILE_SECRET||!env.ORDER_KV)return reply(origin,503,'Mail-Dienst noch nicht vollständig eingerichtet.');
+  if(!env.RESEND_API_KEY||!env.TURNSTILE_SECRET_KEY||!env.ORDER_KV)return reply(origin,503,'Mail-Dienst noch nicht vollständig eingerichtet.');
   return orderConfirmation(request,env,origin);
 }};
 
@@ -294,7 +325,8 @@ async function orderConfirmation(request, env, origin) {
     order = readOrder(raw);
   } catch (e) { return reply(origin, e.message === 'SIZE' ? 413 : 400, 'Die Bestellangaben sind unvollständig oder ungültig.'); }
   const token = form.get('cf-turnstile-response');
-  if(typeof token !== 'string' || !(await verifyTurnstile(token,request,env))) return reply(origin,403,'Sicherheitsprüfung fehlgeschlagen. Bitte erneut bestätigen.');
+  const turnstile = await verifyTurnstile(token,request,env);
+  if (!turnstile.ok) return reply(origin,403,`Sicherheitsprüfung fehlgeschlagen (${turnstile.reason}). Bitte Sicherheitsprüfung erneuern.`);
   const clientId=form.get('bestell-id');
   if(typeof clientId!=='string'||!/^[a-f0-9-]{36}$/.test(clientId))return reply(origin,400,'Bestellkennung fehlt.');
   const key='order:'+clientId;
