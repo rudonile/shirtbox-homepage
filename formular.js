@@ -158,7 +158,12 @@
     let size = 0;
     for (const [i, state] of states.entries()) {
       const file = state.file.files[0];
-      if (file) { body.set(`druck_${i}`, file, file.name); size += file.size; body.set(`bild_${i}`, await mailImage(file), `design-${i + 1}.jpg`); }
+      // Druckdatei: das bestellte Design auf 5315 × 7087 px hochgerechnet (druckdatei.js); falls das scheitert, das Original.
+      if (file) {
+        const print = await window.ShirtboxPrint?.make(file).catch(() => null);
+        body.set(`druck_${i}`, print || file, print ? `design-${i + 1}-5315x7087.jpg` : file.name); size += (print || file).size;
+        body.set(`bild_${i}`, await mailImage(file), `design-${i + 1}.jpg`);
+      }
       for (const input of state.card.querySelectorAll('input.print-original')) { const original = input.files[0]; if (original) { body.append(`original_${i}`, original, original.name); size += original.size; } }
     }
     if (size > 24 * 1024 * 1024) throw Error('Zu gross für den Mailversand');
