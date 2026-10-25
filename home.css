@@ -31,6 +31,12 @@ body.home::before{content:"";position:fixed;inset:0;z-index:200;pointer-events:n
 .hx h1 span{display:block}
 .hx-grad{background:var(--fire);-webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:.06em}
 .hx-outline{margin-top:.18em;font-size:.5em;font-weight:700;letter-spacing:-.02em;color:transparent;-webkit-text-stroke:1.4px #f4f1eab3}
+/* Preiszeile direkt unter der Überschrift */
+.hx-price{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:-8px 0 24px;padding:8px 16px;border-radius:999px;background:#ffffff0a;border:1px solid #ff7a2b66;color:var(--muted-2);font-size:clamp(14px,1.3vw,16px);font-weight:650;line-height:1.2}
+.hx-price b{font-family:"Unbounded","Segoe UI",system-ui,sans-serif;font-size:1.15em;font-weight:800;letter-spacing:-.02em;color:var(--paper)}
+.hx-price i{font-style:normal;color:#ff7a2b}
+.hx-price .hx-price-off{padding:2px 9px;border-radius:999px;background:var(--fire);color:var(--night);font-size:1em}
+.hx-facts li:first-child{display:none}/* Preis steht schon in der Preiszeile */
 .hx-lead{max-width:540px;margin:0 0 30px;color:#aab2c0;font-size:clamp(16px,1.45vw,19px)}
 .hx-actions{display:flex;flex-wrap:wrap;gap:12px;margin:0 0 28px}
 .hx-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;min-height:58px;padding:0 30px;border-radius:999px;font-size:17px;font-weight:800;text-decoration:none;overflow:hidden;transition:transform .2s,box-shadow .2s}
@@ -92,10 +98,11 @@ body.home::before{content:"";position:fixed;inset:0;z-index:200;pointer-events:n
 
 /* Computer: Hero und Anlässe passen zusammen auf den ersten Bildschirm und stehen senkrecht mittig. Grössen richten sich nach der Bildschirmhöhe. */
 @media(min-width:901px){
-  .hx{flex:1;display:flex;align-items:center;padding:clamp(14px,3vh,48px) 0}
+  .hx{flex:1;display:flex;align-items:center;padding:clamp(8px,2vh,48px) 0}
   .hx-grid{width:100%}
-  .hx-kicker{margin-bottom:clamp(10px,2.2vh,22px)}
-  .hx h1{font-size:clamp(34px,min(5.1vw,7vh),74px);margin-bottom:clamp(12px,2.6vh,26px)}
+  .hx-kicker{margin-bottom:clamp(8px,1.6vh,22px)}
+  .hx h1{font-size:clamp(34px,min(5.1vw,6.4vh),74px);margin-bottom:clamp(12px,2.6vh,26px)}
+  .hx-price{margin:calc(-1 * clamp(4px,1vh,10px)) 0 clamp(12px,2.6vh,24px)}
   .hx-lead{max-width:600px;margin-bottom:clamp(14px,3vh,30px);font-size:clamp(15px,min(1.45vw,2.2vh),19px)}
   .hx-actions{margin-bottom:clamp(12px,2.6vh,28px)}
   .hx-btn{min-height:clamp(48px,6.4vh,58px)}
@@ -119,11 +126,13 @@ body.home::before{content:"";position:fixed;inset:0;z-index:200;pointer-events:n
   /* Der Hero füllt die Höhe zwischen Kopf- und Fusszeile; Überschrift, Bilder und Knopf verteilen sich gleichmässig. */
   .home .shell{min-height:100vh;min-height:100svh}
   .hx{flex:1;display:flex;padding:12px 0 4px}
-  .hx-grid{flex:1;align-content:space-evenly;gap:14px}
+  .hx-grid{flex:1;align-content:space-evenly;gap:10px}
   .hx-copy{display:contents}
   .hx-kicker,.hx-lead,.hx-btn-ghost,.hx-facts{display:none}
   .hx h1{order:2;margin-bottom:0}
-  .hx-stage{order:3;--sh:clamp(200px,min(78vw,38vh),340px);--sh:clamp(200px,min(78vw,38svh),340px);height:var(--sh);width:min(100%,calc(var(--sh)*1.2));margin:0 auto}
+  .hx-price{order:2;justify-self:center;flex-wrap:nowrap;margin:0;padding:5px 11px;gap:6px;font-size:clamp(11px,3.3vw,13px);white-space:nowrap}
+  .hx-price .hx-price-off{padding:1px 7px}
+  .hx-stage{order:3;--sh:clamp(180px,min(78vw,34vh),340px);--sh:clamp(180px,min(78vw,34svh),340px);height:var(--sh);width:min(100%,calc(var(--sh)*1.2));margin:0 auto}
   .hx-actions{order:4;margin:0}
   .hx-btn{min-height:52px}
   .home .occ{padding-top:10px;padding-bottom:6px;margin-bottom:10px}
