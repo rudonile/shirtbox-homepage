@@ -19,6 +19,14 @@ body.simple-home .footer-legal{text-align:left!important}
 body.simple-home [data-lang].active{background:#ff7a2b!important;border-color:#ff7a2b!important;color:#090c13!important}
 @media(max-width:860px){.logo-icon{width:34px;height:34px;border-radius:10px}.logo-word{font-size:18px}}
 
+/* Hintergrund-Werkzeuge (navigation.js): hauchdünne Strichzeichnungen, tauchen abwechselnd auf, schweben leicht und verblassen. */
+.sb-tools{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.sb-tools span{position:absolute;opacity:0;animation:sbTool 9s ease-in-out forwards}
+.sb-tools svg{display:block;width:100%;height:100%;overflow:visible;fill:none;stroke:currentColor;stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}
+.sb-tools svg *{vector-effect:non-scaling-stroke}
+.sb-tools .is-still{animation:none;opacity:.13;transform:rotate(var(--r))}
+@keyframes sbTool{0%{opacity:0;transform:translateY(16px) rotate(var(--r)) scale(.9)}25%,70%{opacity:.2}100%{opacity:0;transform:translateY(-16px) rotate(var(--r)) scale(1)}}
+
 /* Fusszeile: eine schlanke Zeile – Logo, Kontakt, Rechtliches. */
 .site-footer{position:relative;margin:0;background:#090c13;color:#9aa3b2;overflow:hidden}
 .site-footer::before{content:"";position:absolute;inset:0 0 auto;height:1px;background:linear-gradient(90deg,transparent,#ff5b2e88,transparent)}
