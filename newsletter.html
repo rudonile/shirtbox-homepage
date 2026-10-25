@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<meta content="ShirtBOX-Newsletter: Neuigkeiten, Aktionen und Angebote rund um Ihr individuelles 360°-Shirt. Kostenlos und jederzeit abbestellbar." name="description"/>
+<title>Newsletter · ShirtBOX.ch</title>
+<link href="shirtbox-icon.svg" rel="icon" type="image/svg+xml"/><link href="shirtbox.css?v=20261024-360" rel="stylesheet"/><link href="marke.css?v=20261024-fuss" rel="stylesheet"/>
+<style>
+.nl{max-width:620px;margin:0 auto;padding:clamp(28px,5vw,64px) var(--gutter) clamp(48px,7vw,88px)}
+.nl-card{padding:clamp(22px,4vw,34px);border-radius:24px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow-lg)}
+.nl h1{font-size:clamp(28px,5vw,44px)}
+.nl p{color:var(--ink-2)}
+.nl-form{display:grid;gap:12px;margin-top:18px}
+.nl-form .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.nl-form label{display:block;font-size:14px;font-weight:700;color:var(--ink)}
+.nl-form input:not([type=checkbox]){display:block;width:100%;min-height:50px;margin-top:6px;padding:12px 14px;border:1.5px solid var(--line-2);border-radius:14px;background:var(--surface-2);color:var(--ink);font:inherit}
+.nl-form input:focus{outline:2px solid #ff5b2e66;border-color:var(--accent)}
+.nl-btn{display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 28px;border:0;border-radius:999px;background:var(--fire);color:var(--on-accent);font:inherit;font-size:17px;font-weight:850;cursor:pointer;box-shadow:0 10px 30px #ff5b2e4d}
+.nl-btn:disabled{opacity:.6;cursor:progress}
+.nl-btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 2px var(--line-2)}
+.nl-note{margin:4px 0 0;font-size:13px;color:var(--ink-3)}
+.nl-msg{margin:16px 0 0;padding:14px 16px;border-radius:14px;font-weight:650}
+.nl-msg.good{background:var(--mint-soft);color:#7ff0a8}.nl-msg.bad{background:#3a1a1c;color:var(--error)}
+.nl-list{margin:14px 0 0;padding:0;list-style:none;display:grid;gap:6px;color:var(--ink-2)}
+.nl-list li::before{content:"✓ ";color:#7ff0a8;font-weight:900}
+.trap{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+@media(max-width:560px){.nl-form .two{grid-template-columns:1fr}.nl-btn{width:100%}}
+</style>
+</head>
+<body>
+<main class="shell">
+<header class="masthead">
+<a aria-label="ShirtBOX.ch – Startseite" class="brand" href="index.html"><img class="logo-icon" src="shirtbox-icon.svg" alt="" width="64" height="64"/><span class="logo-word">shirt<b>box</b><small>.ch</small></span></a>
+<nav aria-label="Hauptnavigation"><a href="index.html">Startseite</a><a href="designhilfe.html">Shirt erstellen</a><a href="shirts-live.html">Shirts live</a><a href="faq.html">FAQs</a><a href="ueber-uns.html">Über uns</a></nav>
+<a class="mobile-order-shortcut" href="bestellen.html#bestellen" hidden aria-hidden="true">Zur Bestellung</a>
+<div aria-label="Sprache / Language" class="language-switch"><button data-lang="de" type="button">DE</button><button data-lang="en" type="button">EN</button></div>
+<a class="btn btn-primary head-cta" href="designhilfe.html">✨ T-Shirt designen</a>
+</header>
+
+<section class="nl" aria-labelledby="nl-title">
+<div class="nl-card">
+<!-- Anmeldung -->
+<div id="nl-anmelden">
+<p class="hero-kicker">📬 Newsletter</p>
+<h1 id="nl-title">Neuigkeiten von ShirtBOX</h1>
+<p>Erfahren Sie als Erste von neuen Shirt-Ideen, Aktionen und Angeboten. Kostenlos und jederzeit abbestellbar.</p>
+<ul class="nl-list"><li>Höchstens ein- bis zweimal im Monat</li><li>Exklusive Aktionen für Vereine und Teams</li><li>Abmeldung mit einem Klick</li></ul>
+<form class="nl-form" id="nl-form" novalidate>
+<div class="two"><label>Vorname *<input id="nl-vorname" autocomplete="given-name" maxlength="80" required/></label><label>Nachname<input id="nl-nachname" autocomplete="family-name" maxlength="80"/></label></div>
+<label>E-Mail-Adresse *<input id="nl-email" type="email" autocomplete="email" maxlength="254" required/></label>
+<div class="trap" aria-hidden="true"><label>Website<input id="nl-website" tabindex="-1" autocomplete="off"/></label></div>
+<div class="cf-turnstile" data-sitekey="0x4AAAAAAFkDAIIYBJZ9VFKw" data-theme="dark"></div>
+<button class="nl-btn" id="nl-submit" type="submit">Newsletter abonnieren</button>
+<p class="nl-note">Sie erhalten zuerst eine E-Mail mit einem Bestätigungslink. Erst nach Ihrer Bestätigung senden wir Ihnen Newsletter. Ihre Angaben verwenden wir ausschliesslich für den Newsletter und geben sie nicht weiter. Versand über unseren E-Mail-Dienstleister Resend.</p>
+<p class="nl-msg" id="nl-msg" role="status" aria-live="polite" hidden></p>
+</form>
+</div>
+<!-- Bestätigung / Abmeldung über Link aus der E-Mail -->
+<div id="nl-link" hidden>
+<p class="hero-kicker">📬 Newsletter</p>
+<h1 id="nl-link-title"></h1>
+<p id="nl-link-text"></p>
+<button class="nl-btn" id="nl-link-button" type="button"></button>
+<p class="nl-msg" id="nl-link-msg" role="status" aria-live="polite" hidden></p>
+<p style="margin-top:18px"><a href="index.html">← Zur Startseite</a></p>
+</div>
+</div>
+</section>
+
+<footer class="site-footer">
+<div class="footer-inner">
+<a aria-label="ShirtBOX.ch – Startseite" class="brand" href="index.html"><img class="logo-icon" src="shirtbox-icon.svg" alt="" width="64" height="64" loading="lazy"/><span class="logo-word">shirt<b>box</b><small>.ch</small></span></a>
+<nav class="footer-links" aria-label="Kontakt und Rechtliches"><a class="wa" href="https://wa.me/41764690100" rel="noopener" target="_blank">💬 WhatsApp</a><a href="mailto:info@shirtbox.ch">✉️ info@shirtbox.ch</a><a href="newsletter.html" aria-current="page">📬 Newsletter</a><a href="agb.html">AGB</a><a href="impressum.html">Impressum</a></nav>
+</div>
+<p class="footer-legal"><a class="footer-admin" href="https://admin.shirtbox.ch/" rel="nofollow">© 2026 ShirtBOX.ch</a> · Alle Preise inkl. MwSt. und Versand · Bezahlung per TWINT</p>
+</footer>
+</main>
+<script defer src="newsletter.js?v=20261024"></script>
+<script defer src="navigation.js?v=20261023-neu"></script>
+<script defer src="language.js?v=20261024-newsletter"></script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+</body>
+</html>
