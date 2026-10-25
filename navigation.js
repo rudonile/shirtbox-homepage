@@ -108,19 +108,37 @@
     '<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/>', // Chip
     '<circle cx="5" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 6.8l3.2 4M7 17.2l3.2-4M13.8 10.8L17 6.8M13.8 13.2l3.2 4M7 6h10M7 18h10"/>' // Neuronales Netz
   ];
+  // Sportarten passend zu den Anlässen: fliegen abwechselnd mit den Werkzeugen von hinten heran.
+  const SPORTS = [
+    '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M13.5 10.5L21 3M18 3h3v3"/>', // Darts
+    '<circle cx="12" cy="12" r="10"/><path d="M12 7l4 3-1.5 5h-5L8 10z"/><path d="M12 7V2M16 10l4.6-1.8M14.5 15l3 4.2M9.5 15l-3 4.2M8 10L3.4 8.2"/>', // Fussball
+    '<path d="M10 2.5c-1.4 0-1.9 1.5-1.9 2.9 0 1.2.6 2 .6 3S6.5 11 6.5 15c0 3.4 1.4 5.8 1.9 6.5h3.2c.5-.7 1.9-3.1 1.9-6.5 0-4-2.2-5.6-2.2-6.6s.6-1.8.6-3c0-1.4-.5-2.9-1.9-2.9z"/><path d="M8.6 7.6h2.8"/><circle cx="18" cy="17.5" r="4"/><circle cx="17" cy="16.3" r=".5"/><circle cx="18.8" cy="16" r=".5"/>', // Kegeln
+    '<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2v20"/><path d="M5.6 4.3C8.5 7 8.5 17 5.6 19.7M18.4 4.3C15.5 7 15.5 17 18.4 19.7"/>', // Basketball
+    '<circle cx="12" cy="12" r="10"/><path d="M4 6.5c4 2.2 12 2.2 16 0M4 17.5c4-2.2 12-2.2 16 0M12 2c-3 5-3 15 0 20"/>', // Handball
+    '<circle cx="12" cy="12" r="10"/><path d="M12 12c0-4 2.2-7.7 6.2-9.4M12 12c-3.5 2-7.8 2.2-10 .2M12 12c3.5 2 5.7 5.6 5.8 9.3"/>', // Volleyball
+    '<path d="M5 2l8 16c.4.8 1 1 2 1h6"/><ellipse cx="7" cy="20" rx="4" ry="1.5"/>', // Eishockey
+    '<circle cx="9" cy="9" r="6.5"/><path d="M13.6 13.6L21 21"/><path d="M4 7h10M3 10h12M4.5 13h9M7 3v12M11 3v12"/><circle cx="19.5" cy="4.5" r="2"/>', // Tennis
+    '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>', // Pokal
+    '<path d="M7 2l3 6M17 2l-3 6"/><circle cx="12" cy="15" r="6"/><path d="M12 12l.9 1.9 2.1.2-1.6 1.4.5 2.1-1.9-1.1-1.9 1.1.5-2.1-1.6-1.4 2.1-.2z"/>' // Medaille
+  ];
   const COLORS = ['#ffffff', '#ffb48f', '#a9bdff'];
   const layer = document.createElement('div'); layer.className = 'sb-tools'; layer.setAttribute('aria-hidden', 'true');
   document.body.prepend(layer);
-  let last = -1;
+  let last = '', sport = false;
   function spawn(still) {
-    let i; do i = Math.floor(Math.random() * ICONS.length); while (i === last); last = i;
-    const el = document.createElement('span'), size = Math.round(48 + Math.random() * 72);
-    el.innerHTML = `<svg viewBox="0 0 24 24">${ICONS[i]}</svg>`;
-    el.style.cssText = `left:${(2 + Math.random() * 90).toFixed(1)}vw;top:${(6 + Math.random() * 82).toFixed(1)}vh;width:${size}px;height:${size}px;color:${COLORS[i % COLORS.length]};--r:${(Math.random() * 40 - 20).toFixed(1)}deg`;
-    if (still) el.className = 'is-still'; else setTimeout(() => el.remove(), 9500);
+    sport = !sport;
+    const list = sport ? SPORTS : ICONS;
+    let i; do i = Math.floor(Math.random() * list.length); while (`${sport}${i}` === last); last = `${sport}${i}`;
+    const el = document.createElement('span'), size = Math.round((sport ? 56 : 48) + Math.random() * 72);
+    const x = 2 + Math.random() * 90, y = 6 + Math.random() * 82;
+    el.innerHTML = `<svg viewBox="0 0 24 24">${list[i]}</svg>`;
+    // Sportgeräte fliegen von der Bildmitte nach aussen, als kämen sie aus der Tiefe auf einen zu.
+    el.style.cssText = `left:${x.toFixed(1)}vw;top:${y.toFixed(1)}vh;width:${size}px;height:${size}px;color:${COLORS[i % COLORS.length]};--r:${(Math.random() * 40 - 20).toFixed(1)}deg;--dx:${((50 - x) * .6).toFixed(1)}vw;--dy:${((50 - y) * .6).toFixed(1)}vh`;
+    if (sport) el.classList.add('is-fly');
+    if (still) el.classList.add('is-still'); else setTimeout(() => el.remove(), 9500);
     layer.append(el);
   }
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { for (let n = 0; n < 7; n++) spawn(true); return; }
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { for (let n = 0; n < 8; n++) spawn(true); return; }
   spawn(); setTimeout(spawn, 900);
   setInterval(() => { if (!document.hidden) spawn(); }, 1800);
 })();

@@ -24,7 +24,9 @@ body.simple-home [data-lang].active{background:#ff7a2b!important;border-color:#f
 .sb-tools span{position:absolute;opacity:0;animation:sbTool 9s ease-in-out forwards}
 .sb-tools svg{display:block;width:100%;height:100%;overflow:visible;fill:none;stroke:currentColor;stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}
 .sb-tools svg *{vector-effect:non-scaling-stroke}
-.sb-tools .is-still{animation:none;opacity:.13;transform:rotate(var(--r))}
+.sb-tools span.is-still{animation:none;opacity:.13;transform:rotate(var(--r))}
+.sb-tools .is-fly{animation:sbFly 7.5s cubic-bezier(.25,.1,.3,1) forwards}
+@keyframes sbFly{0%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.12) rotate(calc(var(--r) - 90deg))}30%{opacity:.22}65%{opacity:.2}100%{opacity:0;transform:translate(0,0) scale(1.35) rotate(var(--r))}}
 @keyframes sbTool{0%{opacity:0;transform:translateY(16px) rotate(var(--r)) scale(.9)}25%,70%{opacity:.2}100%{opacity:0;transform:translateY(-16px) rotate(var(--r)) scale(1)}}
 
 /* Fusszeile: eine schlanke Zeile – Logo, Kontakt, Rechtliches. */
