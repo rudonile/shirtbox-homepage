@@ -20,7 +20,8 @@
   const editRow = $('studio-edit'), editInput = $('studio-edit-input'), editButton = $('studio-edit-button');
   const list = $('studio-designs'), count = $('studio-count'), orderBar = $('studio-order'), total = $('studio-total'), orderButton = $('studio-order-button'), another = $('studio-another');
 
-  const designs = []; let active = -1, busy = false, editingOrder = false;
+  // startOver: nach „Weiteres T-Shirt designen“ beginnt die Schrittanzeige wieder bei 1, obwohl schon Designs da sind.
+  const designs = []; let active = -1, busy = false, editingOrder = false, startOver = false;
 
   const fail = text => { error.textContent = text; error.hidden = !text; };
   const say = text => { status.textContent = text; };
@@ -47,18 +48,19 @@
     const n = ready().length, c = chosen().length;
     count.textContent = n ? `${n} Design${n === 1 ? '' : 's'}` : '';
     orderBar.hidden = !n;
-    total.textContent = c ? `${c} T-Shirt${c === 1 ? '' : 's'} ausgewählt · ab ${window.ShirtboxOrder.money(window.ShirtboxOrder.totalForQuantity(c))}` : 'Kein T-Shirt ausgewählt';
+    total.textContent = c ? `${c} T-Shirt${c === 1 ? '' : 's'} ausgewählt · ${window.ShirtboxOrder.money(window.ShirtboxOrder.totalForQuantity(c))}` : 'Kein T-Shirt ausgewählt';
     orderButton.textContent = editingOrder ? 'Zurück zur Bestellung →' : c > 1 ? `${c} T-Shirts zur Bestellung →` : 'T-Shirt zur Bestellung →';
     controls();
   }
 
   function controls() {
     surprise.disabled = busy;
-    surprise.textContent = designs.length ? '✨ Weiteres T-Shirt designen' : '✨ T-Shirt designen';
+    surprise.textContent = '✨ T-Shirt designen';
     editButton.disabled = busy || !editInput.value.trim();
     orderButton.disabled = busy || !chosen().length;
     another.disabled = busy;
     stage.classList.toggle('is-empty', !designs.length && !busy);
+    stage.classList.toggle('is-blank', active < 0 && !busy);
     loader.hidden = !busy; form.setAttribute('aria-busy', String(busy));
     steps();
   }
@@ -67,7 +69,7 @@
   const stepItems = [...document.querySelectorAll('#studio-steps [data-step]')], idea = $('studio-idea'), go = $('studio-go'), collection = $('studio-collection');
   const hasIdea = () => !!(keyword.value.trim() || shirtText.value.trim() || photo.files[0] || styleChoice);
   function steps() {
-    const current = !model && !designs.length ? 1 : designs.length ? 4 : hasIdea() ? 3 : 2;
+    const current = designs.length && !startOver ? 4 : !model ? 1 : hasIdea() ? 3 : 2;
     stepItems.forEach(item => {
       const n = Number(item.dataset.step);
       item.classList.toggle('is-done', n < current); item.classList.toggle('is-current', n === current);
@@ -199,8 +201,14 @@
     return new Blob([bytes], {type: 'image/jpeg'});
   }
 
+  // Ergebnis-Ansicht: Sobald ein Shirt fertig ist, blendet das Handy (eine Spalte) Überschrift und Formular aus –
+  // das Shirt steht oben, darunter Änderungen / weiteres Shirt, darunter die Bestellung. Zurück nur über „Weiteres T-Shirt designen“.
+  const studio = form.closest('.studio'), oneColumn = matchMedia('(max-width: 900px)');
+  const showResult = on => studio.classList.toggle('is-result', on);
+
   // T-Shirt-Vorschau mittig in den sichtbaren Bereich unter der fixen Kopfzeile scrollen.
   function showPreview() {
+    if (studio.classList.contains('is-result') && oneColumn.matches) { window.scrollTo({top: 0, behavior: 'smooth'}); return; }
     const figure = picture.closest('figure'); if (!figure) return;
     const top = document.querySelector('.masthead')?.getBoundingClientRect().bottom || 0;
     const bottom = window.innerHeight;
@@ -229,18 +237,23 @@
       const blob = await request(surprisePrompt(word, text, !!file), file ? await withPhoto(file) : model === 'polo' ? null : await template());
       const summary = [`Modell: ${MODELS[model].label}`, styleChoice && `Stil: ${STYLES[styleChoice].label}`, word && `Design: ${word}`, text && `Text: ${text}`, file && 'mit eigenem Foto'].filter(Boolean).join(' · ');
       designs.push({blob, url: URL.createObjectURL(blob), prompt: `KI-Design – ${summary}`, model, selected: true, number: editingOrder ? Math.max(0, ...designs.map(d => d.number || 0)) + 1 : null});
-      active = designs.length - 1;
+      active = designs.length - 1; startOver = false; showResult(true);
       say(`Design ${active + 1} ist fertig. Sie können es unten noch ändern oder direkt bestellen.`);
     });
   });
 
-  // Weiteres T-Shirt: Eingaben leeren und zurück zum Formular.
+  // Weiteres T-Shirt: alle Eingaben (Modell, Stil, Beschreibung, Text, Foto) zurücksetzen und oben bei Schritt 1 neu beginnen.
+  // Die fertigen Designs bleiben unten in „Ihre T-Shirts“ erhalten.
   another.addEventListener('click', () => {
     if (busy) return;
+    model = ''; modelButtons.forEach(b => b.setAttribute('aria-pressed', 'false'));
+    styleChoice = ''; styleButtons.forEach(b => b.setAttribute('aria-pressed', 'false'));
     keyword.value = ''; shirtText.value = ''; photo.value = ''; photo.dispatchEvent(new Event('change'));
+    editInput.value = ''; showIdeas(false);
     fail(''); say('');
-    form.scrollIntoView({behavior: 'smooth', block: 'start'});
-    keyword.focus({preventScroll: true});
+    // Vorschau wieder leer (Vorlage vorne/hinten) statt des letzten Designs.
+    active = -1; startOver = true; showResult(false); render();
+    window.scrollTo({top: 0, behavior: 'smooth'});
   });
   rights.addEventListener('change', () => { rights.closest('label').classList.remove('attention'); if (rights.checked && error.textContent.includes('Bildrechte')) fail(''); });
 
@@ -286,7 +299,7 @@
       const index = items.findIndex((x, i) => String(x.number || i + 1) === number);
       if (index < 0) throw Error();
       items.forEach((e, i) => { const blob = e.blob || e; if (blob instanceof Blob) designs.push({blob, url: URL.createObjectURL(blob), prompt: e.prompt || '', model: /Modell: Zip-Shirt/.test(e.prompt || '') ? 'zip' : 'polo', selected: true, number: e.number || i + 1}); });
-      editingOrder = true; active = designs.findIndex(d => String(d.number) === number);
+      editingOrder = true; showResult(true); active = designs.findIndex(d => String(d.number) === number);
       say('Ihr Design wurde geladen. Beschreiben Sie unten die gewünschte Änderung.');
       render(); editInput.focus({preventScroll: true});
     } catch { fail('Das gespeicherte Design konnte nicht geladen werden.'); }

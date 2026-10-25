@@ -66,8 +66,8 @@ html[lang=en] .studio-steps .is-current button::after{content:"Now"}
 .studio-sub .studio-photo{background:var(--bg)}
 
 /* Leere Vorschau: Hinweis direkt auf dem Shirt */
-.studio-stage.is-empty .studio-preview::after{content:"Hier erscheint Ihr Shirt";position:absolute;left:50%;top:46%;translate:-50% -50%;padding:10px 18px;border-radius:999px;background:#090c13cc;border:1px solid #ffffff26;color:#fff;font-size:15px;font-weight:800;white-space:nowrap;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
-html[lang=en] .studio-stage.is-empty .studio-preview::after{content:"Your shirt appears here"}
+.studio-stage.is-blank .studio-preview::after{content:"Hier erscheint Ihr Shirt";position:absolute;left:50%;top:46%;translate:-50% -50%;padding:10px 18px;border-radius:999px;background:#090c13cc;border:1px solid #ffffff26;color:#fff;font-size:15px;font-weight:800;white-space:nowrap;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+html[lang=en] .studio-stage.is-blank .studio-preview::after{content:"Your shirt appears here"}
 
 /* Eingabe */
 .studio-panel{padding:24px;border-radius:24px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
@@ -136,6 +136,20 @@ html[lang=en] .studio-stage.is-empty .studio-preview::after{content:"Your shirt 
 .studio-edit button:hover:not(:disabled){background:#2a3346}
 .studio-edit button:disabled{background:#252c3a;color:var(--ink-3);cursor:not-allowed}
 
+/* „oder“ + Weiteres T-Shirt designen unter den Änderungen */
+.studio-edit-or{display:flex;align-items:center;gap:10px;margin:12px 0 10px;color:var(--ink-3);font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em}
+.studio-edit-or::before,.studio-edit-or::after{content:"";flex:1;height:1px;background:var(--line)}
+#studio-another{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;padding:0 20px;border:0;border-radius:999px;background:transparent;color:var(--ink);box-shadow:inset 0 0 0 2px var(--line-2);font-size:15.5px;font-weight:800;cursor:pointer}
+#studio-another:hover:not(:disabled){box-shadow:inset 0 0 0 2px var(--ink)}
+#studio-another:disabled{color:var(--ink-3);cursor:not-allowed}
+
+/* Ergebnis-Ansicht (eine Spalte): Formular und Überschrift weg, das fertige Shirt steht ganz oben. */
+@media(max-width:900px){
+  .studio.is-result{padding-top:8px}
+  .studio.is-result .studio-head,.studio.is-result .studio-panel,.studio.is-result .studio-status{display:none}
+  .studio.is-result .studio-grid{gap:0}
+}
+
 /* Designs + Bestellung */
 .studio-collection{padding:20px;border-radius:24px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
 .studio-collection h2{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 14px;font-size:20px;letter-spacing:-.02em}
@@ -181,9 +195,14 @@ html[lang=en] .studio-designs:empty::before{content:"Your T-shirt designs will a
   .studio-preview{border-radius:20px}
   .studio-preview figcaption{padding:7px;font-size:11px}
   .studio-loader{inset:0 0 31px}
-  .studio-edit{padding:16px;border-radius:20px}
-  .studio-edit-row{flex-direction:column}
-  .studio-edit button{width:100%}
+  .studio-edit{padding:14px;border-radius:20px}
+  .studio-edit-label{margin-bottom:8px}
+  .studio-edit-label strong{font-size:16px}
+  .studio-edit-label span{display:none}
+  .studio-edit textarea{min-height:52px}
+  .studio-edit #studio-edit-button{width:118px;min-height:52px;padding:0 10px;font-size:13.5px;line-height:1.2}
+  .studio-edit-or{margin:10px 0 8px}
+  #studio-another{min-height:46px}
   .studio-collection{padding:16px;border-radius:20px}
   .studio-designs{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -16px;padding:0 16px 4px;scrollbar-width:none}
   .studio-designs::-webkit-scrollbar{display:none}

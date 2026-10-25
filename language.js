@@ -90,7 +90,7 @@ Object.assign(dict,{
 const plural=(n,one,many)=>Number(n)===1?one:many;
 const patterns=[
 [/^(\d+) Designs?$/,(m,n)=>`${n} ${plural(n,'design','designs')}`],
-[/^(\d+) T-Shirts? ausgewählt · ab (.+)$/,(m,n,p)=>`${n} ${plural(n,'T-shirt','T-shirts')} selected · from ${p}`],
+[/^(\d+) T-Shirts? ausgewählt · (?:ab )?(.+)$/,(m,n,p)=>`${n} ${plural(n,'T-shirt','T-shirts')} selected · ${p}`],
 [/^(\d+) T-Shirts zur Bestellung →$/,'Add $1 T-shirts to order →'],
 [/^Design (\d+) ist fertig\. Sie können es unten noch ändern oder direkt bestellen\.$/,'Design $1 is ready. You can still change it below or order it right away.'],
 [/^Design (\d+) wurde angepasst\. Weitere Änderungen sind jederzeit möglich\.$/,'Design $1 has been updated. You can make further changes at any time.'],
