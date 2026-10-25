@@ -6,8 +6,8 @@
 <meta content="ShirtBOX – Stichwort, Text oder Foto eingeben und Ihr individuelles 360°-Shirt mit KI gestalten." name="description"/>
 <title>Designen Sie Ihr T-Shirt · ShirtBOX.ch</title>
 <script>if ("scrollRestoration" in history) history.scrollRestoration = "manual";</script>
-<link href="shirtbox-icon.svg" rel="icon" type="image/svg+xml"/><link href="shirtbox.css?v=20261024-360" rel="stylesheet"/><link href="marke.css?v=20261024-fuss" rel="stylesheet"/>
-<link href="gestalter.css?v=20261024-oben" rel="stylesheet"/>
+<link href="shirtbox-icon.svg" rel="icon" type="image/svg+xml"/><link href="shirtbox.css?v=20261025-raster" rel="stylesheet"/><link href="marke.css?v=20261025-raster" rel="stylesheet"/>
+<link href="gestalter.css?v=20261025-ideen" rel="stylesheet"/>
 </head>
 <body class="design-page">
 <main class="shell">
@@ -21,17 +21,24 @@
 <section class="studio" aria-labelledby="studio-title">
 <div class="studio-head">
 <h1 id="studio-title">Designen Sie Ihr T-Shirt</h1>
-<p>Beschreiben Sie Ihr Wunsch-Design – die KI gestaltet Ihr persönliches T-Shirt.</p>
+<p>In wenigen Schritten zu Ihrem eigenen Shirt – ganz ohne Grafikkenntnisse.</p>
+<ol class="studio-steps" id="studio-steps" aria-label="Ihr Weg zum eigenen Shirt">
+<li data-step="1"><button type="button" data-goto="studio-model-field"><b>1</b><span>Modell wählen</span></button></li>
+<li data-step="2"><button type="button" data-goto="studio-idea"><b>2</b><span>Idee beschreiben</span></button></li>
+<li data-step="3"><button type="button" data-goto="studio-go"><b>3</b><span>Design erstellen</span></button></li>
+<li data-step="4"><button type="button" data-goto="studio-collection"><b>4</b><span>Auswählen &amp; bestellen</span></button></li>
+</ol>
 </div>
 
 <div class="studio-grid">
 <form class="studio-panel" id="studio-form" novalidate>
-<p class="studio-panel-title">Ihre Wünsche <small>Zuerst das Shirt-Modell wählen – alles andere ist optional.</small></p>
-<div class="studio-field studio-model-field" id="studio-model-field"><span id="studio-model-title">Shirt-Modell wählen</span>
+<div class="studio-field studio-model-field" id="studio-model-field"><span id="studio-model-title" class="studio-step-title"><b>1</b><span>Shirt-Modell wählen</span></span>
 <div class="studio-models" id="studio-models" role="group" aria-labelledby="studio-model-title">
 <button type="button" data-model="polo" aria-pressed="false"><img src="anleitung/polo-auswahl.jpg?v=20261024" width="800" height="800" alt=""/><span>Polo-Shirt<small>Kragen mit Knopfleiste</small></span></button>
 <button type="button" data-model="zip" aria-pressed="false"><img src="anleitung/zip-auswahl.jpg?v=20261024" width="800" height="800" alt=""/><span>Zip-Shirt<small>Stehkragen mit Reissverschluss</small></span></button>
 </div></div>
+<div class="studio-step" id="studio-idea">
+<p class="studio-step-title"><b>2</b><span>Ihre Idee<small>Wählen Sie einen Stil, beschreiben Sie Ihr Wunsch-Design – oder beides. Text und Foto sind optional.</small></span></p>
 <div class="studio-field"><span id="studio-style-title">Designstil <small>(optional)</small></span>
 <div class="studio-styles" id="studio-styles" role="group" aria-labelledby="studio-style-title">
 <button type="button" data-style="modern" aria-pressed="false">Modern</button>
@@ -43,7 +50,7 @@
 <button type="button" data-style="graffiti" aria-pressed="false">Graffiti</button>
 <button type="button" data-style="elegant" aria-pressed="false">Elegant</button>
 </div></div>
-<label class="studio-field"><span>Wie soll Ihr T-Shirt aussehen?</span><textarea id="studio-keyword" rows="2" maxlength="200" placeholder="z. B. sportlich in Blau und Weiss mit dynamischen Streifen" autocomplete="off"></textarea><small class="studio-hint">Farben, Stil und Motive – ganz in Ihren eigenen Worten.</small></label>
+<div class="studio-field"><div class="studio-field-head"><label for="studio-keyword">Wie soll Ihr T-Shirt aussehen?</label><button class="studio-ideas-toggle" id="studio-ideas-toggle" type="button" aria-expanded="false" aria-controls="studio-ideas-list">💡 Ideen</button></div><textarea id="studio-keyword" rows="2" maxlength="200" placeholder="z. B. sportlich in Blau und Weiss mit dynamischen Streifen" autocomplete="off"></textarea><small class="studio-hint">Farben, Stil und Motive – ganz in Ihren eigenen Worten.</small><div class="studio-ideas-list" id="studio-ideas-list" hidden></div></div>
 <label class="studio-field"><span>Text, der auf das T-Shirt gedruckt wird <small>(optional)</small></span><input id="studio-text" type="text" maxlength="160" placeholder="z. B. Ihr Name, ein Spruch oder Ihr Verein" autocomplete="off"/><small class="studio-hint">Genau dieser Text erscheint gut lesbar auf Ihrem T-Shirt.</small></label>
 <div class="studio-field"><span>Foto <small>(optional)</small></span>
 <div class="studio-photo" id="studio-photo-box">
@@ -52,9 +59,13 @@
 <span class="studio-photo-label"><span id="studio-photo-name">Foto hochladen</span><small>JPG, PNG oder WebP · max. 5 MB</small></span>
 <button class="studio-photo-remove" id="studio-photo-remove" type="button" hidden>Entfernen</button>
 </div></div>
+</div>
+<div class="studio-step" id="studio-go">
+<p class="studio-step-title"><b>3</b><span>Design erstellen<small>Rechte bestätigen und los – nach 1 bis 3 Minuten erscheint Ihr Shirt.</small></span></p>
 <label class="studio-rights"><input id="studio-rights" type="checkbox"/><span>Ich habe die Rechte an meinen Inhalten und akzeptiere die <a href="agb.html" target="_blank">AGB</a>.</span></label>
 <button class="studio-surprise" id="studio-surprise" type="submit">✨ T-Shirt designen</button>
 <p class="studio-error" id="studio-error" role="alert" hidden></p>
+</div>
 </form>
 
 <div class="studio-stage">
@@ -72,7 +83,7 @@
 <button id="studio-edit-button" type="button" disabled>Änderungen übernehmen</button>
 </div>
 </div>
-<section class="studio-collection" aria-labelledby="studio-collection-title">
+<section class="studio-collection" id="studio-collection" aria-labelledby="studio-collection-title">
 <h2 id="studio-collection-title">Ihre T-Shirts <span id="studio-count"></span></h2>
 <div class="studio-designs" id="studio-designs"></div>
 <div class="studio-order" id="studio-order" hidden>
@@ -90,15 +101,15 @@
 <footer class="site-footer">
 <div class="footer-inner">
 <a aria-label="ShirtBOX.ch – Startseite" class="brand" href="index.html"><img class="logo-icon" src="shirtbox-icon.svg" alt="" width="64" height="64" loading="lazy"/><span class="logo-word">shirt<b>box</b><small>.ch</small></span></a>
-<nav class="footer-links" aria-label="Kontakt und Rechtliches"><a class="wa" href="https://wa.me/41764690100" rel="noopener" target="_blank">💬 WhatsApp 076 469 01 00</a><a href="mailto:info@shirtbox.ch">✉️ info@shirtbox.ch</a><a href="newsletter.html">📬 Newsletter</a><a href="agb.html">AGB</a><a href="impressum.html">Impressum</a></nav>
+<nav class="footer-links" aria-label="Kontakt und Rechtliches"><a class="wa" href="https://wa.me/41764690100" rel="noopener" target="_blank">💬 WhatsApp</a><a href="mailto:info@shirtbox.ch">✉️ info@shirtbox.ch</a><a href="newsletter.html">📬 Newsletter</a><a href="agb.html">AGB</a><a href="impressum.html">Impressum</a></nav>
 </div>
-<p class="footer-legal">© 2026 ShirtBOX.ch · Alle Preise inkl. MwSt. und Versand · Bezahlung per TWINT</p>
+<p class="footer-legal"><a class="footer-admin" href="https://admin.shirtbox.ch/" rel="nofollow">© 2026 ShirtBOX.ch</a> · Alle Preise inkl. MwSt. und Versand · Bezahlung per TWINT</p>
 </footer>
 </main>
 <script defer src="design-uebernahme.js?v=20261023c"></script>
 <script defer src="bestell-logik.js?v=20261023-unbegrenzt"></script>
-<script defer src="gestalter.js?v=20261024-modell"></script>
+<script defer src="gestalter.js?v=20261025-ideen"></script>
 <script defer src="navigation.js?v=20261023-neu"></script>
-<script defer src="language.js?v=20261024-newsletter"></script>
+<script defer src="language.js?v=20261025-ideen"></script>
 </body>
 </html>

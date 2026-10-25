@@ -14,12 +14,12 @@
   --wrap:1180px;--gutter:clamp(16px,4vw,32px);
 }
 *,*::before,*::after{box-sizing:border-box}
-/* Orange und blaue Lichtflecken hinter jeder Seite, wie auf der Startseite. Der Hintergrund liegt auf html, damit der Regenbogen-Wind (body::after) dazwischen Platz hat. */
-html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;background:radial-gradient(900px 600px at 85% -10%,#ff5b2e26,transparent 70%) fixed,radial-gradient(800px 600px at -10% 105%,#3b5bff1f,transparent 70%) fixed,var(--bg)}
+/* Feines Raster, orange und blaue Lichtflecken hinter jeder Seite. Der Hintergrund liegt auf html, damit der Regenbogen-Wind (body::after) dazwischen Platz hat. */
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;background:linear-gradient(#ffffff09 1px,transparent 1px) 0 0/56px 56px fixed,linear-gradient(90deg,#ffffff09 1px,transparent 1px) 0 0/56px 56px fixed,radial-gradient(900px 600px at 85% -10%,#ff5b2e26,transparent 70%) fixed,radial-gradient(800px 600px at -10% 105%,#3b5bff1f,transparent 70%) fixed,var(--bg)}
 body{margin:0;background:transparent;color:var(--ink);font:16px/1.6 var(--font);-webkit-font-smoothing:antialiased;overflow-x:hidden}
 /* Regenbogen-Wind: feine, helle Farbschleier ziehen langsam von rechts nach links über den Hintergrund. */
 body::after{content:"";position:fixed;top:-10vh;left:0;z-index:-1;width:300vw;height:120vh;pointer-events:none;
-  background:repeating-linear-gradient(105deg,transparent 0,transparent 20vw,#ff5b6a30 29vw,#ffb43a2b 35vw,#9dff8a22 41vw,#5ec8ff30 47vw,#9b7bff2b 54vw,transparent 63vw,transparent 80vw);
+  background:repeating-linear-gradient(105deg,transparent 0,transparent 20vw,#ff5b6a52 29vw,#ffb43a4a 35vw,#9dff8a3a 41vw,#5ec8ff52 47vw,#9b7bff4a 54vw,transparent 63vw,transparent 80vw);
   animation:sbWind 26s linear infinite;will-change:transform}
 @keyframes sbWind{from{transform:translate3d(0,0,0)}to{transform:translate3d(-80vw,0,0)}}
 @media(prefers-reduced-motion:reduce){body::after{animation:none}}
@@ -27,7 +27,7 @@ body::after{content:"";position:fixed;top:-10vh;left:0;z-index:-1;width:300vw;he
 html::after{content:"360°";position:fixed;left:50%;top:52%;z-index:-1;transform:translate(-50%,-50%);pointer-events:none;user-select:none;
   font-family:"Unbounded","Segoe UI",system-ui,sans-serif;font-size:clamp(120px,28vw,560px);font-weight:900;letter-spacing:-.06em;line-height:1;white-space:nowrap;
   color:transparent;-webkit-text-stroke:2px #ffffff14}
-@media(max-width:700px){html::after{font-size:36vw;-webkit-text-stroke:1.5px #ffffff17}}
+@media(max-width:700px){html::after{font-size:36vw;-webkit-text-stroke:1.5px #ffffff1f}}
 /* Feine Körnung gegen den sterilen Look. */
 body::before{content:"";position:fixed;inset:0;z-index:200;pointer-events:none;opacity:.07;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 img,video{max-width:100%;height:auto}

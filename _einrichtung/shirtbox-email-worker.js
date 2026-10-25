@@ -202,7 +202,7 @@ function buildOrderMail(order, number, imageIds) {
   <tr><td style="padding:18px 32px 30px">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f1ea;border-radius:16px"><tr><td style="${font}padding:18px 20px;font-size:14px;line-height:1.55;color:#3d4554">
       <b style="color:#090c13">Fragen zu Ihrer Bestellung?</b><br>
-      Schreiben Sie uns per <a href="${WHATSAPP_LINK}" style="color:#e2481f;font-weight:bold;text-decoration:none">WhatsApp ${WHATSAPP}</a> oder antworten Sie einfach auf diese E-Mail.
+      Schreiben Sie uns per <a href="${WHATSAPP_LINK}" style="color:#e2481f;font-weight:bold;text-decoration:none">WhatsApp</a> oder antworten Sie einfach auf diese E-Mail.
     </td></tr></table>
   </td></tr>
   <tr><td style="background:#090c13;padding:20px 32px;${font}font-size:12px;line-height:1.6;color:#7d8796">
@@ -216,7 +216,7 @@ function buildOrderMail(order, number, imageIds) {
     'IHRE SHIRTS', ...designs.map(d => `Design ${d.number}: ${d.rows.map(r => `Grösse ${r.size} × ${r.count} (asiatische Grösse ${r.ordered})`).join(', ')} – ${chf(d.subtotal)}`), '',
     `Total (${quantity} Shirt${quantity === 1 ? '' : 's'}): ${chf(total)} inkl. MwSt. und Versand`, '',
     'LIEFERADRESSE', `${c.vorname} ${c.nachname}`, c.strasse, `${c.plz} ${c.ort}`, c.land, '',
-    'Lieferung in ca. 14 Tagen (± einige Tage) nach Zahlungseingang.', `Fragen? WhatsApp ${WHATSAPP} oder Antwort auf diese E-Mail.`, '',
+    'Lieferung in ca. 14 Tagen (± einige Tage) nach Zahlungseingang.', `Fragen? WhatsApp oder Antwort auf diese E-Mail.`, '',
     'Diese E-Mail bestätigt den Eingang Ihrer Bestellung, nicht den Zahlungseingang.', 'ShirtBOX.ch'].join('\n');
   return {html, text};
 }

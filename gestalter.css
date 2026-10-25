@@ -5,6 +5,52 @@
 .studio-head>p{margin:10px auto 0;max-width:620px;color:var(--ink-2);font-size:clamp(16px,1.6vw,19px)}
 .studio-grid{display:grid;grid-template-columns:minmax(300px,400px) minmax(0,1fr);gap:24px;align-items:start}
 
+/* Schrittanzeige: erledigt = Haken, aktuell = Orange mit „Jetzt“, kommend = gedämpft (gestalter.js setzt die Klassen). */
+.studio-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;max-width:860px;margin:20px auto 0;padding:0;list-style:none}
+.studio-steps button{position:relative;display:flex;align-items:center;gap:10px;width:100%;height:100%;padding:11px 12px;border:1px solid var(--line);border-radius:16px;background:#ffffff08;color:var(--ink-3);font:inherit;font-size:14px;font-weight:750;line-height:1.2;text-align:left;cursor:pointer;transition:border-color .25s,background .25s,color .25s,box-shadow .25s}
+.studio-steps button:hover{border-color:var(--line-2);color:var(--ink)}
+.studio-steps b{display:grid;place-items:center;flex:none;width:30px;height:30px;border-radius:50%;background:#ffffff12;color:var(--ink-2);font-family:var(--display);font-size:14px;transition:background .25s,color .25s}
+.studio-steps .is-done button{color:var(--ink-2)}
+.studio-steps .is-done b{background:var(--mint-soft);color:#7ff0a8;font-size:0}
+.studio-steps .is-done b::before{content:"✓";font-size:15px;font-weight:900}
+.studio-steps .is-current button{border-color:#ff7a2b;background:#ff5b2e1f;color:var(--ink);box-shadow:0 0 0 3px #ff5b2e26,0 12px 30px #ff5b2e2b}
+.studio-steps .is-current b{background:var(--fire);color:var(--on-accent)}
+.studio-steps .is-current button::after{content:"Jetzt";position:absolute;top:-9px;right:10px;padding:1px 8px;border-radius:999px;background:var(--fire);color:var(--on-accent);font-size:10.5px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}
+html[lang=en] .studio-steps .is-current button::after{content:"Now"}
+
+/* Nummerierte Abschnitte im Formular */
+/* Jeder Abschnitt ist eine eigene Box; der aktuelle wird ganz orange umrandet (is-next). */
+.studio-model-field,.studio-step{margin:0 -12px 10px;padding:14px 12px 4px;border:2px solid transparent;border-radius:20px;transition:border-color .3s,background .3s,box-shadow .3s}
+.studio-step .studio-rights{margin-top:0}
+.studio-step:last-child{padding-bottom:12px;margin-bottom:0}
+.studio-field>.studio-step-title,.studio-step-title{display:flex;align-items:flex-start;gap:11px;margin:0 0 14px;font-family:var(--display);font-size:17px;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
+.studio-step-title b{display:grid;place-items:center;flex:none;width:30px;height:30px;border-radius:50%;background:var(--fire);color:var(--on-accent);font-size:14px;box-shadow:0 6px 16px #ff5b2e40}
+.studio-step-title>span{padding-top:4px}
+.studio-step-title small{display:block;margin-top:3px;font-family:var(--font);font-size:13px;font-weight:500;line-height:1.4;letter-spacing:0;color:var(--ink-3)}
+.studio-panel{border-top:3px solid #ff7a2b}
+
+/* Ideen zum Antippen: erst nach Klick auf die Lampe sichtbar */
+.studio-field-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 7px}
+.studio-field-head label{font-size:14.5px;font-weight:750;color:var(--ink);cursor:pointer}
+.studio-ideas-toggle{display:inline-flex;align-items:center;gap:5px;flex:none;padding:5px 11px;border:1px solid var(--line-2);border-radius:999px;background:transparent;color:var(--ink-2);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
+.studio-ideas-toggle::after{content:"";width:6px;height:6px;margin:0 2px 3px 3px;border:solid currentColor;border-width:0 2px 2px 0;rotate:45deg;transition:rotate .2s,margin .2s}
+.studio-ideas-toggle[aria-expanded=true]::after{rotate:225deg;margin-bottom:-3px}
+.studio-ideas-toggle:hover,.studio-ideas-toggle[aria-expanded=true]{border-color:#ff7a2b;background:#ff5b2e14;color:var(--ink)}
+.studio-ideas-list{display:flex;flex-wrap:wrap;gap:6px;max-height:232px;margin-top:10px;padding:10px;overflow-y:auto;border:1px solid var(--line);border-radius:14px;background:var(--surface-2);scrollbar-width:thin}
+.studio-ideas-list button{padding:6px 11px;border:1px dashed var(--line-2);border-radius:999px;background:transparent;color:var(--ink-2);font:inherit;font-size:12.5px;font-weight:650;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
+.studio-ideas-list button:hover{border-style:solid;border-color:#ff7a2b;background:#ff5b2e14;color:var(--ink)}
+
+/* Nächster Schritt: ganzer Bereich orange umrandet, Rahmen pulsiert sanft */
+@keyframes studioNext{0%,100%{box-shadow:0 0 0 0 #ff7a2b00}50%{box-shadow:0 0 0 6px #ff7a2b38}}
+.studio-model-field.is-next,.studio-step.is-next,.studio-collection.is-next{border-color:#ff7a2b;background:#ff5b2e0d;animation:studioNext 2s ease-in-out infinite}
+.studio-collection{border-width:2px;transition:border-color .3s,background .3s}
+.studio-surprise.is-next,#studio-order-button.is-next{box-shadow:0 0 0 3px #ff7a2b55,0 10px 26px #ff5b2e4d}
+@media(prefers-reduced-motion:reduce){.studio-model-field.is-next,.studio-step.is-next,.studio-collection.is-next{animation:none;box-shadow:0 0 0 4px #ff7a2b38}}
+
+/* Leere Vorschau: Hinweis direkt auf dem Shirt */
+.studio-stage.is-empty .studio-preview::after{content:"Hier erscheint Ihr Shirt";position:absolute;left:50%;top:46%;translate:-50% -50%;padding:10px 18px;border-radius:999px;background:#090c13cc;border:1px solid #ffffff26;color:#fff;font-size:15px;font-weight:800;white-space:nowrap;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+html[lang=en] .studio-stage.is-empty .studio-preview::after{content:"Your shirt appears here"}
+
 /* Eingabe */
 .studio-panel{padding:24px;border-radius:24px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
 .studio-panel-title{margin:0 0 18px;font-family:var(--display);font-size:22px;font-weight:800;letter-spacing:-.02em}
@@ -105,6 +151,11 @@ html[lang=en] .studio-designs:empty::before{content:"Your T-shirt designs will a
 @media(max-width:600px){
   .studio{padding-top:10px}
   .studio-head>p{font-size:15px}
+  .studio-steps{gap:6px;margin-top:14px}
+  .studio-steps button{flex-direction:column;justify-content:flex-start;gap:5px;padding:9px 4px 8px;font-size:11.5px;text-align:center}
+  .studio-steps b{width:26px;height:26px;font-size:12.5px}
+  .studio-steps .is-current button::after{right:50%;translate:50% 0;font-size:9.5px}
+  .studio-model-field,.studio-step{margin-left:-10px;margin-right:-10px;padding-left:10px;padding-right:10px}
   .studio-panel{padding:18px;border-radius:20px}
   .studio-styles button{height:40px}
   .studio-stage.is-empty .studio-preview,.studio-stage.is-empty .studio-collection,.studio-collection:has(.studio-designs:empty){display:none}

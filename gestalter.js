@@ -60,7 +60,55 @@
     another.disabled = busy;
     stage.classList.toggle('is-empty', !designs.length && !busy);
     loader.hidden = !busy; form.setAttribute('aria-busy', String(busy));
+    steps();
   }
+
+  // Schrittanzeige oben: erledigte Schritte mit Haken, der aktuelle leuchtet; das nächste Bedienelement pulsiert sanft.
+  const stepItems = [...document.querySelectorAll('#studio-steps [data-step]')], idea = $('studio-idea'), go = $('studio-go'), collection = $('studio-collection');
+  const hasIdea = () => !!(keyword.value.trim() || shirtText.value.trim() || photo.files[0] || styleChoice);
+  function steps() {
+    const current = !model && !designs.length ? 1 : designs.length ? 4 : hasIdea() ? 3 : 2;
+    stepItems.forEach(item => {
+      const n = Number(item.dataset.step);
+      item.classList.toggle('is-done', n < current); item.classList.toggle('is-current', n === current);
+      if (n === current) item.setAttribute('aria-current', 'step'); else item.removeAttribute('aria-current');
+    });
+    modelField.classList.toggle('is-next', current === 1);
+    idea.classList.toggle('is-next', current === 2);
+    go.classList.toggle('is-next', current === 3 && !busy);
+    collection.classList.toggle('is-next', current === 4 && !busy);
+    surprise.classList.toggle('is-next', current === 3 && !busy);
+    orderButton.classList.toggle('is-next', current === 4 && !busy && chosen().length > 0);
+  }
+  document.querySelectorAll('#studio-steps [data-goto]').forEach(button => button.addEventListener('click', () => {
+    const target = $(button.dataset.goto);
+    if (target && target.offsetParent) target.scrollIntoView({behavior: 'smooth', block: 'center'});
+  }));
+  [keyword, shirtText].forEach(field => field.addEventListener('input', () => steps()));
+  photo.addEventListener('change', () => steps());
+  // Ideen zum Antippen (hinter der Lampe aufklappbar) füllen die Beschreibung. Englisch übersetzt language.js.
+  const IDEAS = ['Darts-Team mit Flammen und Dartpfeilen', 'Fussballverein in Rot und Weiss', 'Tiger im Dschungel', 'Schweizer Alpen mit Edelweiss', 'Retro-Sonnenuntergang mit Palmen',
+    'Kegelclub mit fliegenden Kegeln', 'Eishockey mit Eis-Splittern in Blau', 'Handball-Team mit Blitzen', 'Basketball im Street-Style', 'Tennis mit grünen Speed-Linien',
+    'Velo-Club mit Bergpässen', 'Laufgruppe mit Sonnenaufgang', 'Schwingfest mit Sägemehl und Muni', 'Turnverein in Vereinsfarben', 'Volleyball am Strand',
+    'Unihockey mit Neon-Akzenten', 'Golf mit edlem Grün und Gold', 'Skifahren im Pulverschnee', 'Snowboard im Graffiti-Look', 'Motocross mit Schlamm-Spritzern',
+    'Jassrunde mit Spielkarten', 'Schützenverein mit Zielscheibe', 'Feuerwehr mit Flammen und Helm', 'Guggenmusik mit Masken und Konfetti', 'Polterabend mit Krone und Konfetti',
+    'Geburtstag mit Luftballons und Torte', 'Familienausflug in die Berge', 'Firmenlauf in Firmenfarben', 'Wolf unter Vollmond', 'Adler über den Bergen',
+    'Löwe mit goldener Mähne', 'Hai in tiefblauem Meer', 'Drache mit Feuer', 'Phönix in Rot und Gold', 'Totenkopf mit Rosen',
+    'Galaxie mit Sternen und Planeten', 'Ozeanwellen im japanischen Stil', 'Tropische Blätter und Blüten', 'Wald mit Nebel am Morgen', 'Matterhorn im Abendrot',
+    'Schweizer Kreuz modern interpretiert', 'Kuh mit Glocke im Comic-Stil', 'Bier und Brezel fürs Oktoberfest', 'Grillmeister mit Flammen', 'Fischen am Bergsee',
+    'Hirsch im herbstlichen Wald', 'Motorrad auf der Passstrasse', 'Oldtimer im Retro-Look', 'Rockkonzert mit E-Gitarre', 'DJ mit Neonlichtern',
+    'Gaming mit Pixel-Grafik', 'Graffiti-Wand mit bunten Farben', 'Camouflage in Grautönen', 'Abstrakte Farbspritzer', 'Geometrische Formen in Schwarz und Gold'];
+  const ideaToggle = $('studio-ideas-toggle'), ideaList = $('studio-ideas-list');
+  const showIdeas = open => { ideaList.hidden = !open; ideaToggle.setAttribute('aria-expanded', String(open)); };
+  ideaToggle.addEventListener('click', () => showIdeas(ideaList.hidden));
+  ideaList.append(...IDEAS.map(text => {
+    const button = document.createElement('button'); button.type = 'button'; button.textContent = text;
+    button.addEventListener('click', () => {
+      keyword.value = button.textContent.trim(); fail(''); showIdeas(false); steps();
+      keyword.focus({preventScroll: true});
+    });
+    return button;
+  }));
 
   // Foto-Auswahl mit Vorschau.
   photo.addEventListener('change', () => {
@@ -129,7 +177,7 @@
     modelButtons.forEach(b => b.setAttribute('aria-pressed', String(b === button)));
     if (modelField.classList.contains('attention')) fail('');
     modelField.classList.remove('attention');
-    if (active < 0) render();
+    if (active < 0) render(); else steps();
   }));
 
   // Stil-Knöpfe: einer aktiv, erneuter Klick hebt die Auswahl auf.
@@ -137,6 +185,7 @@
   styleButtons.forEach(button => button.addEventListener('click', () => {
     styleChoice = styleChoice === button.dataset.style ? '' : button.dataset.style;
     styleButtons.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.style === styleChoice)));
+    steps();
   }));
 
   async function request(prompt, image) {

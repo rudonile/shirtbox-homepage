@@ -612,7 +612,7 @@ function renderNewsletter(subject, content, settings, vars) {
   <tr><td style="padding:30px 32px 14px">${blocks}</td></tr>
   <tr><td style="padding:0 32px 26px">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f1ea;border-radius:16px"><tr><td style="${font}padding:16px 20px;font-size:14px;line-height:1.55;color:#3d4554">
-      Fragen? Schreiben Sie uns per <a href="https://wa.me/41764690100" style="color:#e2481f;font-weight:bold;text-decoration:none">WhatsApp 076 469 01 00</a> oder an <a href="mailto:${esc(settings.antwort_email)}" style="color:#e2481f;font-weight:bold;text-decoration:none">${esc(settings.antwort_email)}</a>.
+      Fragen? Schreiben Sie uns per <a href="https://wa.me/41764690100" style="color:#e2481f;font-weight:bold;text-decoration:none">WhatsApp</a> oder an <a href="mailto:${esc(settings.antwort_email)}" style="color:#e2481f;font-weight:bold;text-decoration:none">${esc(settings.antwort_email)}</a>.
     </td></tr></table>
   </td></tr>
   <tr><td style="background:#131c30;padding:20px 32px;${font}font-size:12px;line-height:1.7;color:#8a94a6">
@@ -622,7 +622,7 @@ function renderNewsletter(subject, content, settings, vars) {
 </table>
 </td></tr></table>
 </body></html>`;
-  const text = [...textParts, '', '---', `Fragen? WhatsApp 076 469 01 00 oder ${settings.antwort_email}`, settings.adresse, reason, `Abmelden: ${unsubscribe}`].join('\n\n');
+  const text = [...textParts, '', '---', `Fragen? WhatsApp oder ${settings.antwort_email}`, settings.adresse, reason, `Abmelden: ${unsubscribe}`].join('\n\n');
   return {html, text, unsubscribe};
 }
 
