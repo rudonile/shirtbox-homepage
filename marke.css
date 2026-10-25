@@ -12,7 +12,7 @@
 /* Ältere dunkle Seite (Eigenes Bild): helle Wortmarke, Fremdstile der alten Fusszeile neutralisieren. */
 body.simple-home .brand{color:#f4f1ea!important}
 body.simple-home .site-footer{position:relative!important;bottom:auto!important;display:block!important;max-width:none!important;margin:40px 0 0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#090c13!important;font-size:inherit!important}
-body.simple-home{background:radial-gradient(900px 600px at 85% -10%,#ff5b2e26,transparent 70%),radial-gradient(800px 600px at -10% 105%,#3b5bff1f,transparent 70%) fixed,#090c13!important}
+body.simple-home{background:linear-gradient(#ffffff09 1px,transparent 1px) 0 0/56px 56px fixed,linear-gradient(90deg,#ffffff09 1px,transparent 1px) 0 0/56px 56px fixed,radial-gradient(900px 600px at 85% -10%,#ff5b2e26,transparent 70%),radial-gradient(800px 600px at -10% 105%,#3b5bff1f,transparent 70%) fixed,#090c13!important}
 body.simple-home .site-footer .brand,body.simple-home .site-footer .logo-word{color:#f4f1ea!important;opacity:1!important}
 body.simple-home .footer-inner{justify-content:space-between!important;text-align:left!important}
 body.simple-home .footer-legal{text-align:left!important}
@@ -27,6 +27,18 @@ body.simple-home [data-lang].active{background:#ff7a2b!important;border-color:#f
 .footer-links{display:flex;flex-wrap:wrap;gap:6px}
 .footer-links a{display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:999px;background:#ffffff0d;border:1px solid #ffffff14;color:#d9dde4;font-size:14px;font-weight:650;text-decoration:none;transition:background .15s,border-color .15s,color .15s}
 .footer-links a:hover{background:#ff5b2e;border-color:#ff5b2e;color:#090c13}
-.footer-links .wa{background:#25d36622;border-color:#25d36655;color:#7ff0a8}
 .footer-legal{max-width:1180px;margin:0 auto;padding:0 clamp(16px,4vw,32px) 28px;color:#5f6879;font-size:12.5px}
+/* Unauffälliger Zugang zur Verwaltung: sieht aus wie normaler Text. */
+.footer-legal .footer-admin,.footer-legal .footer-admin:hover{color:inherit!important;text-decoration:none!important;cursor:default}
 @media(max-width:700px){.footer-inner{flex-direction:column;align-items:flex-start}.footer-links a{padding:8px 13px;font-size:13.5px}}
+/* Fusszeile bleibt wie die Kopfzeile immer sichtbar: klebt unten am Bildschirm, bis ihr Platz am Seitenende erreicht ist. */
+.site-footer{position:sticky;bottom:0;z-index:90;background:#090c13e6;-webkit-backdrop-filter:saturate(1.4) blur(14px);backdrop-filter:saturate(1.4) blur(14px);border-top:1px solid #ffffff12}
+.site-footer .footer-inner{padding-top:12px;padding-bottom:10px}
+.site-footer .footer-legal{padding-bottom:12px}
+@media(max-width:700px){
+  .site-footer .brand,.site-footer .footer-legal{display:none}
+  .site-footer .footer-inner{padding:8px 12px calc(8px + env(safe-area-inset-bottom))}
+  .footer-links{flex-wrap:nowrap;overflow-x:auto;width:100%;scrollbar-width:none}
+  .footer-links::-webkit-scrollbar{display:none}
+  .footer-links a{flex:none;padding:7px 12px;font-size:13px}
+}
