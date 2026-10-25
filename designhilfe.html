@@ -7,7 +7,7 @@
 <title>Designen Sie Ihr T-Shirt · ShirtBOX.ch</title>
 <script>if ("scrollRestoration" in history) history.scrollRestoration = "manual";</script>
 <link href="shirtbox-icon.svg" rel="icon" type="image/svg+xml"/><link href="shirtbox.css?v=20261025-raster" rel="stylesheet"/><link href="marke.css?v=20261025-raster" rel="stylesheet"/>
-<link href="gestalter.css?v=20261025-ideen" rel="stylesheet"/>
+<link href="gestalter.css?v=20261025-karten" rel="stylesheet"/>
 </head>
 <body class="design-page">
 <main class="shell">
@@ -39,7 +39,7 @@
 </div></div>
 <div class="studio-step" id="studio-idea">
 <p class="studio-step-title"><b>2</b><span>Ihre Idee<small>Wählen Sie einen Stil, beschreiben Sie Ihr Wunsch-Design – oder beides. Text und Foto sind optional.</small></span></p>
-<div class="studio-field"><span id="studio-style-title">Designstil <small>(optional)</small></span>
+<div class="studio-field studio-sub sub-style"><span id="studio-style-title">Designstil <small>(optional)</small></span>
 <div class="studio-styles" id="studio-styles" role="group" aria-labelledby="studio-style-title">
 <button type="button" data-style="modern" aria-pressed="false">Modern</button>
 <button type="button" data-style="realistisch" aria-pressed="false">Realistisch</button>
@@ -50,9 +50,9 @@
 <button type="button" data-style="graffiti" aria-pressed="false">Graffiti</button>
 <button type="button" data-style="elegant" aria-pressed="false">Elegant</button>
 </div></div>
-<div class="studio-field"><div class="studio-field-head"><label for="studio-keyword">Wie soll Ihr T-Shirt aussehen?</label><button class="studio-ideas-toggle" id="studio-ideas-toggle" type="button" aria-expanded="false" aria-controls="studio-ideas-list">💡 Ideen</button></div><textarea id="studio-keyword" rows="2" maxlength="200" placeholder="z. B. sportlich in Blau und Weiss mit dynamischen Streifen" autocomplete="off"></textarea><small class="studio-hint">Farben, Stil und Motive – ganz in Ihren eigenen Worten.</small><div class="studio-ideas-list" id="studio-ideas-list" hidden></div></div>
-<label class="studio-field"><span>Text, der auf das T-Shirt gedruckt wird <small>(optional)</small></span><input id="studio-text" type="text" maxlength="160" placeholder="z. B. Ihr Name, ein Spruch oder Ihr Verein" autocomplete="off"/><small class="studio-hint">Genau dieser Text erscheint gut lesbar auf Ihrem T-Shirt.</small></label>
-<div class="studio-field"><span>Foto <small>(optional)</small></span>
+<div class="studio-field studio-sub sub-idea"><div class="studio-field-head"><label for="studio-keyword">Wie soll Ihr T-Shirt aussehen?</label><button class="studio-ideas-toggle" id="studio-ideas-toggle" type="button" aria-expanded="false" aria-controls="studio-ideas-list">💡 Ideen</button></div><textarea id="studio-keyword" rows="2" maxlength="200" placeholder="z. B. sportlich in Blau und Weiss mit dynamischen Streifen" autocomplete="off"></textarea><small class="studio-hint">Farben, Stil und Motive – ganz in Ihren eigenen Worten.</small><div class="studio-ideas-list" id="studio-ideas-list" hidden></div></div>
+<label class="studio-field studio-sub sub-text"><span>Text, der auf das T-Shirt gedruckt wird <small>(optional)</small></span><input id="studio-text" type="text" maxlength="160" placeholder="z. B. Ihr Name, ein Spruch oder Ihr Verein" autocomplete="off"/><small class="studio-hint">Genau dieser Text erscheint gut lesbar auf Ihrem T-Shirt.</small></label>
+<div class="studio-field studio-sub sub-photo"><span>Foto <small>(optional)</small></span>
 <div class="studio-photo" id="studio-photo-box">
 <input id="studio-photo" type="file" accept="image/png,image/jpeg,image/webp" aria-label="Foto hochladen"/>
 <span class="studio-photo-icon" aria-hidden="true">📷</span><img id="studio-photo-thumb" alt=""/>

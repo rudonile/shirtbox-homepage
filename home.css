@@ -115,18 +115,21 @@ body.home::before{content:"";position:fixed;inset:0;z-index:200;pointer-events:n
 }
 /* Handy: Überschrift → wechselnde Shirts → „Jetzt T-Shirt designen“. Erklärtext, zweiter Knopf und Fakten entfallen. */
 @media(max-width:700px){
-  .hx{padding-top:28px}
+  /* Alles auf einen Bildschirm: kleinere Überschrift, Bühne nach Bildschirmhöhe, kein Kicker. */
+  .hx{padding:14px 0 6px}
+  .hx-grid{gap:10px}
   .hx-copy{display:contents}
-  .hx-kicker{order:1;justify-self:center;margin-bottom:0}
+  .hx-kicker,.hx-lead,.hx-btn-ghost,.hx-facts{display:none}
   .hx h1{order:2;margin-bottom:0}
-  .hx-stage{order:3;margin:4px auto 8px}
+  .hx-stage{order:3;--sh:clamp(200px,min(76vw,38vh),330px);--sh:clamp(200px,min(76vw,38svh),330px);height:var(--sh);width:min(100%,calc(var(--sh)*1.2));margin:6px auto 4px}
   .hx-actions{order:4;margin:0}
-  .hx-lead,.hx-btn-ghost,.hx-facts{display:none}
+  .hx-btn{min-height:52px}
+  .home .occ{padding-top:10px;padding-bottom:6px;margin-bottom:10px}
   .occ-line{flex-direction:column;font-size:20px}
   .occ-lead{font-size:14px;letter-spacing:-.01em}
 }
 @media(max-width:520px){
-  .hx h1{font-size:clamp(32px,10vw,44px)}
+  .hx h1{font-size:clamp(25px,7.6vw,32px)}
   .hx-actions .hx-btn{width:100%}
   .hx-badge.q1{left:0}.hx-badge.q2{right:0}
   .hx-badge{font-size:13px;padding:9px 12px 9px 9px}
