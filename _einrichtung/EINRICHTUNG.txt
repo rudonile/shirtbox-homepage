@@ -25,7 +25,7 @@ Interne Bestellmail (an r-n@gmx.ch), ebenfalls vom Worker:
 Betreff "🛒 Neue Bestellung SB-… – CHF … – Name". Enthält offene Zahlung,
 Kunde (Mail/Telefon/WhatsApp anklickbar), Lieferadresse, Lieferanten-Bestellliste
 mit umgerechneten asiatischen Grössen, Shirt-Bilder, Platzierungsangaben und als
-Anhang die Druckdateien in voller Auflösung (SB-…-design-1.jpg) plus Originalbilder.
+Anhang die Druckdateien als PNG für 45 × 60 cm (SB-…-design-1.png) plus Originalbilder.
 "Antworten" auf diese Mail schreibt direkt an den Kunden.
 
 Ersatzweg: Ist Resend nicht eingerichtet oder nicht erreichbar, läuft die Bestellung

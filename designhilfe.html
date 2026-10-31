@@ -7,7 +7,7 @@
 <title>Designen Sie Ihr T-Shirt · ShirtBOX.ch</title>
 <script>if ("scrollRestoration" in history) history.scrollRestoration = "manual";</script>
 <link href="shirtbox-icon.svg" rel="icon" type="image/svg+xml"/><link href="shirtbox.css?v=20261025-raster" rel="stylesheet"/><link href="marke.css?v=20261025-raster" rel="stylesheet"/>
-<link href="gestalter.css?v=20261025-leer" rel="stylesheet"/>
+<link href="gestalter.css?v=20261031-linien" rel="stylesheet"/>
 </head>
 <body class="design-page">
 <main class="shell">
@@ -38,7 +38,7 @@
 <button type="button" data-model="zip" aria-pressed="false"><img src="anleitung/zip-auswahl.jpg?v=20261024" width="800" height="800" alt=""/><span>Zip-Shirt<small>Stehkragen mit Reissverschluss</small></span></button>
 </div></div>
 <div class="studio-step" id="studio-idea">
-<p class="studio-step-title"><b>2</b><span>Ihre Idee<small>Wählen Sie einen Stil, beschreiben Sie Ihr Wunsch-Design – oder beides. Text und Foto sind optional.</small></span></p>
+<p class="studio-step-title"><b>2</b><span>Ihre Idee<small>Wählen Sie einen Stil, beschreiben Sie Ihr Wunsch-Design – oder beides. Ein Foto ist optional.</small></span></p>
 <div class="studio-field studio-sub sub-style"><span id="studio-style-title">Designstil <small>(optional)</small></span>
 <div class="studio-styles" id="studio-styles" role="group" aria-labelledby="studio-style-title">
 <button type="button" data-style="modern" aria-pressed="false">Modern</button>
@@ -50,8 +50,20 @@
 <button type="button" data-style="graffiti" aria-pressed="false">Graffiti</button>
 <button type="button" data-style="elegant" aria-pressed="false">Elegant</button>
 </div></div>
-<div class="studio-field studio-sub sub-idea"><div class="studio-field-head"><label for="studio-keyword">Wie soll Ihr T-Shirt aussehen?</label><button class="studio-ideas-toggle" id="studio-ideas-toggle" type="button" aria-expanded="false" aria-controls="studio-ideas-list">💡 Ideen</button></div><textarea id="studio-keyword" rows="2" maxlength="200" placeholder="z. B. sportlich in Blau und Weiss mit dynamischen Streifen" autocomplete="off"></textarea><small class="studio-hint">Farben, Stil und Motive – ganz in Ihren eigenen Worten.</small><div class="studio-ideas-list" id="studio-ideas-list" hidden></div></div>
-<label class="studio-field studio-sub sub-text"><span>Text, der auf das T-Shirt gedruckt wird <small>(optional)</small></span><input id="studio-text" type="text" maxlength="160" placeholder="z. B. Ihr Name, ein Spruch oder Ihr Verein" autocomplete="off"/><small class="studio-hint">Genau dieser Text erscheint gut lesbar auf Ihrem T-Shirt.</small></label>
+<div class="studio-field studio-sub sub-idea"><div class="studio-field-head"><label for="studio-keyword">Wie soll Ihr T-Shirt aussehen und was soll auf Ihrem T-Shirt stehen?</label><button class="studio-ideas-toggle" id="studio-ideas-toggle" type="button" aria-expanded="false" aria-controls="studio-ideas-list">💡 Ideen</button></div><div class="studio-ideas-list" id="studio-ideas-list" hidden></div><div class="studio-guide" id="studio-guide">
+<p>Schreiben oder sprechen Sie hier einfach alles, was Ihnen wichtig ist – die KI gestaltet daraus Vorder- und Rückseite:</p>
+<ul>
+<li><b>🎨 Aussehen:</b> Farben, Stil und Muster – z. B. „sportlich in Blau und Weiss mit Streifen“</li>
+<li><b>🦅 Grafik / Motiv:</b> was zu sehen sein soll und wo – z. B. „ein Adler auf dem Rücken“</li>
+<li><b>🔤 Text:</b> was genau gedruckt wird und wo – z. B. „FC Gretzenbach“ gross hinten, „Nico 10“ auf der Brust</li>
+<li><b>📷 Eigenes Bild oder Logo:</b> unten bei „Foto“ hochladen – die KI baut es ins Design ein</li>
+</ul>
+<p>Danach sehen Sie Ihr fertiges Shirt und können alles noch ändern.</p>
+</div>
+<div class="studio-keyword-box"><textarea id="studio-keyword" rows="6" placeholder=" " autocomplete="off" aria-describedby="studio-guide"></textarea><span class="studio-keyword-icons" aria-hidden="true"><svg class="icon-keys" viewBox="0 0 24 24"><rect x="1.5" y="6" width="21" height="12.5" rx="2.2"/><path d="M5 9.5h1.2M8.6 9.5h1.2M12.2 9.5h1.2M15.8 9.5h1.2M19 9.5h.4M6.8 12.3h1.2M10.4 12.3h1.2M14 12.3h1.2M17.4 12.3h1.2M7.5 15.2h9"/></svg><svg class="icon-mouth" viewBox="0 0 24 24"><path d="M1.8 12.2c2.2-1.7 4.2-4.6 6.8-4.6 1.4 0 2.3.9 3.4 1.6 1.1-.7 2-1.6 3.4-1.6 2.6 0 4.6 2.9 6.8 4.6-2.6 3.3-5.8 5.4-10.2 5.4S4.4 15.5 1.8 12.2z"/><path d="M1.8 12.2c3.2.9 6.6 1.3 10.2 1.3s7-.4 10.2-1.3"/><path d="M23 6.5c.6 1 .6 2.2 0 3.2M21.2 7.3c.3.5.3 1.1 0 1.6M1 6.5c-.6 1-.6 2.2 0 3.2M2.8 7.3c-.3.5-.3 1.1 0 1.6"/></svg></span></div>
+<button class="studio-speech" id="studio-speech" type="button" aria-pressed="false" aria-describedby="studio-speech-status"><span class="studio-speech-icon" aria-hidden="true">🎙️</span><span class="studio-speech-text"><strong id="studio-speech-label">Idee einsprechen</strong><small id="studio-speech-sub">Antippen und erzählen – wir schreiben mit</small></span></button>
+<p class="studio-speech-status" id="studio-speech-status" role="status" aria-live="polite"></p>
+</div>
 <div class="studio-field studio-sub sub-photo"><span>Foto <small>(optional)</small></span>
 <div class="studio-photo" id="studio-photo-box">
 <input id="studio-photo" type="file" accept="image/png,image/jpeg,image/webp" aria-label="Foto hochladen"/>
@@ -82,12 +94,11 @@
 <textarea id="studio-edit-input" rows="2" maxlength="300" placeholder="z. B. Hintergrund dunkler, Schriftzug grösser, Ärmel in Blau"></textarea>
 <button id="studio-edit-button" type="button" disabled>Änderungen übernehmen</button>
 </div>
-<p class="studio-edit-or"><span>oder</span></p>
-<button class="studio-another" id="studio-another" type="button">+ Weiteres T-Shirt designen</button>
 </div>
 <section class="studio-collection" id="studio-collection" aria-labelledby="studio-collection-title">
 <h2 id="studio-collection-title">Ihre T-Shirts <span id="studio-count"></span></h2>
 <div class="studio-designs" id="studio-designs"></div>
+<button class="studio-card studio-card-another" id="studio-another" type="button" hidden><span aria-hidden="true">+</span><strong>Weiteres T-Shirt designen</strong></button>
 <div class="studio-order" id="studio-order" hidden>
 <div><strong id="studio-total"></strong><p>inkl. MwSt. und Versand · Grössen und Stückzahlen im nächsten Schritt</p></div>
 <div class="studio-order-actions">
@@ -109,8 +120,8 @@
 </main>
 <script defer src="design-uebernahme.js?v=20261023c"></script>
 <script defer src="bestell-logik.js?v=20261023-unbegrenzt"></script>
-<script defer src="gestalter.js?v=20261025-leer"></script>
+<script defer src="gestalter.js?v=20261031-linien"></script>
 <script defer src="navigation.js?v=20261023-neu"></script>
-<script defer src="language.js?v=20261025-ergebnis"></script>
+<script defer src="language.js?v=20261031-ideen"></script>
 </body>
 </html>

@@ -36,8 +36,10 @@ html[lang=en] .studio-steps .is-current button::after{content:"Now"}
 .studio-ideas-toggle::after{content:"";width:6px;height:6px;margin:0 2px 3px 3px;border:solid currentColor;border-width:0 2px 2px 0;rotate:45deg;transition:rotate .2s,margin .2s}
 .studio-ideas-toggle[aria-expanded=true]::after{rotate:225deg;margin-bottom:-3px}
 .studio-ideas-toggle:hover,.studio-ideas-toggle[aria-expanded=true]{border-color:#ff7a2b;background:#ff5b2e14;color:var(--ink)}
-.studio-ideas-list{display:flex;flex-wrap:wrap;gap:6px;max-height:232px;margin-top:10px;padding:10px;overflow-y:auto;border:1px solid var(--line);border-radius:14px;background:var(--surface-2);scrollbar-width:thin}
-.studio-ideas-list button{padding:6px 11px;border:1px dashed var(--line-2);border-radius:999px;background:transparent;color:var(--ink-2);font:inherit;font-size:12.5px;font-weight:650;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
+/* Direkt unter der Überschrift/Lampe: zehn ganze Beispiel-Beschreibungen, je eine Zeile. */
+.studio-ideas-list{display:grid;gap:6px;max-height:380px;margin:0 0 12px;padding:10px;overflow-y:auto;border:1px solid #ff9a3d66;border-radius:14px;background:var(--surface-2);scrollbar-width:thin}
+.studio-ideas-list[hidden]{display:none}
+.studio-ideas-list button{padding:9px 12px;border:1px dashed var(--line-2);border-radius:12px;background:transparent;color:var(--ink-2);font:inherit;font-size:13px;font-weight:600;line-height:1.4;text-align:left;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
 .studio-ideas-list button:hover{border-style:solid;border-color:#ff7a2b;background:#ff5b2e14;color:var(--ink)}
 
 /* Nächster Schritt: ganzer Bereich orange umrandet, Rahmen pulsiert sanft */
@@ -52,7 +54,6 @@ html[lang=en] .studio-steps .is-current button::after{content:"Now"}
 #studio-idea.is-next{border-color:#ff7a2b}
 .studio-sub{--c:#9b7bff;--t:#9b7bff17;margin:0 0 12px;padding:12px 12px 12px 14px;border:1px solid var(--line);border-left:4px solid var(--c);border-radius:14px;background:var(--t)}
 .studio-sub.sub-idea{--c:#ff9a3d;--t:#ff9a3d14}
-.studio-sub.sub-text{--c:#4fd2ff;--t:#4fd2ff12}
 .studio-sub.sub-photo{--c:#3ddc8a;--t:#3ddc8a12;margin-bottom:14px}
 .studio-sub>span:first-child,.studio-sub .studio-field-head label{display:flex;align-items:center;gap:8px;margin-bottom:9px;font-size:15.5px;font-weight:800;line-height:1.25;color:var(--ink)}
 .studio-sub .studio-field-head{margin-bottom:9px}
@@ -60,9 +61,33 @@ html[lang=en] .studio-steps .is-current button::after{content:"Now"}
 .studio-sub>span:first-child::before,.studio-sub .studio-field-head label::before{display:grid;place-items:center;flex:none;width:28px;height:28px;border-radius:9px;background:var(--c);font-size:15px}
 .sub-style>span:first-child::before{content:"🎨"}
 .sub-idea .studio-field-head label::before{content:"✏️"}
-.sub-text>span:first-child::before{content:"🔤"}
 .sub-photo>span:first-child::before{content:"📷"}
 .studio-sub textarea,.studio-sub input[type=text]{background:var(--bg)}
+/* Beschreibung: doppelt so grosses Feld, darüber eine kurze Anleitung, was man alles angeben kann. */
+.studio-field textarea#studio-keyword{min-height:168px;font-size:15.5px;line-height:1.5}
+/* Leeres Eingabefeld: statt Text eine Tastatur und ein Mund – schreiben oder sprechen. Verschwindet beim Tippen. */
+.studio-keyword-box{position:relative}
+/* Gleicher Linien-Stil wie die fliegenden Werkzeuge im Hintergrund (navigation.js / marke.css). */
+.studio-keyword-icons{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:40px;opacity:.85;pointer-events:none;transition:opacity .25s}
+.studio-keyword-icons svg{width:70px;height:70px;overflow:visible;fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 10px currentColor);animation:studioFloat 4s ease-in-out infinite}
+.studio-keyword-icons svg *{vector-effect:non-scaling-stroke}
+.studio-keyword-icons .icon-keys{color:#a9bdff}
+.studio-keyword-icons .icon-mouth{color:#ffb48f;animation-delay:-2s}
+@keyframes studioFloat{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-6px) rotate(3deg)}}
+@media(prefers-reduced-motion:reduce){.studio-keyword-icons svg{animation:none}}
+.studio-keyword-box:has(textarea:not(:placeholder-shown)) .studio-keyword-icons{opacity:0}
+.studio-guide{margin:0 0 10px;font-size:13.5px;line-height:1.45;color:var(--ink-2)}
+.studio-guide p{margin:0}
+.studio-guide ul{display:grid;gap:5px;margin:8px 0;padding:0;list-style:none}
+.studio-guide li{padding:6px 10px;border-radius:10px;background:var(--bg)}
+.studio-guide b{color:var(--ink);font-weight:800}
+.studio-guide p:last-child{color:var(--ink-3)}
+
+/* Führung nach der Modellwahl: der jeweils erklärte Bereich wird heller und leuchtet orange (gestalter.js setzt is-lit). */
+.studio-sub.sub-style,.studio-guide li,#studio-keyword{scroll-margin:100px 0 120px;transition:background-color .45s,box-shadow .45s,border-color .45s,color .45s}
+.studio-sub.sub-style.is-lit{background:#b49bff59;box-shadow:0 0 0 2px #ffb46a,0 0 26px #ff9a3d66}
+.studio-guide li.is-lit{background:#ff9a3d59;color:var(--ink);box-shadow:0 0 0 2px #ffb46a,0 0 22px #ff9a3d59}
+#studio-keyword.is-lit{border-color:#ffb46a;background:#ff9a3d33;box-shadow:0 0 0 3px #ff9a3d80,0 0 28px #ff9a3d66}
 .studio-sub .studio-photo{background:var(--bg)}
 
 /* Leere Vorschau: Hinweis direkt auf dem Shirt */
@@ -114,6 +139,9 @@ html[lang=en] .studio-stage.is-blank .studio-preview::after{content:"Your shirt 
 
 /* Vorschau */
 .studio-stage{display:flex;flex-direction:column;gap:16px;min-width:0;scroll-margin-top:100px}
+/* Computer: Die rechte Seite bleibt beim Scrollen der (längeren) linken Seite stehen, senkrecht mittig im sichtbaren Bereich.
+   --stage-top setzt gestalter.js (Kopfzeile, Fusszeile und Höhe der rechten Seite). */
+@media(min-width:901px){.studio-stage{position:sticky;top:var(--stage-top,90px)}}
 .studio-preview{position:relative;margin:0;border-radius:24px;overflow:hidden;background:#747474;box-shadow:var(--shadow-lg)}
 /* cover statt contain: Die leeren Vorlagen (1536×1228) füllen den 3:2-Rahmen ohne graue Seitenbalken; abgeschnitten wird nur leerer Hintergrund oben/unten. */
 .studio-preview img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover}
@@ -135,13 +163,31 @@ html[lang=en] .studio-stage.is-blank .studio-preview::after{content:"Your shirt 
 .studio-edit button{flex:none;min-height:56px;padding:0 22px;border:0;border-radius:14px;background:var(--solid);color:#fff;font-size:15.5px;font-weight:800;cursor:pointer}
 .studio-edit button:hover:not(:disabled){background:#2a3346}
 .studio-edit button:disabled{background:#252c3a;color:var(--ink-3);cursor:not-allowed}
+/* Sobald man ins Änderungsfeld tippt (oder Text drinsteht), leuchtet „Änderungen übernehmen“ orange und pulsiert. */
+@keyframes studioPress{0%,100%{box-shadow:0 0 0 0 #ff7a2b00,0 8px 22px #ff5b2e45}50%{box-shadow:0 0 0 6px #ff7a2b55,0 8px 22px #ff5b2e45}}
+.studio-edit-row:focus-within #studio-edit-button,.studio-edit #studio-edit-button:not(:disabled){background:var(--fire);color:var(--on-accent);animation:studioPress 1.6s ease-in-out infinite}
+.studio-edit-row:focus-within #studio-edit-button:disabled{cursor:pointer}
+@media(prefers-reduced-motion:reduce){.studio-edit-row:focus-within #studio-edit-button,.studio-edit #studio-edit-button:not(:disabled){animation:none;box-shadow:0 0 0 3px #ff7a2b55}}
 
-/* „oder“ + Weiteres T-Shirt designen unter den Änderungen */
-.studio-edit-or{display:flex;align-items:center;gap:10px;margin:12px 0 10px;color:var(--ink-3);font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em}
-.studio-edit-or::before,.studio-edit-or::after{content:"";flex:1;height:1px;background:var(--line)}
-#studio-another{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;padding:0 20px;border:0;border-radius:999px;background:transparent;color:var(--ink);box-shadow:inset 0 0 0 2px var(--line-2);font-size:15.5px;font-weight:800;cursor:pointer}
-#studio-another:hover:not(:disabled){box-shadow:inset 0 0 0 2px var(--ink)}
-#studio-another:disabled{color:var(--ink-3);cursor:not-allowed}
+/* Spracheingabe: grosser Mikrofon-Knopf direkt unter der Beschreibung */
+.studio-speech{display:flex;align-items:center;gap:12px;width:100%;margin-top:10px;padding:12px 14px;border:2px solid #ff9a3d;border-radius:16px;background:#ff9a3d1f;color:var(--ink);text-align:left;font:inherit;cursor:pointer;transition:background .15s,border-color .15s}
+.studio-speech:hover{background:#ff9a3d33}
+.studio-speech-icon{display:grid;place-items:center;flex:none;width:48px;height:48px;border-radius:50%;background:var(--fire);font-size:24px;box-shadow:0 6px 16px #ff5b2e4d}
+.studio-speech-text strong{display:block;font-size:16.5px;font-weight:850}
+.studio-speech-text small{display:block;margin-top:2px;font-size:13px;color:var(--ink-2)}
+@keyframes studioListen{0%,100%{box-shadow:0 0 0 0 #ff3d2e66}50%{box-shadow:0 0 0 10px #ff3d2e00}}
+.studio-speech.is-on{border-color:#ff3d2e;background:#ff3d2e26}
+.studio-speech.is-on .studio-speech-icon{background:#ff3d2e;animation:studioListen 1.2s ease-out infinite}
+.studio-speech-status{margin:6px 0 0;font-size:13px;line-height:1.4;color:var(--ink-2)}
+.studio-speech-status:empty{display:none}
+
+/* „Weiteres T-Shirt designen“: eigene Karte neben den Designs, gleich gross wie eine Design-Karte */
+.studio-card.studio-card-another{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:120px;padding:12px;border-style:dashed;border-color:var(--line-2);color:var(--ink);font:inherit;text-align:center;cursor:pointer}
+.studio-card-another[hidden]{display:none}
+.studio-card-another span{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--fire);color:var(--on-accent);font-size:28px;font-weight:800;line-height:1}
+.studio-card-another strong{font-size:14px;font-weight:800;line-height:1.25}
+.studio-card-another:hover:not(:disabled){border-color:#ff7a2b;background:#ff5b2e14}
+.studio-card-another:disabled{color:var(--ink-3);cursor:not-allowed}
 
 /* Ergebnis-Ansicht (eine Spalte): Formular und Überschrift weg, das fertige Shirt steht ganz oben. */
 @media(max-width:900px){
@@ -172,8 +218,6 @@ html[lang=en] .studio-designs:empty::before{content:"Your T-shirt designs will a
 #studio-order-button{background:var(--fire);color:var(--on-accent);box-shadow:0 8px 22px #ff5b2e45}
 #studio-order-button:hover:not(:disabled){background:var(--fire);transform:translateY(-2px)}
 #studio-order-button:disabled{background:#252c3a;color:var(--ink-3);box-shadow:none;cursor:not-allowed}
-.studio-another{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 2px var(--line-2)}
-.studio-another:hover:not(:disabled){box-shadow:inset 0 0 0 2px var(--ink)}
 
 @media(max-width:900px){
   .studio-grid{grid-template-columns:minmax(0,1fr)}
@@ -201,8 +245,6 @@ html[lang=en] .studio-designs:empty::before{content:"Your T-shirt designs will a
   .studio-edit-label span{display:none}
   .studio-edit textarea{min-height:52px}
   .studio-edit #studio-edit-button{width:118px;min-height:52px;padding:0 10px;font-size:13.5px;line-height:1.2}
-  .studio-edit-or{margin:10px 0 8px}
-  #studio-another{min-height:46px}
   .studio-collection{padding:16px;border-radius:20px}
   .studio-designs{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -16px;padding:0 16px 4px;scrollbar-width:none}
   .studio-designs::-webkit-scrollbar{display:none}

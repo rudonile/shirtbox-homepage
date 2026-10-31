@@ -60,8 +60,7 @@ export default {async fetch(request,env,ctx){
   // Ohne Website-Herkunft: Abmeldung per Mailprogramm (One-Click), Resend-Webhook, öffentliche Newsletter-Bilder.
   if(path==='/newsletter/abmelden-direkt')return unsubscribeDirect(request,env,url);
   if(path==='/resend/webhook')return resendWebhook(request,env);
-  if(path.startsWith('/bild/newsletter/'))return newsletterImage(request,env,path);
-  if(request.method==='OPTIONS' && ALLOWED_SITES.has(origin))return new Response(null,{status:204,headers:{...headers(origin),'Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type','Access-Control-Max-Age':'600'}});
+  if(path.startsWith('/bild/newsletter/'))return newsletterImage(request,env,path);  if(request.method==='OPTIONS' && ALLOWED_SITES.has(origin))return new Response(null,{status:204,headers:{...headers(origin),'Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type','Access-Control-Max-Age':'600'}});
   if(!ALLOWED_SITES.has(origin))return reply(origin,403,'Nicht freigegeben.');
   if(request.method!=='POST')return reply(origin,405,'Nur POST erlaubt.');
   if(path.startsWith('/newsletter/'))return newsletterRoute(request,env,origin,path);
