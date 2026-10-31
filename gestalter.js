@@ -41,11 +41,25 @@
       const view = document.createElement('button'); view.type = 'button'; view.className = 'studio-card-view'; view.setAttribute('aria-pressed', String(i === active)); view.setAttribute('aria-label', `Design ${i + 1} ansehen`);
       const img = document.createElement('img'); img.src = item.url; img.alt = ''; view.append(img);
       view.addEventListener('click', () => { if (busy) return; active = i; render(); zoom(i); });
-      const pick = document.createElement('label'); pick.className = 'studio-card-pick';
-      const box = document.createElement('input'); box.type = 'checkbox'; box.checked = item.selected || editingOrder; box.disabled = editingOrder || busy;
-      box.addEventListener('change', () => { item.selected = box.checked; render(); });
-      pick.append(box, document.createTextNode(` Design ${i + 1}`));
-      card.append(view, pick); list.append(card);
+      // Deutlich sichtbar, ob das Design bestellt wird: grüner Knopf „Im Warenkorb“ bzw. grauer Knopf „In den Warenkorb“.
+      // Daneben der Papierkorb zum Löschen. Beim Weiterbearbeiten einer Bestellung bleiben alle Designs in der Bestellung.
+      const inCart = item.selected || editingOrder;
+      const head = document.createElement('div'); head.className = 'studio-card-head';
+      const title = document.createElement('p'); title.className = 'studio-card-title'; title.textContent = `Design ${i + 1}`;
+      head.append(title);
+      card.append(view);
+      // Kleiner roter Löschknopf oben rechts auf dem Bild.
+      if (!editingOrder) {
+        const del = document.createElement('button'); del.type = 'button'; del.className = 'studio-card-delete'; del.disabled = busy;
+        del.textContent = '×'; del.title = 'Design löschen'; del.setAttribute('aria-label', `Design ${i + 1} löschen`);
+        del.addEventListener('click', () => removeDesign(i));
+        card.append(del);
+      }
+      const pick = document.createElement('button'); pick.type = 'button'; pick.className = 'studio-card-pick';
+      pick.setAttribute('aria-pressed', String(inCart)); pick.disabled = editingOrder || busy;
+      pick.textContent = inCart ? '✓ Im Warenkorb' : '+ In den Warenkorb';
+      pick.addEventListener('click', () => { if (busy) return; item.selected = !item.selected; render(); });
+      card.append(head, pick); list.append(card);
     });
     // „Weiteres T-Shirt designen“ als gleich grosse Karte direkt neben den Designs – bewusst getrennt von den Änderungen.
     if (designs.length) list.append(another);
@@ -61,7 +75,8 @@
   function controls() {
     surprise.disabled = busy;
     surprise.textContent = '✨ T-Shirt designen';
-    editButton.disabled = busy || !editInput.value.trim();
+    // Während im Änderungsfeld diktiert wird, ist der Knopf schon aktiv – er beendet das Diktat und übernimmt den Text.
+    editButton.disabled = busy || (!editInput.value.trim() && dict?.field !== editInput);
     orderButton.disabled = busy || !chosen().length;
     another.disabled = busy;
     stage.classList.toggle('is-empty', !designs.length && !busy);
@@ -94,43 +109,90 @@
   keyword.addEventListener('input', () => steps());
   photo.addEventListener('change', () => steps());
   // Spracheingabe (Web Speech API, Deutsch) für die Beschreibung und das Änderungsfeld – immer nur ein Diktat gleichzeitig.
-  // Gestartet und beendet wird über den Mund im Feld; während des Diktats bleibt er klein und rot in der Ecke sichtbar.
+  // Gestartet wird über den Mund im Feld. Beenden ist nicht nötig: „T-Shirt designen“ bzw. „Änderungen übernehmen“
+  // beenden das Diktat selbst, warten das letzte Wort ab und arbeiten dann mit dem vollständigen Text.
+  // Safari/iPad beendet die Erkennung nach kurzen Sprechpausen von sich aus – dann hört sie automatisch weiter zu
+  // (bis dreimal hintereinander nichts mehr erkannt wurde).
   // Ohne Unterstützung verschwindet der Mund, und ein Hinweis nennt die Diktierfunktion der Handy-Tastatur.
   const speechStatus = $('studio-speech-status'), editStatus = $('studio-edit-status');
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  let listening = null, listenButton = null, listenOff = null;
   const hear = text => { speechStatus.textContent = text; };
   const SPEECH_ERRORS = {'not-allowed': 'Bitte erlauben Sie den Mikrofonzugriff im Browser.', 'service-not-allowed': 'Der Sprachdienst ist hier nicht verfügbar. Nutzen Sie das Mikrofon Ihrer Tastatur.',
     'audio-capture': 'Kein Mikrofon gefunden. Bitte prüfen Sie Ihr Mikrofon.', 'no-speech': 'Keine Sprache erkannt. Bitte nochmals den Mund antippen und sprechen.',
     'network': 'Die Spracherkennung ist nicht erreichbar. Bitte Internetverbindung prüfen.'};
-  function stopDictation() {
-    const s = listening, off = listenOff; listening = listenButton = listenOff = null;
-    try { s?.stop(); } catch {}
-    off?.();
+  const FATAL = ['not-allowed', 'service-not-allowed', 'audio-capture', 'network'];
+  // dict = laufendes Diktat {button, field, report, changed, show, session, base, want, quiet, error, done}
+  let dict = null;
+  function endDictation(d, text) {
+    if (dict !== d) return;
+    dict = null; d.show(false);
+    if (text) d.report(text);
+    d.done?.();
   }
-  function dictation(button, field, report, changed) {
+  // Sofort beenden (z. B. beim Wechsel ins andere Feld): der angezeigte Text bleibt stehen.
+  function stopDictation() {
+    const d = dict; if (!d) return;
+    d.want = false; const s = d.session; d.session = null;
+    try { s?.abort(); } catch {}
+    endDictation(d);
+  }
+  // Sauber beenden und die letzten Wörter noch abwarten (höchstens 1,5 Sekunden).
+  function finishDictation() {
+    const d = dict; if (!d) return Promise.resolve();
+    d.want = false;
+    return new Promise(resolve => {
+      const timer = setTimeout(() => { if (dict === d) { const s = d.session; d.session = null; try { s?.abort(); } catch {} endDictation(d); } resolve(); }, 1500);
+      d.done = () => { clearTimeout(timer); resolve(); };
+      if (!d.session) { endDictation(d); return; }
+      try { d.session.stop(); } catch { d.session = null; endDictation(d); }
+    });
+  }
+  function listen(d) {
+    const session = new Recognition(), field = d.field;
+    d.session = session; d.base = field.value.trim(); d.heard = false;
+    session.lang = 'de-DE'; session.continuous = true; session.interimResults = true;
+    session.onresult = event => {
+      if (d.session !== session) return;
+      let final = '', interim = '';
+      for (const result of event.results) (result.isFinal ? (final += result[0].transcript + ' ') : (interim += result[0].transcript + ' '));
+      if (final.trim() || interim.trim()) { d.heard = true; d.quiet = 0; }
+      field.value = [d.base, final.trim(), interim.trim()].filter(Boolean).join(' ');
+      field.scrollTop = field.scrollHeight; d.changed();
+    };
+    session.onerror = event => {
+      if (d.session !== session) return;
+      if (FATAL.includes(event.error)) { d.want = false; d.error = SPEECH_ERRORS[event.error]; }
+    };
+    session.onend = () => {
+      if (d.session !== session) return;
+      d.session = null;
+      if (dict !== d) return;
+      if (d.want) {
+        d.quiet = d.heard ? 0 : d.quiet + 1;
+        if (d.quiet < 3) { try { listen(d); return; } catch { d.session = null; } }
+        endDictation(d, d.quiet >= 3 ? 'Diktat beendet. Prüfen Sie den Text – zum Weitersprechen den Mund antippen.' : 'Die Spracheingabe wurde unterbrochen. Bitte nochmals den Mund antippen.');
+        return;
+      }
+      endDictation(d, d.error || '');
+    };
+    session.start();
+  }
+  function dictation(button, field, report, changed, hint) {
     const box = field.parentElement, label = button.querySelector('span'), idle = label.textContent;
     const show = on => {
       box.classList.toggle('is-listening', on); button.classList.toggle('is-on', on); button.setAttribute('aria-pressed', String(on));
       label.textContent = on ? 'Stopp' : idle; field.readOnly = on;
+      controls();
     };
     button.addEventListener('click', () => {
-      if (listenButton === button) { stopDictation(); report('Diktat beendet. Prüfen Sie den Text – zum Weitersprechen den Mund antippen.'); return; }
+      if (dict?.button === button) { finishDictation().then(() => report('Diktat beendet. Prüfen Sie den Text – zum Weitersprechen den Mund antippen.')); return; }
       stopDictation(); stopTour(); if (field === keyword) robotStop();
-      const base = field.value.trim(), session = new Recognition();
-      listening = session; listenButton = button; listenOff = () => show(false);
-      session.lang = 'de-DE'; session.continuous = true; session.interimResults = true;
-      session.onresult = event => {
-        if (listening !== session) return;
-        let final = '', interim = '';
-        for (const result of event.results) (result.isFinal ? (final += result[0].transcript + ' ') : (interim += result[0].transcript + ' '));
-        field.value = [base, final.trim(), interim.trim()].filter(Boolean).join(' ');
-        field.scrollTop = field.scrollHeight; changed();
-      };
-      session.onerror = event => { if (listening === session) report(SPEECH_ERRORS[event.error] || 'Die Spracheingabe wurde unterbrochen. Bitte nochmals versuchen.'); };
-      session.onend = () => { if (listening === session) { listening = listenButton = listenOff = null; show(false); } };
-      show(true); report('Ich höre zu … zum Beenden den roten Mund antippen.');
-      try { session.start(); } catch { stopDictation(); report('Die Spracheingabe konnte nicht gestartet werden. Bitte nochmals versuchen.'); }
+      // Offene Bildschirmtastatur schliessen – auf dem iPad blockiert sie sonst das Mikrofon.
+      if (document.activeElement === field) field.blur();
+      const d = {button, field, report, changed, show, want: true, quiet: 0, error: ''};
+      dict = d; show(true); report(hint);
+      // start() muss direkt im Antippen passieren (Safari), darum ohne Warten.
+      try { listen(d); } catch { endDictation(d, 'Die Spracheingabe konnte nicht gestartet werden. Bitte nochmals versuchen.'); }
     });
   }
   const speakButton = field => field.parentElement.querySelector('.studio-icon-btn[data-act=speak]');
@@ -138,8 +200,8 @@
     speakButton(keyword).hidden = speakButton(editInput).hidden = true;
     hear('Tipp: Sie können Ihre Idee auch mit dem Mikrofon Ihrer Handy-Tastatur einsprechen.');
   } else {
-    dictation(speakButton(keyword), keyword, hear, () => { fail(''); steps(); });
-    dictation(speakButton(editInput), editInput, text => { editStatus.textContent = text; }, () => controls());
+    dictation(speakButton(keyword), keyword, hear, () => { fail(''); steps(); }, 'Ich höre zu … Wenn Sie fertig sind, einfach auf „T-Shirt designen“ tippen.');
+    dictation(speakButton(editInput), editInput, text => { editStatus.textContent = text; }, () => controls(), 'Ich höre zu … Wenn Sie fertig sind, einfach auf „Änderungen übernehmen“ tippen.');
   }
   window.addEventListener('pagehide', stopDictation);
   // Tastatur im leeren Feld: Klick setzt den Cursor ins Feld (auf dem Handy öffnet sich die Tastatur).
@@ -156,19 +218,32 @@
   picture.addEventListener('click', () => { if (active >= 0 && !busy) zoom(active); });
 
   // Foto-Auswahl mit Vorschau.
+  // Zu grosses oder falsches Foto: nicht still verwerfen, sondern das Feld rot umranden und den Grund direkt darunter nennen.
+  const photoError = $('studio-photo-error');
+  const photoProblem = text => {
+    photoBox.classList.toggle('is-error', !!text);
+    photoError.textContent = text; photoError.hidden = !text;
+    if (text) photoBox.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+  };
   photo.addEventListener('change', () => {
     fail('');
     const file = photo.files[0];
-    if (file && file.size > MAX_PHOTO) { photo.value = ''; fail('Das Foto darf maximal 5 MB gross sein.'); }
-    else if (file && !/^image\/(jpeg|png|webp)$/.test(file.type)) { photo.value = ''; fail('Bitte ein JPG-, PNG- oder WebP-Foto wählen.'); }
+    if (file && file.size > MAX_PHOTO) {
+      photo.value = '';
+      photoProblem(`Die maximale Grösse von 5 MB ist überschritten (Ihr Foto: ${(file.size / 1024 / 1024).toFixed(1).replace('.', ',')} MB). Bitte ein kleineres Foto wählen.`);
+    } else if (file && !/^image\/(jpeg|png|webp)$/.test(file.type)) {
+      photo.value = '';
+      photoProblem('Dieses Dateiformat geht leider nicht. Bitte ein JPG-, PNG- oder WebP-Foto wählen.');
+    } else if (file) photoProblem('');
     const current = photo.files[0];
     photoBox.classList.toggle('has-photo', !!current);
     photoName.textContent = current ? current.name : 'Eigenes Foto oder Logo hochladen';
     if (photoThumb.src) URL.revokeObjectURL(photoThumb.src);
     photoThumb.src = current ? URL.createObjectURL(current) : '';
     photoRemove.hidden = !current;
+    steps(); // nach der Prüfung neu: ein abgelehntes Foto zählt nicht als Idee
   });
-  photoRemove.addEventListener('click', () => { photo.value = ''; photo.dispatchEvent(new Event('change')); });
+  photoRemove.addEventListener('click', () => { photo.value = ''; photoProblem(''); photo.dispatchEvent(new Event('change')); });
 
   async function template() {
     const response = await fetch(TEMPLATE());
@@ -412,13 +487,21 @@
 
   // Computer: rechte Seite senkrecht mittig zwischen Kopf- und Fusszeile festhalten (CSS position:sticky, Abstand hier berechnet).
   // Ist sie höher als der Bildschirm, bleibt sie oben unter der Kopfzeile stehen.
+  // Höhe bewusst über 100svh (kleinster sichtbarer Bereich) gemessen: Auf dem iPad ändert sich innerHeight beim Scrollen
+  // (Safari blendet die Adressleiste ein/aus) – sonst springt die Vorschau mit.
   const wide = matchMedia('(min-width: 901px)');
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:fixed;top:0;left:-9999px;width:1px;height:100vh;height:100svh;visibility:hidden;pointer-events:none';
+  document.body.append(probe);
   function placeStage() {
-    if (!wide.matches) { stage.style.removeProperty('--stage-top'); return; }
+    if (!wide.matches) { stage.style.removeProperty('--stage-top'); stage.style.removeProperty('--stage-max'); return; }
     const head = document.querySelector('.masthead')?.offsetHeight || 0, footer = document.querySelector('.site-footer');
     const foot = footer && ['sticky', 'fixed'].includes(getComputedStyle(footer).position) ? footer.offsetHeight : 0;
-    const room = window.innerHeight - head - foot;
-    stage.style.setProperty('--stage-top', `${Math.round(head + Math.max(12, (room - stage.offsetHeight) / 2))}px`);
+    const room = Math.min(window.innerHeight, probe.offsetHeight || window.innerHeight) - head - foot;
+    const max = Math.max(260, room - 24), top = `${Math.round(head + Math.max(12, (room - Math.min(stage.offsetHeight, max)) / 2))}px`;
+    // Nur bei Änderung setzen – sonst meldet der ResizeObserver eine Endlosschleife.
+    if (stage.style.getPropertyValue('--stage-max') !== `${max}px`) stage.style.setProperty('--stage-max', `${max}px`);
+    if (stage.style.getPropertyValue('--stage-top') !== top) stage.style.setProperty('--stage-top', top);
   }
   new ResizeObserver(placeStage).observe(stage);
   window.addEventListener('resize', placeStage); wide.addEventListener('change', placeStage);
@@ -426,6 +509,8 @@
   // T-Shirt-Vorschau mittig in den sichtbaren Bereich unter der fixen Kopfzeile scrollen.
   function showPreview() {
     if (studio.classList.contains('is-result') && oneColumn.matches) { window.scrollTo({top: 0, behavior: 'smooth'}); return; }
+    // Computer/iPad quer: rechte Seite in sich nach oben, damit das Shirt sichtbar ist.
+    if (wide.matches && stage.scrollTop) stage.scrollTo({top: 0, behavior: 'smooth'});
     const figure = picture.closest('figure'); if (!figure) return;
     const top = document.querySelector('.masthead')?.getBoundingClientRect().bottom || 0;
     const bottom = window.innerHeight;
@@ -442,10 +527,20 @@
     finally { busy = false; render(); requestAnimationFrame(showPreview); }
   }
 
-  form.addEventListener('submit', event => {
+  // Läuft noch ein Diktat, wird es zuerst sauber beendet (letzte Wörter abwarten) – kein extra „Stopp“ nötig.
+  let finishing = false;
+  async function afterDictation() {
+    if (!dict) return true;
+    if (finishing) return false;
+    finishing = true;
+    try { await finishDictation(); } finally { finishing = false; }
+    return !busy;
+  }
+
+  form.addEventListener('submit', async event => {
     event.preventDefault();
-    if (busy) return;
-    stopDictation();
+    if (busy || !(await afterDictation())) return;
+    if (!speakButton(keyword).hidden) hear('');
     const word = keyword.value.trim(), file = photo.files[0];
     if (!model) { fail('Bitte wählen Sie zuerst ein Shirt-Modell (Polo-Shirt oder Zip-Shirt).'); modelField.classList.add('attention'); modelField.scrollIntoView({behavior: 'smooth', block: 'center'}); modelButtons[0].focus({preventScroll: true}); return; }
     if (!word && !file && !styleChoice) { fail('Bitte beschreiben Sie Ihr Design oder laden Sie ein Foto hoch.'); keyword.focus(); return; }
@@ -462,26 +557,38 @@
 
   // Weiteres T-Shirt: alle Eingaben (Modell, Stil, Beschreibung, Foto) zurücksetzen und oben bei Schritt 1 neu beginnen.
   // Die fertigen Designs bleiben unten in „Ihre T-Shirts“ erhalten.
-  another.addEventListener('click', () => {
-    if (busy) return;
+  another.addEventListener('click', () => { if (!busy) startNew(); });
+  function startNew() {
     model = ''; modelButtons.forEach(b => b.setAttribute('aria-pressed', 'false'));
     styleChoice = ''; styleButtons.forEach(b => b.setAttribute('aria-pressed', 'false'));
     stopTour(); toured = false; robotDone = false; robotType();
-    stopDictation(); if (!speakButton(keyword).hidden) hear(''); keyword.value = ''; photo.value = ''; photo.dispatchEvent(new Event('change'));
+    stopDictation(); if (!speakButton(keyword).hidden) hear(''); keyword.value = ''; photo.value = ''; photoProblem(''); photo.dispatchEvent(new Event('change'));
     editInput.value = '';
     fail(''); say('');
     // Vorschau wieder leer (Vorlage vorne/hinten) statt des letzten Designs.
     active = -1; startOver = true; showResult(false); render();
     window.scrollTo({top: 0, behavior: 'smooth'});
-  });
+  }
+
+  // Design löschen (Papierkorb auf der Karte). War es das letzte, beginnt man direkt mit einem neuen Shirt.
+  function removeDesign(i) {
+    const d = designs[i]; if (busy || !d) return;
+    if (!confirm(document.documentElement.lang === 'en' ? `Really delete design ${i + 1}?` : `Design ${i + 1} wirklich löschen?`)) return;
+    URL.revokeObjectURL(d.url); designs.splice(i, 1);
+    if (!designs.length) { startNew(); return; }
+    if (active > i || active >= designs.length) active--;
+    say(''); render();
+  }
   rights.addEventListener('change', () => { rights.closest('label').classList.remove('attention'); if (rights.checked && error.textContent.includes('Bildrechte')) fail(''); });
 
   editInput.addEventListener('input', controls);
   editInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); editButton.click(); } });
-  editButton.addEventListener('click', () => {
+  editButton.addEventListener('click', async () => {
+    const spoke = dict?.field === editInput;
+    if (busy || !designs[active] || !(await afterDictation())) return;
     const d = designs[active], change = editInput.value.trim();
-    if (busy || !d || !change) return;
-    stopDictation(); editStatus.textContent = '';
+    if (!d || !change) { if (!change && spoke) editStatus.textContent = 'Keine Sprache erkannt. Bitte nochmals den Mund antippen und sprechen.'; return; }
+    editStatus.textContent = '';
     run(async () => {
       const cut = MODELS[d.model]?.cut;
       const blob = await keepInside(await request(`Bisheriges Shirt und Gestaltung beibehalten${cut ? ` (Schnitt: ${cut})` : ''}. Ändere nur Folgendes: ${change}\nErhalte alle anderen Merkmale. ${INSIDE}`, d.blob), d.model);

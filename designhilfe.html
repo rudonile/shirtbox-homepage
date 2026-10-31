@@ -7,7 +7,7 @@
 <title>Designen Sie Ihr T-Shirt · ShirtBOX.ch</title>
 <script>if ("scrollRestoration" in history) history.scrollRestoration = "manual";</script>
 <link href="shirtbox-icon.svg" rel="icon" type="image/svg+xml"/><link href="shirtbox.css?v=20261025-raster" rel="stylesheet"/><link href="marke.css?v=20261025-raster" rel="stylesheet"/>
-<link href="gestalter.css?v=20261031-shirti" rel="stylesheet"/>
+<link href="gestalter.css?v=20261031-loeschen" rel="stylesheet"/>
 </head>
 <body class="design-page">
 <main class="shell">
@@ -46,6 +46,7 @@
 <span class="studio-photo-label"><span id="studio-photo-name">Eigenes Foto oder Logo hochladen</span><small class="studio-photo-hint">optional – ich integriere es in dein Design</small></span>
 <button class="studio-photo-remove" id="studio-photo-remove" type="button" hidden>Entfernen</button>
 </div>
+<p class="studio-photo-error" id="studio-photo-error" role="alert" hidden></p>
 <div class="studio-keyword-box"><textarea id="studio-keyword" rows="6" placeholder=" " autocomplete="off" aria-label="Wie soll Ihr T-Shirt aussehen und was soll darauf stehen?" aria-describedby="studio-guide"></textarea><span class="studio-keyword-icons"><button class="studio-icon-btn" type="button" data-act="type"><svg class="icon-keys" viewBox="0 0 24 24"><rect x="1.5" y="6" width="21" height="12.5" rx="2.2"/><path d="M5 9.5h1.2M8.6 9.5h1.2M12.2 9.5h1.2M15.8 9.5h1.2M19 9.5h.4M6.8 12.3h1.2M10.4 12.3h1.2M14 12.3h1.2M17.4 12.3h1.2M7.5 15.2h9"/></svg><span>Antippen &amp; schreiben</span></button><button class="studio-icon-btn" type="button" data-act="speak"><svg class="icon-mouth" viewBox="0 0 24 24"><path d="M1.8 12.2c2.2-1.7 4.2-4.6 6.8-4.6 1.4 0 2.3.9 3.4 1.6 1.1-.7 2-1.6 3.4-1.6 2.6 0 4.6 2.9 6.8 4.6-2.6 3.3-5.8 5.4-10.2 5.4S4.4 15.5 1.8 12.2z"/><path d="M1.8 12.2c3.2.9 6.6 1.3 10.2 1.3s7-.4 10.2-1.3"/><path d="M23 6.5c.6 1 .6 2.2 0 3.2M21.2 7.3c.3.5.3 1.1 0 1.6M1 6.5c-.6 1-.6 2.2 0 3.2M2.8 7.3c-.3.5-.3 1.1 0 1.6"/></svg><span>Antippen &amp; sprechen</span></button></span></div>
 <p class="studio-speech-status" id="studio-speech-status" role="status" aria-live="polite"></p>
 </div>
@@ -99,9 +100,9 @@
 </main>
 <script defer src="design-uebernahme.js?v=20261031-png"></script>
 <script defer src="bestell-logik.js?v=20261023-unbegrenzt"></script>
-<script defer src="gestalter.js?v=20261031-foto-regel"></script>
+<script defer src="gestalter.js?v=20261031-loeschen"></script>
 <script defer src="navigation.js?v=20261023-neu"></script>
-<script defer src="language.js?v=20261031-mund"></script>
-<script defer src="shirti.js?v=20261031-1"></script>
+<script defer src="language.js?v=20261031-loeschen"></script>
+<script defer src="shirti.js?v=20261031-loeschen"></script>
 </body>
 </html>
