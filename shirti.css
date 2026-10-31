@@ -1,0 +1,75 @@
+/* Shirti – „Frag mich“-Helfer unten rechts (shirti.js). Eigene Fallback-Farben, damit er auf allen Seiten gleich aussieht. */
+.shirti{--sh-bg:#121826;--sh-bg2:#0b0f18;--sh-line:#ffffff1f;--sh-ink:#f4f1ea;--sh-ink2:#b9c0cc;--sh-blue:#a9bdff;--sh-orange:#ff9a3d;--sh-fire:linear-gradient(100deg,#ff3d2e,#ff7a2b,#ffb43a);
+  position:fixed;right:14px;bottom:var(--shirti-bottom,14px);z-index:950;font-family:inherit;color:var(--sh-ink)}
+.shirti *{box-sizing:border-box}
+.shirti svg{overflow:visible;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.shirti svg *{vector-effect:non-scaling-stroke}
+
+/* Knopf unten rechts: Roboter-Kopf + „Frag mich“ */
+.shirti-launch{display:flex;align-items:center;gap:8px;padding:5px 14px 5px 5px;border:1px solid #a9bdff55;border-radius:999px;background:#121826e6;color:var(--sh-ink);font:inherit;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 10px 28px #0008,0 0 18px #a9bdff26;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);animation:shirtiFloat 4s ease-in-out infinite;transition:transform .2s,box-shadow .2s}
+.shirti-launch:hover{box-shadow:0 10px 28px #0008,0 0 24px #a9bdff59}
+.shirti-launch:active{transform:scale(.95)}
+.shirti-face{display:grid;place-items:center;flex:none;width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#1d2742,#0b0f18);box-shadow:inset 0 0 0 1px #a9bdff55;color:var(--sh-blue)}
+.shirti-face svg{width:30px;height:30px;filter:drop-shadow(0 0 6px #a9bdff99)}
+.shirti-face .shirti-eye{fill:#ffb48f;stroke:#ffb48f;transform-box:fill-box;transform-origin:center;animation:shirtiBlink 4.5s infinite}
+.shirti-label{white-space:nowrap}
+.shirti.is-open .shirti-launch{animation:none}
+@keyframes shirtiFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes shirtiBlink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+.shirti.is-talking .shirti-head .shirti-mouth{transform-box:fill-box;transform-origin:center;animation:shirtiTalk .22s ease-in-out infinite alternate}
+@keyframes shirtiTalk{to{transform:scaleY(3.2)}}
+
+/* Chatfenster */
+.shirti-panel{position:absolute;right:0;bottom:calc(100% + 12px);display:flex;flex-direction:column;width:min(370px,calc(100vw - 28px));height:min(560px,calc(100vh - var(--shirti-bottom,14px) - 150px));border:1px solid var(--sh-line);border-radius:22px;background:var(--sh-bg);box-shadow:0 24px 60px #000a,0 0 0 1px #a9bdff1a;overflow:hidden;transform-origin:100% 100%;animation:shirtiOpen .22s ease-out}
+.shirti-panel[hidden]{display:none}
+@keyframes shirtiOpen{from{opacity:0;transform:translateY(10px) scale(.96)}}
+.shirti-head{display:flex;align-items:center;gap:10px;padding:12px 12px 12px 14px;border-bottom:1px solid var(--sh-line);background:linear-gradient(180deg,#1a2236,#121826)}
+.shirti-head>div{flex:1;min-width:0}
+.shirti-head strong{display:block;font-size:16.5px;font-weight:900;letter-spacing:-.01em}
+.shirti-head small{display:block;font-size:12.5px;color:var(--sh-ink2)}
+.shirti-head button{display:grid;place-items:center;flex:none;width:38px;height:38px;border:1px solid var(--sh-line);border-radius:50%;background:#ffffff0a;color:var(--sh-ink);font-size:16px;cursor:pointer}
+.shirti-head button:hover{background:#ffffff17}
+.shirti-voice svg{width:20px;height:20px}
+.shirti-voice .wave{opacity:.35}
+.shirti-voice[aria-pressed=true]{border-color:#ff9a3d;background:#ff9a3d26;color:#ffb48f}
+.shirti-voice[aria-pressed=true] .wave{opacity:1}
+
+.shirti-log{flex:1;display:flex;flex-direction:column;gap:9px;padding:14px;overflow-y:auto;scrollbar-width:thin;background:radial-gradient(120% 60% at 100% 0,#a9bdff0d,transparent)}
+.shirti-msg{position:relative;max-width:88%;padding:9px 12px;border-radius:16px;font-size:14px;line-height:1.45;overflow-wrap:anywhere}
+.shirti-msg.is-bot{align-self:flex-start;padding-right:30px;border:1px solid var(--sh-line);border-bottom-left-radius:5px;background:#1b2234}
+.shirti-msg.is-user{align-self:flex-end;border-bottom-right-radius:5px;background:var(--sh-fire);color:#160b05;font-weight:650}
+.shirti-msg.is-new{animation:shirtiMsg .25s ease-out}
+@keyframes shirtiMsg{from{opacity:0;transform:translateY(6px)}}
+.shirti-msg ol,.shirti-msg ul{margin:6px 0;padding-left:20px}
+.shirti-msg li{margin:2px 0}
+.shirti-msg a{color:#ffb48f;font-weight:750}
+.shirti-play{position:absolute;top:6px;right:6px;width:20px;height:20px;padding:0;border:0;border-radius:50%;background:#ffffff12;color:var(--sh-ink2);font-size:9px;cursor:pointer}
+.shirti-play:hover{background:#ff9a3d40;color:#fff}
+.shirti-msg.is-typing{display:flex;gap:4px;padding:12px 14px}
+.shirti-msg.is-typing i{width:6px;height:6px;border-radius:50%;background:var(--sh-blue);animation:shirtiDot 1s infinite}
+.shirti-msg.is-typing i:nth-child(2){animation-delay:.15s}.shirti-msg.is-typing i:nth-child(3){animation-delay:.3s}
+@keyframes shirtiDot{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+
+.shirti-asks{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 10px}
+.shirti-asks:empty{display:none}
+.shirti-asks button{padding:6px 10px;border:1px solid #ff9a3d66;border-radius:999px;background:#ff9a3d14;color:var(--sh-ink);font:inherit;font-size:12.5px;font-weight:650;cursor:pointer}
+.shirti-asks button:hover{background:#ff9a3d33}
+.shirti-form{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--sh-line);background:var(--sh-bg2)}
+.shirti-form input{flex:1;min-width:0;height:44px;padding:0 14px;border:1px solid var(--sh-line);border-radius:999px;background:#ffffff0d;color:var(--sh-ink);font:inherit;font-size:16px}
+.shirti-form input:focus{outline:none;border-color:#ff9a3d;box-shadow:0 0 0 3px #ff9a3d33}
+.shirti-form button{display:grid;place-items:center;flex:none;width:44px;height:44px;border:0;border-radius:50%;background:var(--sh-fire);color:#160b05;cursor:pointer}
+.shirti-form button svg{width:20px;height:20px;stroke-width:1.8}
+.shirti-note{margin:0;padding:0 12px 9px;background:var(--sh-bg2);color:#7d8796;font-size:11px;text-align:center}
+.shirti-note button{padding:0;border:0;background:none;color:#9aa4b2;font:inherit;text-decoration:underline;cursor:pointer}
+
+/* Handy: kleinerer Knopf, Chat fast bildschirmfüllend */
+@media(max-width:600px){
+  .shirti{right:10px}
+  .shirti-launch{gap:6px;padding:4px 11px 4px 4px;font-size:12.5px}
+  .shirti-face{width:36px;height:36px}.shirti-face svg{width:24px;height:24px}
+  .shirti-asks{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.shirti-asks::-webkit-scrollbar{display:none}
+  .shirti-asks button{flex:none;white-space:nowrap}
+  .shirti-panel{position:fixed;right:8px;left:8px;bottom:calc(var(--shirti-bottom,14px) + 56px);top:auto;width:auto;height:min(70vh,calc(100dvh - var(--shirti-bottom,14px) - 130px))}
+}
+@media(prefers-reduced-motion:reduce){.shirti-launch,.shirti-face .shirti-eye,.shirti-panel,.shirti-msg.is-new{animation:none}}
+@media print{.shirti{display:none}}
