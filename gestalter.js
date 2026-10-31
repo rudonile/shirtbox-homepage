@@ -5,8 +5,12 @@
   const form = $('studio-form'); if (!form) return;
   const API = 'https://black-snow-2fdf.r-n.workers.dev';
   const MAX_PHOTO = 5 * 1024 * 1024;
-  // Obergrenze des Bildmodells (32'000 Zeichen) – die Kundenbeschreibung selbst ist nicht begrenzt.
-  const MAX_PROMPT = 30000;
+  // Obergrenze des live laufenden Workers (black-snow-2fdf): Anfragen über 2000 Zeichen lehnt er ab
+  // („3 bis 2000 Zeichen“). Darum bauen surprisePrompt() und die Änderungsanfrage ihre Anweisung so, dass sie hineinpasst.
+  const MAX_PROMPT = 2000;
+  const TOO_LONG = 'Ihre Beschreibung ist zu lang. Bitte kürzer fassen (etwa 800 Zeichen).';
+  // Hängt Zusatzregeln nur an, wenn noch Platz ist – der Worker wiederholt die wichtigsten Regeln ohnehin selbst.
+  const fit = (core, ...extras) => { let p = core; for (const x of extras) if ((p + ' ' + x).length <= MAX_PROMPT) p += ' ' + x; if (p.length > MAX_PROMPT) throw Error(TOO_LONG); return p; };
   // Shirt-Modelle: leere Vorlage (links vorne, rechts hinten) und Schnittbeschreibung für die KI.
   const MODELS = {
     polo: {label: 'Polo-Shirt', template: 'anleitung/polo-api-vorlage.jpg', cut: 'Sportpolo mit Polo-Kragen und Knopfleiste'},
@@ -279,19 +283,21 @@
 
   // Hilft der Kundeneingabe nach: ergänzt Aufbau, Farben, Schrift und Druckqualität zu einem vollständigen Briefing.
   // Ein eigenes Textfeld gibt es nicht mehr: Schriftzüge nennt die Kundschaft direkt in der Beschreibung.
+  // Bewusst kompakt: Der live Worker nimmt höchstens 2000 Zeichen an (siehe MAX_PROMPT). Die ausführliche Randregel (INSIDE)
+  // kommt nur dazu, wenn noch Platz ist – der Worker schickt dieselbe Regel ohnehin in seinen eigenen Anweisungen mit.
   function surprisePrompt(word, hasPhoto) {
-    let p = `Gestalte als erfahrener Designer ein hochwertiges, rundum bedrucktes 360-Grad-${MODELS[model].cut} auf der Vorlage (links Vorderseite, rechts Rückseite) mit zusammenhängendem Design über Vorderseite, Rückseite, Kragen und Ärmel. `;
-    const wish = word ? `Kundenwunsch: "${word}". Treu umsetzen und fehlende Details (Farben, Motive, Muster, Komposition) professionell ergänzen. ` : '';
+    const cut = MODELS[model].cut;
+    let p = `Rundum bedrucktes 360-Grad-${cut} auf der Vorlage (links vorne, rechts hinten): EIN zusammenhängendes Design über Vorderseite, Rückseite, Kragen und Ärmel. `;
     // Foto-Regel: das Foto erscheint genau einmal und originalgetreu; die übrigen Flächen setzen nur Farben und Muster fort.
-    if (hasPhoto) p += `Das hochgeladene Foto (auf der Vorlage vorne platziert) ist die verbindliche Referenz für das Hauptmotiv (Person, Tier, Logo oder Objekt): originalgetreu übernehmen – Gesichter, Personen und Logos NICHT verändern, nicht neu zeichnen, nicht ersetzen –, sauber freistellen und harmonisch ins Design einbetten. Das Fotomotiv erscheint auf dem ganzen Shirt GENAU EINMAL: standardmässig auf der Vorderseite, oder an der Stelle, die der Kundenwunsch ausdrücklich nennt. Keine Wiederholung, Spiegelung oder zweite Version der Person bzw. des Motivs auf Rückseite, Ärmeln oder Seiten. ${wish}`;
-    else if (word) p += wish;
-    else p += 'Entwickle ein ausdrucksstarkes, überraschendes Motiv, das zum gewählten Stil passt. ';
-    p += `Designstil: ${STYLES[styleChoice]?.brief || RANDOM_STYLES[Math.floor(Math.random() * RANDOM_STYLES.length)]} `;
-    p += hasPhoto
-      ? 'Aufbau: EIN zusammenhängendes Design wie aus einem Guss, nicht zwei unabhängige Bilder. Die Rückseite ist die natürliche Fortsetzung der Vorderseite: dieselben Farben, Muster, Hintergrund-Elemente und Effekte laufen harmonisch weiter – ohne Personen oder Gesichter (ausser der Kundenwunsch verlangt sie ausdrücklich dort). Schultern, Ärmel, Seiten und Kragen verbinden Vorder- und Rückseite nahtlos; keine abgeschnittenen oder verzerrten Motive. Schriftzüge aus dem Kundenwunsch an der genannten Stelle (sonst gut lesbar auf der Rückseite). Höchstens 3–4 harmonische Hauptfarben mit gutem Kontrast. '
-      : 'Aufbau: EIN zusammenhängendes Design wie aus einem Guss: Vorderseite mit klarem Blickfang auf Brusthöhe, Rückseite mit dem grössten Hauptmotiv, Ärmel, Seiten und Kragen mit passenden Akzenten oder Mustern, die alles nahtlos verbinden. Höchstens 3–4 harmonische Hauptfarben mit gutem Kontrast. ';
-    p += word ? 'Schrift: Nur Texte drucken, die der Kundenwunsch ausdrücklich als Schriftzug nennt (z. B. in Anführungszeichen oder „mit Schriftzug …“) – genau so, Buchstabe für Buchstabe korrekt, gut lesbar und an der gewünschten Stelle. Die Beschreibung selbst NICHT als Schrift drucken; sonst keine weiteren Wörter. ' : 'Keine Schriftzüge oder Wörter auf das Shirt setzen, ausser sie sind Teil des Fotos. ';
-    return p + INSIDE + ` Keine rechteckige Foto-Auflage, keine Marken-Logos, keine Wasserzeichen. Shirt-Schnitt (${MODELS[model].cut}), Perspektive und Vorlage beibehalten. Druckfertige, professionelle Qualität. Variante ${Date.now()}`;
+    if (hasPhoto) p += 'Das hochgeladene Foto (vorne auf der Vorlage) ist das Hauptmotiv: originalgetreu übernehmen – Gesichter, Personen und Logos nicht verändern oder neu zeichnen –, sauber freistellen und harmonisch einbetten. Es erscheint GENAU EINMAL (vorne oder wo der Kundenwunsch es nennt), keine Wiederholung auf Rückseite oder Ärmeln. Rückseite, Ärmel und Kragen führen Farben, Muster und Effekte nahtlos fort. ';
+    if (word) p += `Kundenwunsch: "${word}". Treu umsetzen, fehlende Details professionell ergänzen. `;
+    else if (!hasPhoto) p += 'Entwickle ein ausdrucksstarkes, überraschendes Motiv. ';
+    p += `Stil: ${(STYLES[styleChoice]?.brief || RANDOM_STYLES[Math.floor(Math.random() * RANDOM_STYLES.length)]).replace(/\.$/, '')}. `;
+    if (!hasPhoto) p += 'Vorderseite mit Blickfang auf Brusthöhe, Rückseite mit dem grössten Hauptmotiv, Ärmel und Kragen mit passenden Akzenten. ';
+    p += 'Höchstens 3–4 harmonische Farben. ';
+    p += word ? 'Schrift nur, wenn der Kundenwunsch ausdrücklich einen Schriftzug nennt – dann Buchstabe für Buchstabe korrekt, gut lesbar, an der genannten Stelle (sonst hinten). Die Beschreibung selbst nicht als Text drucken. ' : 'Keine Schriftzüge ausser im Foto. ';
+    p += `Alles bleibt innerhalb der Shirt-Umrisse, grauer Hintergrund leer. Keine rechteckige Foto-Auflage, keine Marken-Logos, keine Wasserzeichen. Schnitt und Perspektive der Vorlage beibehalten, druckfertige Qualität. Variante ${Date.now()}`;
+    return fit(p, INSIDE);
   }
 
   // Modell-Knöpfe: genau eines muss vor dem Generieren gewählt sein.
@@ -591,7 +597,7 @@
     editStatus.textContent = '';
     run(async () => {
       const cut = MODELS[d.model]?.cut;
-      const blob = await keepInside(await request(`Bisheriges Shirt und Gestaltung beibehalten${cut ? ` (Schnitt: ${cut})` : ''}. Ändere nur Folgendes: ${change}\nErhalte alle anderen Merkmale. ${INSIDE}`, d.blob), d.model);
+      const blob = await keepInside(await request(fit(`Bisheriges Shirt und Gestaltung beibehalten${cut ? ` (Schnitt: ${cut})` : ''}. Ändere nur Folgendes: ${change}\nErhalte alle anderen Merkmale.`, INSIDE), d.blob), d.model);
       URL.revokeObjectURL(d.url); d.blob = blob; d.url = URL.createObjectURL(blob);
       d.prompt = `${d.prompt}\nÄnderung: ${change}`.slice(-1500); editInput.value = '';
       say(`Design ${active + 1} wurde angepasst. Weitere Änderungen sind jederzeit möglich.`);

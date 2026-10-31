@@ -193,6 +193,10 @@ html[lang=en] .studio-stage.is-blank .studio-preview::after{content:"Your shirt 
    weggeschoben, sondern bleibt stehen und scrollt in sich (--stage-max ebenfalls aus gestalter.js). */
 @media(min-width:901px){.studio-stage{position:sticky;top:var(--stage-top,90px);max-height:var(--stage-max,none);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:2px 6px 2px 2px;margin:-2px -6px -2px -2px}}
 .studio-preview{position:relative;margin:0;border-radius:24px;overflow:hidden;background:#747474;box-shadow:var(--shadow-lg)}
+/* Die ganze Vorschau (Bild 3:2 + Beschriftung) muss immer vollständig sichtbar sein: Breite so begrenzen,
+   dass die Höhe in den sichtbaren Bereich passt (Computer: --stage-max aus gestalter.js, sonst Bildschirmhöhe). */
+.studio-preview{width:100%;max-width:calc((100svh - 170px) * 1.5);margin-inline:auto}
+@media(min-width:901px){.studio-preview{flex:none;max-width:calc((var(--stage-max,100svh) - 48px) * 1.5)}}
 /* cover statt contain: Die leeren Vorlagen (1536×1228) füllen den 3:2-Rahmen ohne graue Seitenbalken; abgeschnitten wird nur leerer Hintergrund oben/unten. */
 .studio-preview img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover}
 .studio-preview figcaption{display:flex;justify-content:space-around;padding:10px;background:var(--solid);color:#c5ccd6;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}

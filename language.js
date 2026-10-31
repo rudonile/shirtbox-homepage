@@ -101,6 +101,7 @@ const patterns=[
 [/^Design (\d+) ansehen$/,'View design $1'],
 [/^Design (\d+) löschen$/,'Delete design $1'],
 [/^Die maximale Grösse von 5 MB ist überschritten \(Ihr Foto: ([\d,]+) MB\)\. Bitte ein kleineres Foto wählen\.$/,(m,n)=>`The maximum size of 5 MB has been exceeded (your photo: ${n.replace(',','.')} MB). Please choose a smaller photo.`],
+[/^Ihre Beschreibung ist zu lang\. Bitte kürzer fassen \(etwa 800 Zeichen\)\.$/,'Your description is too long. Please shorten it (about 800 characters).'],
 [/^Dieses Dateiformat geht leider nicht\. Bitte ein JPG-, PNG- oder WebP-Foto wählen\.$/,'This file format is not supported. Please choose a JPG, PNG or WebP photo.'],
 [/^Die maximale Grösse von 5 MB ist überschritten \(Ihr Bild: ([\d,]+) MB\)\. Bitte ein kleineres Bild wählen\.$/,(m,n)=>`The maximum size of 5 MB has been exceeded (your image: ${n.replace(',','.')} MB). Please choose a smaller image.`],
 [/^Dieses Dateiformat geht leider nicht\. Bitte ein PNG-, JPG- oder WebP-Bild wählen\.$/,'This file format is not supported. Please choose a PNG, JPG or WebP image.'],
