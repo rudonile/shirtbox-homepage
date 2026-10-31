@@ -54,7 +54,7 @@ export default {
         if(!input.type.startsWith('image/')||input.size>MAX_BODY)return reply(origin,503,'Die Polo-Vorlage ist nicht verfügbar.');
       }
       const upstream=new FormData();
-      upstream.set('model',MODEL);upstream.set('n','1');upstream.set('size','1536x1024');upstream.set('quality','medium');upstream.set('output_format','jpeg');upstream.set('output_compression','90');
+      upstream.set('model',MODEL);upstream.set('n','1');upstream.set('size','1536x1024');upstream.set('quality','medium');upstream.set('output_format','png');
       upstream.set('prompt',`${INSTRUCTIONS}\n\n${mode==='edit'?'Änderung am vorhandenen Entwurf':'Neuer Entwurf auf der weissen Vorlage'}:\n${prompt.trim()}`);
       upstream.append('image[]',input,'polo.jpg');
       const response=await fetch('https://api.openai.com/v1/images/edits',{method:'POST',headers:{Authorization:`Bearer ${env.OPENAI_API_KEY}`},body:upstream,signal:AbortSignal.timeout(180000)});

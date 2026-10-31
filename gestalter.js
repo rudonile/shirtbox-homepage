@@ -40,7 +40,7 @@
       const card = document.createElement('div'); card.className = 'studio-card'; card.classList.toggle('is-active', i === active); card.classList.toggle('is-selected', item.selected || editingOrder);
       const view = document.createElement('button'); view.type = 'button'; view.className = 'studio-card-view'; view.setAttribute('aria-pressed', String(i === active)); view.setAttribute('aria-label', `Design ${i + 1} ansehen`);
       const img = document.createElement('img'); img.src = item.url; img.alt = ''; view.append(img);
-      view.addEventListener('click', () => { if (busy) return; active = i; render(); });
+      view.addEventListener('click', () => { if (busy) return; active = i; render(); zoom(i); });
       const pick = document.createElement('label'); pick.className = 'studio-card-pick';
       const box = document.createElement('input'); box.type = 'checkbox'; box.checked = item.selected || editingOrder; box.disabled = editingOrder || busy;
       box.addEventListener('change', () => { item.selected = box.checked; render(); });
@@ -93,69 +93,80 @@
   }));
   keyword.addEventListener('input', () => steps());
   photo.addEventListener('change', () => steps());
-  // Ideen zum Antippen (hinter der Lampe aufklappbar, direkt darunter) füllen die Beschreibung. Englisch übersetzt language.js.
-  // Zehn vollständige Beispiele: jeweils Aussehen, Grafik/Motiv, Text und/oder eigenes Bild – zeigen, was man alles angeben kann.
-  const IDEAS = [
-    'Sportlich in Rot und Weiss mit dynamischen Streifen. Vorne auf der Brust ein kleiner Fussball, hinten gross der Schriftzug „FC Gretzenbach“ und darunter „Nico 10“.',
-    'Dunkelblau mit goldenen Akzenten. Auf dem Rücken ein grosser Adler über den Schweizer Alpen, vorne klein „Bergfreunde 2026“.',
-    'Neon-Grün auf Schwarz im Comic-Stil. Vorne ein Dartpfeil, der in Flammen ins Bull’s Eye trifft, hinten gross „Double Trouble“.',
-    'Retro-Look in Orange, Pink und Lila mit Sonnenuntergang und Palmen über das ganze Shirt. Hinten „Sommerfest 2026“ in Schreibschrift.',
-    'Eishockey-Design in Eisblau und Weiss mit Eis-Splittern an den Ärmeln. Vorne unser Vereinslogo (lade ich als Foto hoch), hinten „EHC Olten“ und „Captain 7“.',
-    'Unser Firmenlogo vorne links auf der Brust (lade ich als Foto hoch), ruhiges Anthrazit mit feinen grauen Linien, hinten gross „Team Müller AG“.',
-    'Polterabend: Pink und Gold mit Konfetti und einer Krone vorne. Hinten gross „Team Braut“ und darunter „Sarah 2026“.',
-    'Mein Hund als Hauptmotiv auf dem Rücken (lade ich als Foto hoch), umgeben von Pfotenabdrücken in Hellblau. Vorne klein „Bello“.',
-    'Edles Schwarz mit Totenkopf und roten Rosen auf dem Rücken im Tattoo-Stil, Ärmel mit Rosenranken. Vorne klein „Rock Crew“.',
-    'Velo-Club in Grün und Weiss mit Bergpässen und Höhenlinien als Muster. Vorne „VC Aarau“, auf dem linken Ärmel die Schweizer Flagge.'
-  ];
-  const ideaToggle = $('studio-ideas-toggle'), ideaList = $('studio-ideas-list');
-  const showIdeas = open => { ideaList.hidden = !open; ideaToggle.setAttribute('aria-expanded', String(open)); };
-  ideaToggle.addEventListener('click', () => showIdeas(ideaList.hidden));
-  ideaList.append(...IDEAS.map(text => {
-    const button = document.createElement('button'); button.type = 'button'; button.textContent = text;
-    button.addEventListener('click', () => {
-      keyword.value = button.textContent.trim(); fail(''); showIdeas(false); steps();
-      keyword.focus({preventScroll: true});
-    });
-    return button;
-  }));
-
-  // Spracheingabe für die Beschreibung (Web Speech API, Deutsch). Ohne Unterstützung bleibt nur der Hinweis auf die Tastatur-Diktierfunktion.
+  // Spracheingabe (Web Speech API, Deutsch) für die Beschreibung und das Änderungsfeld – immer nur ein Diktat gleichzeitig.
+  // Ohne Unterstützung bleibt nur der Hinweis auf die Diktierfunktion der Tastatur.
   const speech = $('studio-speech'), speechLabel = $('studio-speech-label'), speechSub = $('studio-speech-sub'), speechStatus = $('studio-speech-status');
+  const editMic = $('studio-edit-mic'), editMicLabel = $('studio-edit-mic-label'), editMicSub = $('studio-edit-mic-sub'), editStatus = $('studio-edit-status');
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  let listening = null;
+  let listening = null, listenButton = null, listenOff = null;
   const hear = text => { speechStatus.textContent = text; };
-  function dictating(on) {
-    speech.setAttribute('aria-pressed', String(on)); speech.classList.toggle('is-on', on);
-    speechLabel.textContent = on ? 'Ich höre zu … zum Beenden antippen' : 'Idee einsprechen';
-    speechSub.textContent = on ? 'Erzählen Sie in Ruhe, wie Ihr Shirt aussehen soll' : 'Antippen und erzählen – wir schreiben mit';
-    keyword.readOnly = on;
+  const SPEECH_ERRORS = {'not-allowed': 'Bitte erlauben Sie den Mikrofonzugriff im Browser.', 'service-not-allowed': 'Der Sprachdienst ist hier nicht verfügbar. Nutzen Sie das Mikrofon Ihrer Tastatur.',
+    'audio-capture': 'Kein Mikrofon gefunden. Bitte prüfen Sie Ihr Mikrofon.', 'no-speech': 'Keine Sprache erkannt. Bitte nochmals antippen und sprechen.',
+    'network': 'Die Spracherkennung ist nicht erreichbar. Bitte Internetverbindung prüfen.'};
+  // Während des Diktats zeigt auch der Mund im Feld, dass zugehört wird.
+  const speakIcon = (field, on) => {
+    const b = field.parentElement.querySelector('.studio-icon-btn[data-act=speak]'); if (!b) return;
+    b.classList.toggle('is-on', on); b.querySelector('span').textContent = on ? 'Ich höre zu …' : 'Hier sprechen';
+  };
+  function stopDictation() {
+    const s = listening, off = listenOff; listening = listenButton = listenOff = null;
+    try { s?.stop(); } catch {}
+    off?.();
   }
-  function stopDictation() { const s = listening; listening = null; try { s?.stop(); } catch {} dictating(false); }
+  function dictation(button, field, show, report, changed) {
+    button.addEventListener('click', () => {
+      if (listenButton === button) { stopDictation(); report('Diktat beendet. Prüfen Sie den Text – Sie können jederzeit weiter einsprechen.'); return; }
+      stopDictation();
+      const base = field.value.trim(), session = new Recognition();
+      listening = session; listenButton = button; listenOff = () => show(false);
+      session.lang = 'de-DE'; session.continuous = true; session.interimResults = true;
+      session.onresult = event => {
+        if (listening !== session) return;
+        let final = '', interim = '';
+        for (const result of event.results) (result.isFinal ? (final += result[0].transcript + ' ') : (interim += result[0].transcript + ' '));
+        field.value = [base, final.trim(), interim.trim()].filter(Boolean).join(' ');
+        field.scrollTop = field.scrollHeight; changed();
+      };
+      session.onerror = event => { if (listening === session) report(SPEECH_ERRORS[event.error] || 'Die Spracheingabe wurde unterbrochen. Bitte nochmals versuchen.'); };
+      session.onend = () => { if (listening === session) { listening = listenButton = listenOff = null; show(false); } };
+      show(true); report('');
+      try { session.start(); } catch { stopDictation(); report('Die Spracheingabe konnte nicht gestartet werden. Bitte nochmals versuchen.'); }
+    });
+  }
   if (!Recognition || !window.isSecureContext) {
-    speech.hidden = true;
+    speech.hidden = true; editMic.hidden = true;
     hear('Tipp: Sie können Ihre Idee auch mit dem Mikrofon Ihrer Handy-Tastatur einsprechen.');
-  } else speech.addEventListener('click', () => {
-    if (listening) { stopDictation(); hear('Diktat beendet. Prüfen Sie den Text – Sie können jederzeit weiter einsprechen.'); return; }
-    const base = keyword.value.trim(), session = new Recognition(); listening = session;
-    session.lang = 'de-DE'; session.continuous = true; session.interimResults = true;
-    session.onresult = event => {
-      if (listening !== session) return;
-      let final = '', interim = '';
-      for (const result of event.results) (result.isFinal ? (final += result[0].transcript + ' ') : (interim += result[0].transcript + ' '));
-      keyword.value = [base, final.trim(), interim.trim()].filter(Boolean).join(' ');
-      keyword.scrollTop = keyword.scrollHeight; fail(''); steps();
-    };
-    session.onerror = event => {
-      if (listening !== session) return;
-      hear({'not-allowed': 'Bitte erlauben Sie den Mikrofonzugriff im Browser.', 'service-not-allowed': 'Der Sprachdienst ist hier nicht verfügbar. Nutzen Sie das Mikrofon Ihrer Tastatur.',
-        'audio-capture': 'Kein Mikrofon gefunden. Bitte prüfen Sie Ihr Mikrofon.', 'no-speech': 'Keine Sprache erkannt. Bitte nochmals antippen und sprechen.',
-        'network': 'Die Spracherkennung ist nicht erreichbar. Bitte Internetverbindung prüfen.'}[event.error] || 'Die Spracheingabe wurde unterbrochen. Bitte nochmals versuchen.');
-    };
-    session.onend = () => { if (listening === session) { listening = null; dictating(false); } };
-    dictating(true); hear('');
-    try { session.start(); } catch { stopDictation(); hear('Die Spracheingabe konnte nicht gestartet werden. Bitte nochmals versuchen.'); }
-  });
+  } else {
+    dictation(speech, keyword, on => {
+      speech.setAttribute('aria-pressed', String(on)); speech.classList.toggle('is-on', on);
+      speechLabel.textContent = on ? 'Ich höre zu … zum Beenden antippen' : 'Idee einsprechen';
+      speechSub.textContent = on ? 'Erzählen Sie in Ruhe, wie Ihr Shirt aussehen soll' : 'Antippen und erzählen – wir schreiben mit';
+      keyword.readOnly = on; speakIcon(keyword, on);
+    }, hear, () => { fail(''); steps(); });
+    dictation(editMic, editInput, on => {
+      editMic.setAttribute('aria-pressed', String(on)); editMic.classList.toggle('is-on', on);
+      editMicLabel.textContent = on ? 'Ich höre zu … zum Beenden antippen' : 'Änderung einsprechen';
+      editMicSub.textContent = on ? 'Sagen Sie, was anders werden soll' : 'Antippen und erzählen – wir schreiben mit';
+      editInput.readOnly = on; speakIcon(editInput, on);
+    }, text => { editStatus.textContent = text; }, () => controls());
+  }
   window.addEventListener('pagehide', stopDictation);
+  // Tastatur und Mund im leeren Feld sind Knöpfe: Tastatur = ins Feld schreiben, Mund = Einsprechen starten.
+  for (const [field, mic] of [[keyword, speech], [editInput, editMic]]) {
+    field.parentElement.querySelectorAll('.studio-icon-btn').forEach(button => button.addEventListener('click', () => {
+      if (button.dataset.act === 'speak' && !mic.hidden) { stopTour(); mic.click(); } else field.focus();
+    }));
+  }
+
+  // Grossansicht: Klick auf ein Design unten (oder auf das Vorschaubild) zeigt es bildschirmfüllend. Schliessen per Klick, X oder Esc.
+  const lightbox = $('studio-lightbox'), lightboxImg = $('studio-lightbox-img');
+  function zoom(i) {
+    const d = designs[i]; if (!d || !lightbox.showModal) return;
+    lightboxImg.src = d.url; lightboxImg.alt = `Design ${i + 1}: Vorderseite und Rückseite`;
+    lightbox.showModal();
+  }
+  lightbox.addEventListener('click', () => lightbox.close());
+  picture.addEventListener('click', () => { if (active >= 0 && !busy) zoom(active); });
 
   // Foto-Auswahl mit Vorschau.
   photo.addEventListener('change', () => {
@@ -165,7 +176,7 @@
     else if (file && !/^image\/(jpeg|png|webp)$/.test(file.type)) { photo.value = ''; fail('Bitte ein JPG-, PNG- oder WebP-Foto wählen.'); }
     const current = photo.files[0];
     photoBox.classList.toggle('has-photo', !!current);
-    photoName.textContent = current ? current.name : 'Foto hochladen';
+    photoName.textContent = current ? current.name : 'Eigenes Foto oder Logo hochladen';
     if (photoThumb.src) URL.revokeObjectURL(photoThumb.src);
     photoThumb.src = current ? URL.createObjectURL(current) : '';
     photoRemove.hidden = !current;
@@ -188,7 +199,7 @@
     return new Promise((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(Error('Das Foto konnte nicht verarbeitet werden.')), 'image/jpeg', .9));
   }
 
-  // Designstile der fünf Knöpfe: kurze Kundenwahl -> ausführliche Gestaltungsanweisung.
+  // Designstile (Knöpfe derzeit ausgeblendet – ohne Wahl gilt ein zufälliger RANDOM_STYLES-Stil).
   const STYLES = {
     modern: {label: 'Modern', brief: 'MODERN – klare geometrische Formen, dynamische Linien und Flächen, kräftige Farbverläufe, zeitgemässes Grafikdesign wie bei aktuellen Profi-Teamtrikots.'},
     realistisch: {label: 'Realistisch', brief: 'REALISTISCH – fotorealistische Darstellung mit natürlichem Licht, Tiefe, feinen Details und echten Texturen; das Motiv wirkt wie ein hochwertiges Foto, nahtlos ins Shirt übergehend.'},
@@ -230,7 +241,7 @@
     tour();
   }));
 
-  // Führung nach der ersten Modellwahl: Designstil, dann Aussehen, Grafik/Motiv, Text, eigenes Bild und das Eingabefeld
+  // Führung nach der ersten Modellwahl: Roboter mit Sprechblase, Foto-Feld und Eingabefeld
   // leuchten nacheinander je 2 Sekunden auf – immer wieder von vorne, bis man ins Eingabefeld klickt (oder dort etwas steht).
   // Nur in der ersten Runde scrollt die Seite mit; danach nicht mehr, damit niemand beim Scrollen gestört wird.
   let toured = false, tourTimer = null;
@@ -241,7 +252,7 @@
   function tour() {
     if (toured || keyword.value.trim()) return;
     toured = true;
-    const parts = [document.querySelector('.sub-style'), ...document.querySelectorAll('#studio-guide li'), keyword].filter(Boolean);
+    const parts = [$('studio-guide'), photoBox, keyword].filter(Boolean);
     let i = 0;
     const next = () => {
       if (keyword.value.trim()) { stopTour(); return; }
@@ -264,13 +275,14 @@
 
   async function request(prompt, image) {
     const body = new FormData(); body.set('prompt', prompt.slice(0, MAX_PROMPT)); body.set('mode', image ? 'edit' : 'new');
-    if (image) body.set('image', image, 'shirtbox.jpg');
+    if (image) body.set('image', image, image.type === 'image/png' ? 'shirtbox.png' : 'shirtbox.jpg');
     const response = await fetch(`${API}/generate`, {method: 'POST', body, signal: AbortSignal.timeout(195000)});
     const result = await response.json().catch(() => ({}));
     if (!response.ok) throw Error(result.error || 'Die Bildgestaltung ist momentan nicht verfügbar.');
     const b64 = result.data?.[0]?.b64_json; if (typeof b64 !== 'string' || !b64) throw Error('Es wurde kein Bild zurückgegeben.');
     const bin = atob(b64), bytes = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    return new Blob([bytes], {type: 'image/jpeg'});
+    // Der Worker liefert verlustfreies PNG (ältere Worker-Versionen JPG) – Typ anhand der Datei erkennen.
+    return new Blob([bytes], {type: bytes[0] === 0x89 && bytes[1] === 0x50 ? 'image/png' : 'image/jpeg'});
   }
 
   // Sicherheitsnetz: Nichts darf ausserhalb der Shirts stehen (z. B. ein Fuss, der über den Saum ragt).
@@ -377,7 +389,8 @@
       const front = canvasOf(W, H), fx = front.getContext('2d');
       fx.drawImage(shirt, 0, 0); fx.globalCompositeOperation = 'destination-in'; fx.drawImage(mask, 0, 0);
       bx.drawImage(front, 0, 0); shirt.close(); tpl.close();
-      return await new Promise(resolve => back.toBlob(b => resolve(b || blob), 'image/jpeg', .92));
+      // Verlustfrei speichern: keine zusätzliche JPG-Kompression des Designs.
+      return await new Promise(resolve => back.toBlob(b => resolve(b || blob), 'image/png'));
     } catch { return blob; }
   }
 
@@ -424,7 +437,7 @@
     stopDictation();
     const word = keyword.value.trim(), file = photo.files[0];
     if (!model) { fail('Bitte wählen Sie zuerst ein Shirt-Modell (Polo-Shirt oder Zip-Shirt).'); modelField.classList.add('attention'); modelField.scrollIntoView({behavior: 'smooth', block: 'center'}); modelButtons[0].focus({preventScroll: true}); return; }
-    if (!word && !file && !styleChoice) { fail('Bitte wählen Sie einen Stil, beschreiben Sie Ihr Design oder laden Sie ein Foto hoch.'); keyword.focus(); return; }
+    if (!word && !file && !styleChoice) { fail('Bitte beschreiben Sie Ihr Design oder laden Sie ein Foto hoch.'); keyword.focus(); return; }
     if (!rights.checked) { fail('Bitte bestätigen Sie Ihre Inhalts- und Bildrechte.'); rights.closest('label').classList.add('attention'); rights.focus(); return; }
     run(async () => {
       // Das Polo-Shirt holt der Worker selbst; alle anderen Modelle schicken ihre leere Vorlage mit.
@@ -444,7 +457,7 @@
     styleChoice = ''; styleButtons.forEach(b => b.setAttribute('aria-pressed', 'false'));
     stopTour(); toured = false;
     stopDictation(); if (!speech.hidden) hear(''); keyword.value = ''; photo.value = ''; photo.dispatchEvent(new Event('change'));
-    editInput.value = ''; showIdeas(false);
+    editInput.value = '';
     fail(''); say('');
     // Vorschau wieder leer (Vorlage vorne/hinten) statt des letzten Designs.
     active = -1; startOver = true; showResult(false); render();
@@ -457,6 +470,7 @@
   editButton.addEventListener('click', () => {
     const d = designs[active], change = editInput.value.trim();
     if (busy || !d || !change) return;
+    stopDictation(); editStatus.textContent = '';
     run(async () => {
       const cut = MODELS[d.model]?.cut;
       const blob = await keepInside(await request(`Bisheriges Shirt und Gestaltung beibehalten${cut ? ` (Schnitt: ${cut})` : ''}. Ändere nur Folgendes: ${change}\nErhalte alle anderen Merkmale. ${INSIDE}`, d.blob), d.model);

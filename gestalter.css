@@ -68,25 +68,37 @@ html[lang=en] .studio-steps .is-current button::after{content:"Now"}
 /* Leeres Eingabefeld: statt Text eine Tastatur und ein Mund – schreiben oder sprechen. Verschwindet beim Tippen. */
 .studio-keyword-box{position:relative}
 /* Gleicher Linien-Stil wie die fliegenden Werkzeuge im Hintergrund (navigation.js / marke.css). */
-.studio-keyword-icons{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:40px;opacity:.85;pointer-events:none;transition:opacity .25s}
+.studio-keyword-icons{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:28px;opacity:.95;pointer-events:none;transition:opacity .25s,visibility .25s}
 .studio-keyword-icons svg{width:70px;height:70px;overflow:visible;fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 10px currentColor);animation:studioFloat 4s ease-in-out infinite}
 .studio-keyword-icons svg *{vector-effect:non-scaling-stroke}
 .studio-keyword-icons .icon-keys{color:#a9bdff}
 .studio-keyword-icons .icon-mouth{color:#ffb48f;animation-delay:-2s}
 @keyframes studioFloat{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-6px) rotate(3deg)}}
 @media(prefers-reduced-motion:reduce){.studio-keyword-icons svg{animation:none}}
-.studio-keyword-box:has(textarea:not(:placeholder-shown)) .studio-keyword-icons{opacity:0}
-.studio-guide{margin:0 0 10px;font-size:13.5px;line-height:1.45;color:var(--ink-2)}
-.studio-guide p{margin:0}
-.studio-guide ul{display:grid;gap:5px;margin:8px 0;padding:0;list-style:none}
-.studio-guide li{padding:6px 10px;border-radius:10px;background:var(--bg)}
-.studio-guide b{color:var(--ink);font-weight:800}
-.studio-guide p:last-child{color:var(--ink-3)}
+.studio-keyword-box:has(textarea:not(:placeholder-shown)) .studio-keyword-icons,.studio-keyword-box:has(textarea:focus) .studio-keyword-icons{opacity:0;visibility:hidden}
+/* Tastatur und Mund sind Knöpfe mit kurzer Beschriftung; das leere Feld hat einen gestrichelten, leuchtenden Rahmen. */
+.studio-keyword-icons .studio-icon-btn{display:flex;flex-direction:column;align-items:center;gap:6px;min-height:0;padding:8px 10px;border:0;border-radius:14px;background:transparent;color:inherit;font:inherit;cursor:pointer;pointer-events:auto;animation:none;box-shadow:none}
+.studio-keyword-icons .studio-icon-btn:hover:not(:disabled){background:#ffffff0d}
+.studio-keyword-icons .studio-icon-btn span{font-size:13px;font-weight:800;letter-spacing:.02em}
+.studio-keyword-icons .studio-icon-btn:has(.icon-keys) span{color:#a9bdff}
+.studio-keyword-icons .studio-icon-btn:has(.icon-mouth) span{color:#ffb48f}
+.studio-keyword-box:has(textarea:placeholder-shown:not(:focus)) textarea{border:2px dashed #ff9a3d99;box-shadow:inset 0 0 26px #ff9a3d14}
+/* Kleiner Roboter mit Sprechblase über dem Eingabefeld (gleicher feiner Linien-Stil wie die fliegenden Werkzeuge). */
+.studio-robot{display:flex;align-items:center;gap:12px;margin:0 0 12px;padding:8px 10px;border-radius:16px}
+.studio-robot-icon{flex:none;width:58px;height:58px;overflow:visible;fill:none;stroke:#a9bdff;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 8px #a9bdff99);animation:studioFloat 4s ease-in-out infinite}
+.studio-robot-icon *{vector-effect:non-scaling-stroke}
+.studio-robot-icon .robot-eye{fill:#ffb48f;stroke:#ffb48f;transform-box:fill-box;transform-origin:center;animation:robotBlink 4.5s infinite}
+@keyframes robotBlink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+.studio-robot-bubble{position:relative;flex:1;margin:0;padding:10px 13px;border-radius:14px;background:var(--bg);border:1px solid #a9bdff55;color:var(--ink-2);font-size:14px;font-weight:600;line-height:1.4}
+.studio-robot-bubble strong{display:block;margin-bottom:2px;color:var(--ink);font-size:15px;font-weight:850}
+.studio-robot-bubble::before{content:"";position:absolute;left:-7px;top:50%;width:12px;height:12px;background:var(--bg);border-left:1px solid #a9bdff55;border-bottom:1px solid #a9bdff55;transform:translateY(-50%) rotate(45deg)}
+@media(prefers-reduced-motion:reduce){.studio-robot-icon,.studio-robot-icon .robot-eye{animation:none}}
 
 /* Führung nach der Modellwahl: der jeweils erklärte Bereich wird heller und leuchtet orange (gestalter.js setzt is-lit). */
-.studio-sub.sub-style,.studio-guide li,#studio-keyword{scroll-margin:100px 0 120px;transition:background-color .45s,box-shadow .45s,border-color .45s,color .45s}
+.studio-robot,.studio-photo,#studio-keyword{scroll-margin:100px 0 120px;transition:background-color .45s,box-shadow .45s,border-color .45s,color .45s}
 .studio-sub.sub-style.is-lit{background:#b49bff59;box-shadow:0 0 0 2px #ffb46a,0 0 26px #ff9a3d66}
-.studio-guide li.is-lit{background:#ff9a3d59;color:var(--ink);box-shadow:0 0 0 2px #ffb46a,0 0 22px #ff9a3d59}
+.studio-photo.is-lit{border-color:#ffb46a;background:#ff9a3d33;box-shadow:0 0 0 2px #ffb46a,0 0 22px #ff9a3d59}
+.studio-robot.is-lit{background:#ff9a3d40;box-shadow:0 0 0 2px #ffb46a,0 0 22px #ff9a3d59}
 #studio-keyword.is-lit{border-color:#ffb46a;background:#ff9a3d33;box-shadow:0 0 0 3px #ff9a3d80,0 0 28px #ff9a3d66}
 .studio-sub .studio-photo{background:var(--bg)}
 
@@ -127,6 +139,19 @@ html[lang=en] .studio-stage.is-blank .studio-preview::after{content:"Your shirt 
 .studio-photo-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:var(--surface);font-size:22px}
 .studio-photo-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:750}
 .studio-photo-label small{display:block;font-weight:500;font-size:12.5px;color:var(--ink-3)}
+/* Kompaktes Foto-Feld zwischen Roboter und Eingabefeld (halbe Höhe) */
+.studio-photo.studio-photo-small{min-height:58px;gap:12px;margin:0 0 12px;padding:8px 12px;border:2px dashed #3ddc8acc;background:#3ddc8a1a;box-shadow:0 0 18px #3ddc8a26}
+.studio-photo.studio-photo-small:hover{border-style:solid;background:#3ddc8a2b}
+.studio-photo-small .studio-photo-icon{width:40px;height:40px;border-radius:50%;background:#3ddc8a26;box-shadow:inset 0 0 0 1.5px #3ddc8a99}
+.studio-photo-small .studio-photo-icon svg{width:22px;height:22px;fill:none;stroke:#3ddc8a;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 6px #3ddc8a88)}
+.studio-photo-small img{width:40px;height:40px;border-radius:10px}
+.studio-photo-small .studio-photo-label{font-size:14.5px;font-weight:800;white-space:normal}
+.studio-photo-small .studio-photo-label small{font-size:11.5px}
+.studio-photo-small .studio-photo-label .studio-photo-hint{margin:1px 0 1px;font-size:13px;font-weight:700;color:#7ff0a8}
+.studio-photo-small .studio-photo-remove{padding:4px 10px;font-size:12px}
+/* Mund im Feld während des Diktats: rot und pulsierend */
+.studio-keyword-icons .studio-icon-btn.is-on .icon-mouth{color:#ff3d2e;animation:studioListen 1.2s ease-out infinite;border-radius:50%}
+.studio-keyword-icons .studio-icon-btn.is-on span{color:#ff6a5c}
 .studio-photo-remove{position:relative;z-index:1;padding:7px 12px;border:1px solid var(--line-2);border-radius:999px;background:var(--surface);color:var(--ink);font-size:13px;font-weight:700;cursor:pointer}
 .studio-rights{display:flex;gap:10px;align-items:flex-start;margin:4px 0 16px;padding:12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);font-size:13.5px;line-height:1.45;color:var(--ink-2);cursor:pointer}
 .studio-rights input{width:20px;height:20px;flex:none;margin:0}
@@ -170,16 +195,36 @@ html[lang=en] .studio-stage.is-blank .studio-preview::after{content:"Your shirt 
 @media(prefers-reduced-motion:reduce){.studio-edit-row:focus-within #studio-edit-button,.studio-edit #studio-edit-button:not(:disabled){animation:none;box-shadow:0 0 0 3px #ff7a2b55}}
 
 /* Spracheingabe: grosser Mikrofon-Knopf direkt unter der Beschreibung */
-.studio-speech{display:flex;align-items:center;gap:12px;width:100%;margin-top:10px;padding:12px 14px;border:2px solid #ff9a3d;border-radius:16px;background:#ff9a3d1f;color:var(--ink);text-align:left;font:inherit;cursor:pointer;transition:background .15s,border-color .15s}
+.studio-speech{display:inline-flex;align-items:center;gap:8px;margin-top:8px;padding:5px 12px 5px 5px;border:1.5px solid #ff9a3d;border-radius:999px;background:#ff9a3d1f;color:var(--ink);text-align:left;font:inherit;cursor:pointer;transition:background .15s,border-color .15s}
 .studio-speech:hover{background:#ff9a3d33}
-.studio-speech-icon{display:grid;place-items:center;flex:none;width:48px;height:48px;border-radius:50%;background:var(--fire);font-size:24px;box-shadow:0 6px 16px #ff5b2e4d}
-.studio-speech-text strong{display:block;font-size:16.5px;font-weight:850}
-.studio-speech-text small{display:block;margin-top:2px;font-size:13px;color:var(--ink-2)}
+.studio-speech-icon{display:grid;place-items:center;flex:none;width:30px;height:30px;border-radius:50%;background:var(--fire);box-shadow:0 4px 10px #ff5b2e4d}
+.studio-speech-icon svg,.studio-edit-mic svg{width:17px;height:17px;fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.studio-speech-text strong{display:block;font-size:13.5px;font-weight:850;line-height:1.2}
+.studio-speech-text small{display:block;font-size:11.5px;color:var(--ink-2);line-height:1.25}
 @keyframes studioListen{0%,100%{box-shadow:0 0 0 0 #ff3d2e66}50%{box-shadow:0 0 0 10px #ff3d2e00}}
 .studio-speech.is-on{border-color:#ff3d2e;background:#ff3d2e26}
 .studio-speech.is-on .studio-speech-icon{background:#ff3d2e;animation:studioListen 1.2s ease-out infinite}
 .studio-speech-status{margin:6px 0 0;font-size:13px;line-height:1.4;color:var(--ink-2)}
 .studio-speech-status:empty{display:none}
+
+/* Änderungsfeld: gleiche Zeichen (Tastatur + Mund) wie links, darunter der Knopf zum Einsprechen */
+.studio-edit-field{flex:1;min-width:0;display:flex}
+.studio-edit .studio-edit-field textarea{min-height:92px}
+.studio-edit-field .studio-keyword-icons{gap:14px}
+.studio-edit-field .studio-keyword-icons svg{width:38px;height:38px}
+.studio-edit-field .studio-icon-btn{padding:4px 6px;gap:3px}
+.studio-edit-field .studio-icon-btn span{font-size:11.5px}
+.studio-edit .studio-speech{min-height:0;padding:5px 12px 5px 5px;border:1.5px solid #ff9a3d;border-radius:999px;background:#ff9a3d1f;color:var(--ink);font-size:inherit;font-weight:inherit}
+.studio-edit .studio-speech:hover:not(:disabled){background:#ff9a3d33}
+.studio-edit .studio-speech.is-on{border-color:#ff3d2e;background:#ff3d2e26}
+
+/* Grossansicht eines Designs */
+.studio-lightbox{max-width:none;max-height:none;width:100vw;height:100vh;margin:0;padding:0;border:0;background:transparent;cursor:zoom-out}
+.studio-lightbox::backdrop{background:#05070dee;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.studio-lightbox[open]{display:grid;place-items:center}
+.studio-lightbox img{display:block;max-width:96vw;max-height:92vh;width:auto;height:auto;border-radius:14px;background:#747474;box-shadow:0 20px 60px #000a}
+.studio-lightbox-close{position:fixed;top:14px;right:14px;width:46px;height:46px;border:0;border-radius:50%;background:#ffffff1f;color:#fff;font-size:28px;line-height:1;cursor:pointer}
+.studio-stage:not(.is-blank) .studio-preview img{cursor:zoom-in}
 
 /* „Weiteres T-Shirt designen“: eigene Karte neben den Designs, gleich gross wie eine Design-Karte */
 .studio-card.studio-card-another{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:120px;padding:12px;border-style:dashed;border-color:var(--line-2);color:var(--ink);font:inherit;text-align:center;cursor:pointer}

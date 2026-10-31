@@ -156,14 +156,11 @@
       designs: order.designs.map((item, i) => ({nummer: states[i].designNumber || item.number, rechte: states[i].rights.checked, platzierung: states[i].card.querySelector('textarea.print-original')?.value || '', groessen: item.rows.map(row => ({groesse: row.size, anzahl: Number(row.quantity)}))}))
     }));
     let size = 0;
-    // Alle Druckdateien zusammen müssen in den Mail-Anhang passen (max. 24 MB) – das Budget wird auf die Designs verteilt.
-    const maxBytes = Math.min(11 * 1024 * 1024, Math.floor(20 * 1024 * 1024 / Math.max(1, states.filter(s => s.file.files[0]).length)));
     for (const [i, state] of states.entries()) {
       const file = state.file.files[0];
-      // Druckdatei: das bestellte Design als PNG im Format 45 × 60 cm hochgerechnet (druckdatei.js); falls das scheitert, das Original.
+      // Druckdatei: exakt das bestellte Design in Originalauflösung und verlustfrei (PNG) – nicht verkleinert, nicht aufgefüllt.
       if (file) {
-        const print = await window.ShirtboxPrint?.make(file, {maxBytes}).catch(() => null);
-        body.set(`druck_${i}`, print || file, print ? `design-${i + 1}-${print.width}x${print.height}.png` : file.name); size += (print || file).size;
+        body.set(`druck_${i}`, file, `ShirtBOX_Design-${i + 1}_Druckdatei.${file.type === 'image/png' ? 'png' : 'jpg'}`); size += file.size;
         body.set(`bild_${i}`, await mailImage(file), `design-${i + 1}.jpg`);
       }
       for (const input of state.card.querySelectorAll('input.print-original')) { const original = input.files[0]; if (original) { body.append(`original_${i}`, original, original.name); size += original.size; } }
