@@ -217,11 +217,12 @@ html[lang=en] .studio-stage.is-blank .studio-preview::after{content:"Your shirt 
 .studio-edit button{flex:none;min-height:56px;padding:0 22px;border:0;border-radius:14px;background:var(--solid);color:#fff;font-size:15.5px;font-weight:800;cursor:pointer}
 .studio-edit button:hover:not(:disabled){background:#2a3346}
 .studio-edit button:disabled{background:#252c3a;color:var(--ink-3);cursor:not-allowed}
+.studio-edit #studio-edit-button[aria-disabled=true]{background:#252c3a;color:var(--ink-3)}
 /* Sobald man ins Änderungsfeld tippt (oder Text drinsteht), leuchtet „Änderungen übernehmen“ orange und pulsiert. */
 @keyframes studioPress{0%,100%{box-shadow:0 0 0 0 #ff7a2b00,0 8px 22px #ff5b2e45}50%{box-shadow:0 0 0 6px #ff7a2b55,0 8px 22px #ff5b2e45}}
-.studio-edit-row:focus-within #studio-edit-button,.studio-edit #studio-edit-button:not(:disabled){background:var(--fire);color:var(--on-accent);animation:studioPress 1.6s ease-in-out infinite}
+.studio-edit-row:focus-within #studio-edit-button,.studio-edit #studio-edit-button:not(:disabled):not([aria-disabled=true]){background:var(--fire);color:var(--on-accent);animation:studioPress 1.6s ease-in-out infinite}
 .studio-edit-row:focus-within #studio-edit-button:disabled{cursor:pointer}
-@media(prefers-reduced-motion:reduce){.studio-edit-row:focus-within #studio-edit-button,.studio-edit #studio-edit-button:not(:disabled){animation:none;box-shadow:0 0 0 3px #ff7a2b55}}
+@media(prefers-reduced-motion:reduce){.studio-edit-row:focus-within #studio-edit-button,.studio-edit #studio-edit-button:not(:disabled):not([aria-disabled=true]){animation:none;box-shadow:0 0 0 3px #ff7a2b55}}
 
 /* Spracheingabe: grosser Mikrofon-Knopf direkt unter der Beschreibung */
 .studio-speech{display:inline-flex;align-items:center;gap:8px;margin-top:8px;padding:5px 12px 5px 5px;border:1.5px solid #ff9a3d;border-radius:999px;background:#ff9a3d1f;color:var(--ink);text-align:left;font:inherit;cursor:pointer;transition:background .15s,border-color .15s}
@@ -303,8 +304,10 @@ html[lang=en] .studio-designs:empty::before{content:"Your T-shirt designs will a
 .studio-order-actions{display:flex;gap:10px;flex-wrap:wrap}
 .studio-order button{min-height:54px;padding:0 24px;border:0;border-radius:999px;font-size:16.5px;font-weight:850;cursor:pointer;transition:transform .15s,background .15s}
 #studio-order-button{background:var(--fire);color:var(--on-accent);box-shadow:0 8px 22px #ff5b2e45}
-#studio-order-button:hover:not(:disabled){background:var(--fire);transform:translateY(-2px)}
+#studio-order-button:hover:not(:disabled):not([aria-disabled=true]){background:var(--fire);transform:translateY(-2px)}
 #studio-order-button:disabled{background:#252c3a;color:var(--ink-3);box-shadow:none;cursor:not-allowed}
+/* Noch kein T-Shirt gewählt: grau, aber anklickbar – der Klick zeigt, was fehlt. */
+#studio-order-button[aria-disabled=true]{background:#252c3a;color:var(--ink-3);box-shadow:none;cursor:pointer}
 
 @media(max-width:900px){
   .studio-grid{grid-template-columns:minmax(0,1fr)}

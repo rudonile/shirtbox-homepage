@@ -30,6 +30,9 @@
   const designs = []; let active = -1, busy = false, editingOrder = false, startOver = false;
 
   const fail = text => { error.textContent = text; error.hidden = !text; };
+  // Fehlende Angabe: hinscrollen und deutlich markieren (window.sbMissing aus navigation.js).
+  const en = () => document.documentElement.lang === 'en';
+  const missing = (el, focus, text) => { if (window.sbMissing) window.sbMissing(el, focus, text); else { el?.scrollIntoView({behavior: 'smooth', block: 'center'}); focus?.focus({preventScroll: true}); } };
   const say = text => { status.textContent = text; };
   const ready = () => designs.filter(d => d.blob);
   const chosen = () => editingOrder ? ready() : ready().filter(d => d.selected);
@@ -80,8 +83,10 @@
     surprise.disabled = busy;
     surprise.textContent = '✨ T-Shirt designen';
     // Während im Änderungsfeld diktiert wird, ist der Knopf schon aktiv – er beendet das Diktat und übernimmt den Text.
-    editButton.disabled = busy || (!editInput.value.trim() && dict?.field !== editInput);
-    orderButton.disabled = busy || !chosen().length;
+    // Ohne Eingabe bzw. ohne gewähltes Shirt bleiben die Knöpfe anklickbar (nur grau dargestellt): Ein Klick zeigt dann,
+    // was noch fehlt, statt einfach nichts zu tun.
+    editButton.disabled = busy; editButton.setAttribute('aria-disabled', String(!editInput.value.trim() && dict?.field !== editInput));
+    orderButton.disabled = busy; orderButton.setAttribute('aria-disabled', String(!chosen().length));
     another.disabled = busy;
     stage.classList.toggle('is-empty', !designs.length && !busy);
     stage.classList.toggle('is-blank', active < 0 && !busy);
@@ -548,9 +553,9 @@
     if (busy || !(await afterDictation())) return;
     if (!speakButton(keyword).hidden) hear('');
     const word = keyword.value.trim(), file = photo.files[0];
-    if (!model) { fail('Bitte wählen Sie zuerst ein Shirt-Modell (Polo-Shirt oder Zip-Shirt).'); modelField.classList.add('attention'); modelField.scrollIntoView({behavior: 'smooth', block: 'center'}); modelButtons[0].focus({preventScroll: true}); return; }
-    if (!word && !file && !styleChoice) { fail('Bitte beschreiben Sie Ihr Design oder laden Sie ein Foto hoch.'); keyword.focus(); return; }
-    if (!rights.checked) { fail('Bitte bestätigen Sie Ihre Inhalts- und Bildrechte.'); rights.closest('label').classList.add('attention'); rights.focus(); return; }
+    if (!model) { fail('Bitte wählen Sie zuerst ein Shirt-Modell (Polo-Shirt oder Zip-Shirt).'); modelField.classList.add('attention'); missing(modelField, modelButtons[0], en() ? '👇 Please pick a shirt' : '👇 Bitte ein Shirt anklicken'); return; }
+    if (!word && !file && !styleChoice) { fail('Bitte beschreiben Sie Ihr Design oder laden Sie ein Foto hoch.'); missing(keyword.parentElement, keyword, en() ? '👇 Describe your shirt here' : '👇 Hier Ihr Shirt beschreiben'); return; }
+    if (!rights.checked) { fail('Bitte bestätigen Sie Ihre Inhalts- und Bildrechte.'); rights.closest('label').classList.add('attention'); missing(rights.closest('label'), rights, en() ? '👇 Please tick this box' : '👇 Bitte Häkchen setzen'); return; }
     run(async () => {
       // Das Polo-Shirt holt der Worker selbst; alle anderen Modelle schicken ihre leere Vorlage mit.
       const blob = await keepInside(await request(surprisePrompt(word, !!file), file ? await withPhoto(file) : model === 'polo' ? null : await template()), model);
@@ -593,7 +598,11 @@
     const spoke = dict?.field === editInput;
     if (busy || !designs[active] || !(await afterDictation())) return;
     const d = designs[active], change = editInput.value.trim();
-    if (!d || !change) { if (!change && spoke) editStatus.textContent = 'Keine Sprache erkannt. Bitte nochmals den Mund antippen und sprechen.'; return; }
+    if (!d || !change) {
+      if (!change && spoke) editStatus.textContent = 'Keine Sprache erkannt. Bitte nochmals den Mund antippen und sprechen.';
+      if (d && !change) missing(editInput.parentElement, spoke ? null : editInput, en() ? '👇 Describe your changes here' : '👇 Hier die Änderung beschreiben');
+      return;
+    }
     editStatus.textContent = '';
     run(async () => {
       const cut = MODELS[d.model]?.cut;
@@ -605,7 +614,8 @@
   });
 
   orderButton.addEventListener('click', async () => {
-    const picked = chosen(); if (busy || !picked.length) return;
+    const picked = chosen(); if (busy) return;
+    if (!picked.length) { missing(collection, list.querySelector('.studio-card-pick'), en() ? '👇 Please add a shirt to the cart' : '👇 Bitte ein T-Shirt „In den Warenkorb“ legen'); return; }
     const items = picked.map(d => ({blob: d.blob, number: d.number, prompt: d.prompt, originals: [], placement: ''}));
     busy = true; controls();
     try {

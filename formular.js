@@ -225,8 +225,11 @@
       document.querySelectorAll('.missing-required').forEach(el=>el.classList.remove('missing-required'));
       const missing=[...form.querySelectorAll('[required]')].find(el=>!el.validity.valid);
       const target=missing || (result.order.errors.length ? list.querySelector('.design-size-row') || list : null);
-      if(target){const box=target.closest('.agb-consent,.design-size-row,.field')||target;box.classList.add('missing-required');box.scrollIntoView({behavior:'smooth',block:'center'});if(missing){try{missing.focus({preventScroll:true});}catch(e){missing.focus();}}}
-      else if(!result.order.valid){list.classList.add('missing-required');list.scrollIntoView({behavior:'smooth',block:'center'});}
+      // Fehlende Angabe: hinscrollen und orange pulsierend markieren (window.sbMissing aus navigation.js).
+      const en=document.documentElement.lang==='en';
+      const show=(box,focus,text)=>{box.classList.add('missing-required');if(window.sbMissing)window.sbMissing(box,focus,text);else{box.scrollIntoView({behavior:'smooth',block:'center'});if(focus){try{focus.focus({preventScroll:true});}catch(e){focus.focus();}}}};
+      if(target){const box=target.closest('.agb-consent,.design-size-row,.field')||target;const text=box.matches('.agb-consent')||missing?.type==='checkbox'?(en?'👇 Please tick this box':'👇 Bitte Häkchen setzen'):box.matches('.design-size-row')||!missing?(en?'👇 Please choose size and quantity':'👇 Bitte Grösse und Anzahl wählen'):'';show(box,missing,text);}
+      else if(!result.order.valid){show(list,null,en?'👇 Please add a design':'👇 Bitte ein Design hinzufügen');}
       return;
     }
     // Normalfall: Der Worker verschickt interne Mail und Kundenbestätigung, danach direkt zur Danke-Seite.
