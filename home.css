@@ -151,4 +151,19 @@ body.home::before{content:"";position:fixed;inset:0;z-index:200;pointer-events:n
   .hx-badge small{font-size:10px}
   .hx-badge.q1{left:-2%;bottom:4%}.hx-badge.q2{right:-2%;top:46%}
 }
+/* iPad hochkant (und andere Tablets hochkant): eine Spalte, alles mittig. Überschrift, Preis und Knopf oben,
+   darunter die Shirts in voller Grösse – Kicker, Erklärtext und Fakten entfallen, damit Shirts und Anlässe auf den ersten Bildschirm passen. */
+@media(min-width:701px) and (max-width:1100px) and (orientation:portrait){
+  .hx{flex:1;display:flex;align-items:stretch;padding:clamp(14px,2.2vh,36px) 0 clamp(6px,1.2vh,18px)}
+  .hx-grid{flex:1;width:100%;grid-template-columns:1fr;align-content:space-evenly;gap:clamp(14px,2.4vh,34px)}
+  .hx-copy{text-align:center}
+  .hx h1{font-size:clamp(40px,6.2vw,62px);margin-bottom:clamp(14px,2vh,24px)}
+  .hx-price{margin:0 0 clamp(16px,2.4vh,28px)}
+  .hx-kicker,.hx-lead,.hx-facts{display:none}
+  .hx-actions{justify-content:center;margin:0}
+  .hx-stage{--sh:clamp(250px,min(62vw,100vh - 700px),560px);--sh:clamp(250px,min(62vw,100svh - 700px),560px);height:var(--sh);width:min(100%,calc(var(--sh) * 1.2));max-width:none;margin:0 auto}
+  .home .occ{margin-bottom:clamp(14px,2.6vh,36px)}
+}
+/* Kleinere iPads hochkant: Shirts sind kleiner – die Hinweis-Schilder würden sie verdecken. */
+@media(min-width:701px) and (max-width:1100px) and (orientation:portrait) and (max-height:1020px){.hx-badge{display:none}}
 @media(prefers-reduced-motion:reduce){.hx-card,.hx-badge,.hx-dot{animation:none}}
