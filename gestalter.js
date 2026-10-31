@@ -94,29 +94,29 @@
   keyword.addEventListener('input', () => steps());
   photo.addEventListener('change', () => steps());
   // Spracheingabe (Web Speech API, Deutsch) für die Beschreibung und das Änderungsfeld – immer nur ein Diktat gleichzeitig.
-  // Ohne Unterstützung bleibt nur der Hinweis auf die Diktierfunktion der Tastatur.
-  const speech = $('studio-speech'), speechLabel = $('studio-speech-label'), speechSub = $('studio-speech-sub'), speechStatus = $('studio-speech-status');
-  const editMic = $('studio-edit-mic'), editMicLabel = $('studio-edit-mic-label'), editMicSub = $('studio-edit-mic-sub'), editStatus = $('studio-edit-status');
+  // Gestartet und beendet wird über den Mund im Feld; während des Diktats bleibt er klein und rot in der Ecke sichtbar.
+  // Ohne Unterstützung verschwindet der Mund, und ein Hinweis nennt die Diktierfunktion der Handy-Tastatur.
+  const speechStatus = $('studio-speech-status'), editStatus = $('studio-edit-status');
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   let listening = null, listenButton = null, listenOff = null;
   const hear = text => { speechStatus.textContent = text; };
   const SPEECH_ERRORS = {'not-allowed': 'Bitte erlauben Sie den Mikrofonzugriff im Browser.', 'service-not-allowed': 'Der Sprachdienst ist hier nicht verfügbar. Nutzen Sie das Mikrofon Ihrer Tastatur.',
-    'audio-capture': 'Kein Mikrofon gefunden. Bitte prüfen Sie Ihr Mikrofon.', 'no-speech': 'Keine Sprache erkannt. Bitte nochmals antippen und sprechen.',
+    'audio-capture': 'Kein Mikrofon gefunden. Bitte prüfen Sie Ihr Mikrofon.', 'no-speech': 'Keine Sprache erkannt. Bitte nochmals den Mund antippen und sprechen.',
     'network': 'Die Spracherkennung ist nicht erreichbar. Bitte Internetverbindung prüfen.'};
-  // Während des Diktats zeigt auch der Mund im Feld, dass zugehört wird.
-  const speakIcon = (field, on) => {
-    const b = field.parentElement.querySelector('.studio-icon-btn[data-act=speak]'); if (!b) return;
-    b.classList.toggle('is-on', on); b.querySelector('span').textContent = on ? 'Ich höre zu …' : 'Hier sprechen';
-  };
   function stopDictation() {
     const s = listening, off = listenOff; listening = listenButton = listenOff = null;
     try { s?.stop(); } catch {}
     off?.();
   }
-  function dictation(button, field, show, report, changed) {
+  function dictation(button, field, report, changed) {
+    const box = field.parentElement, label = button.querySelector('span'), idle = label.textContent;
+    const show = on => {
+      box.classList.toggle('is-listening', on); button.classList.toggle('is-on', on); button.setAttribute('aria-pressed', String(on));
+      label.textContent = on ? 'Stopp' : idle; field.readOnly = on;
+    };
     button.addEventListener('click', () => {
-      if (listenButton === button) { stopDictation(); report('Diktat beendet. Prüfen Sie den Text – Sie können jederzeit weiter einsprechen.'); return; }
-      stopDictation();
+      if (listenButton === button) { stopDictation(); report('Diktat beendet. Prüfen Sie den Text – zum Weitersprechen den Mund antippen.'); return; }
+      stopDictation(); stopTour(); if (field === keyword) robotStop();
       const base = field.value.trim(), session = new Recognition();
       listening = session; listenButton = button; listenOff = () => show(false);
       session.lang = 'de-DE'; session.continuous = true; session.interimResults = true;
@@ -129,34 +129,21 @@
       };
       session.onerror = event => { if (listening === session) report(SPEECH_ERRORS[event.error] || 'Die Spracheingabe wurde unterbrochen. Bitte nochmals versuchen.'); };
       session.onend = () => { if (listening === session) { listening = listenButton = listenOff = null; show(false); } };
-      show(true); report('');
+      show(true); report('Ich höre zu … zum Beenden den roten Mund antippen.');
       try { session.start(); } catch { stopDictation(); report('Die Spracheingabe konnte nicht gestartet werden. Bitte nochmals versuchen.'); }
     });
   }
+  const speakButton = field => field.parentElement.querySelector('.studio-icon-btn[data-act=speak]');
   if (!Recognition || !window.isSecureContext) {
-    speech.hidden = true; editMic.hidden = true;
+    speakButton(keyword).hidden = speakButton(editInput).hidden = true;
     hear('Tipp: Sie können Ihre Idee auch mit dem Mikrofon Ihrer Handy-Tastatur einsprechen.');
   } else {
-    dictation(speech, keyword, on => {
-      speech.setAttribute('aria-pressed', String(on)); speech.classList.toggle('is-on', on);
-      speechLabel.textContent = on ? 'Ich höre zu … zum Beenden antippen' : 'Idee einsprechen';
-      speechSub.textContent = on ? 'Erzählen Sie in Ruhe, wie Ihr Shirt aussehen soll' : 'Antippen und erzählen – wir schreiben mit';
-      keyword.readOnly = on; speakIcon(keyword, on);
-    }, hear, () => { fail(''); steps(); });
-    dictation(editMic, editInput, on => {
-      editMic.setAttribute('aria-pressed', String(on)); editMic.classList.toggle('is-on', on);
-      editMicLabel.textContent = on ? 'Ich höre zu … zum Beenden antippen' : 'Änderung einsprechen';
-      editMicSub.textContent = on ? 'Sagen Sie, was anders werden soll' : 'Antippen und erzählen – wir schreiben mit';
-      editInput.readOnly = on; speakIcon(editInput, on);
-    }, text => { editStatus.textContent = text; }, () => controls());
+    dictation(speakButton(keyword), keyword, hear, () => { fail(''); steps(); });
+    dictation(speakButton(editInput), editInput, text => { editStatus.textContent = text; }, () => controls());
   }
   window.addEventListener('pagehide', stopDictation);
-  // Tastatur und Mund im leeren Feld sind Knöpfe: Tastatur = ins Feld schreiben, Mund = Einsprechen starten.
-  for (const [field, mic] of [[keyword, speech], [editInput, editMic]]) {
-    field.parentElement.querySelectorAll('.studio-icon-btn').forEach(button => button.addEventListener('click', () => {
-      if (button.dataset.act === 'speak' && !mic.hidden) { stopTour(); mic.click(); } else field.focus();
-    }));
-  }
+  // Tastatur im leeren Feld: Klick setzt den Cursor ins Feld (auf dem Handy öffnet sich die Tastatur).
+  for (const field of [keyword, editInput]) field.parentElement.querySelector('.studio-icon-btn[data-act=type]').addEventListener('click', () => field.focus());
 
   // Grossansicht: Klick auf ein Design unten (oder auf das Vorschaubild) zeigt es bildschirmfüllend. Schliessen per Klick, X oder Esc.
   const lightbox = $('studio-lightbox'), lightboxImg = $('studio-lightbox-img');
@@ -220,11 +207,14 @@
   function surprisePrompt(word, hasPhoto) {
     let p = `Gestalte als erfahrener Designer ein hochwertiges, rundum bedrucktes 360-Grad-${MODELS[model].cut} auf der Vorlage (links Vorderseite, rechts Rückseite) mit zusammenhängendem Design über Vorderseite, Rückseite, Kragen und Ärmel. `;
     const wish = word ? `Kundenwunsch: "${word}". Treu umsetzen und fehlende Details (Farben, Motive, Muster, Komposition) professionell ergänzen. ` : '';
-    if (hasPhoto) p += `Das hochgeladene Foto ist die verbindliche Referenz für das Hauptmotiv (Person, Tier oder Objekt): gut erkennbar übernehmen, freistellen und harmonisch integrieren, nicht ersetzen. ${wish}`;
+    // Foto-Regel: das Foto erscheint genau einmal und originalgetreu; die übrigen Flächen setzen nur Farben und Muster fort.
+    if (hasPhoto) p += `Das hochgeladene Foto (auf der Vorlage vorne platziert) ist die verbindliche Referenz für das Hauptmotiv (Person, Tier, Logo oder Objekt): originalgetreu übernehmen – Gesichter, Personen und Logos NICHT verändern, nicht neu zeichnen, nicht ersetzen –, sauber freistellen und harmonisch ins Design einbetten. Das Fotomotiv erscheint auf dem ganzen Shirt GENAU EINMAL: standardmässig auf der Vorderseite, oder an der Stelle, die der Kundenwunsch ausdrücklich nennt. Keine Wiederholung, Spiegelung oder zweite Version der Person bzw. des Motivs auf Rückseite, Ärmeln oder Seiten. ${wish}`;
     else if (word) p += wish;
     else p += 'Entwickle ein ausdrucksstarkes, überraschendes Motiv, das zum gewählten Stil passt. ';
     p += `Designstil: ${STYLES[styleChoice]?.brief || RANDOM_STYLES[Math.floor(Math.random() * RANDOM_STYLES.length)]} `;
-    p += 'Aufbau: Vorderseite mit klarem Blickfang auf Brusthöhe, Rückseite mit dem grössten Hauptmotiv, Ärmel und Kragen mit passenden Akzenten oder Mustern, die alles verbinden. Höchstens 3–4 harmonische Hauptfarben mit gutem Kontrast. ';
+    p += hasPhoto
+      ? 'Aufbau: EIN zusammenhängendes Design wie aus einem Guss, nicht zwei unabhängige Bilder. Die Rückseite ist die natürliche Fortsetzung der Vorderseite: dieselben Farben, Muster, Hintergrund-Elemente und Effekte laufen harmonisch weiter – ohne Personen oder Gesichter (ausser der Kundenwunsch verlangt sie ausdrücklich dort). Schultern, Ärmel, Seiten und Kragen verbinden Vorder- und Rückseite nahtlos; keine abgeschnittenen oder verzerrten Motive. Schriftzüge aus dem Kundenwunsch an der genannten Stelle (sonst gut lesbar auf der Rückseite). Höchstens 3–4 harmonische Hauptfarben mit gutem Kontrast. '
+      : 'Aufbau: EIN zusammenhängendes Design wie aus einem Guss: Vorderseite mit klarem Blickfang auf Brusthöhe, Rückseite mit dem grössten Hauptmotiv, Ärmel, Seiten und Kragen mit passenden Akzenten oder Mustern, die alles nahtlos verbinden. Höchstens 3–4 harmonische Hauptfarben mit gutem Kontrast. ';
     p += word ? 'Schrift: Nur Texte drucken, die der Kundenwunsch ausdrücklich als Schriftzug nennt (z. B. in Anführungszeichen oder „mit Schriftzug …“) – genau so, Buchstabe für Buchstabe korrekt, gut lesbar und an der gewünschten Stelle. Die Beschreibung selbst NICHT als Schrift drucken; sonst keine weiteren Wörter. ' : 'Keine Schriftzüge oder Wörter auf das Shirt setzen, ausser sie sind Teil des Fotos. ';
     return p + INSIDE + ` Keine rechteckige Foto-Auflage, keine Marken-Logos, keine Wasserzeichen. Shirt-Schnitt (${MODELS[model].cut}), Perspektive und Vorlage beibehalten. Druckfertige, professionelle Qualität. Variante ${Date.now()}`;
   }
@@ -263,7 +253,28 @@
     };
     tourTimer = setTimeout(next, 700);
   }
-  ['pointerdown', 'focus'].forEach(type => keyword.addEventListener(type, stopTour)); keyword.addEventListener('input', () => { if (keyword.value.trim()) stopTour(); });
+  ['pointerdown', 'focus'].forEach(type => keyword.addEventListener(type, stopTour));
+  // Roboter „schreibt“ seine Nachricht Buchstabe für Buchstabe (sein Mund bewegt sich dabei), wartet und beginnt von vorne –
+  // bis man ins Eingabefeld klickt; dann bleibt der ganze Text stehen. Text aus .studio-robot-source (von language.js übersetzbar).
+  const robot = $('studio-guide'), robotSource = robot.querySelector('.studio-robot-source');
+  const [typedHead, typedTail] = robot.querySelectorAll('.studio-robot-typed > strong, .studio-robot-typed > span');
+  const robotText = () => [robotSource.querySelector('strong').textContent, ' ' + robotSource.querySelector('span').textContent];
+  let robotTimer = null, robotDone = false;
+  function robotType() {
+    clearTimeout(robotTimer);
+    const [head, tail] = robotText();
+    if (robotDone || matchMedia('(prefers-reduced-motion: reduce)').matches) { typedHead.textContent = head; typedTail.textContent = tail; robot.classList.remove('is-typing'); return; }
+    let n = 0; typedHead.textContent = typedTail.textContent = ''; robot.classList.add('is-typing');
+    const step = () => {
+      n++; typedHead.textContent = head.slice(0, n); typedTail.textContent = n > head.length ? tail.slice(0, n - head.length) : '';
+      if (n < head.length + tail.length) robotTimer = setTimeout(step, 42);
+      else { robot.classList.remove('is-typing'); robotTimer = setTimeout(robotType, 6000); }
+    };
+    robotTimer = setTimeout(step, 500);
+  }
+  function robotStop() { robotDone = true; robotType(); }
+  robotType();
+  ['pointerdown', 'focus'].forEach(type => keyword.addEventListener(type, robotStop)); keyword.addEventListener('input', () => { if (keyword.value.trim()) stopTour(); });
 
   // Stil-Knöpfe: einer aktiv, erneuter Klick hebt die Auswahl auf.
   const styleButtons = [...document.querySelectorAll('#studio-styles [data-style]')];
@@ -455,8 +466,8 @@
     if (busy) return;
     model = ''; modelButtons.forEach(b => b.setAttribute('aria-pressed', 'false'));
     styleChoice = ''; styleButtons.forEach(b => b.setAttribute('aria-pressed', 'false'));
-    stopTour(); toured = false;
-    stopDictation(); if (!speech.hidden) hear(''); keyword.value = ''; photo.value = ''; photo.dispatchEvent(new Event('change'));
+    stopTour(); toured = false; robotDone = false; robotType();
+    stopDictation(); if (!speakButton(keyword).hidden) hear(''); keyword.value = ''; photo.value = ''; photo.dispatchEvent(new Event('change'));
     editInput.value = '';
     fail(''); say('');
     // Vorschau wieder leer (Vorlage vorne/hinten) statt des letzten Designs.
