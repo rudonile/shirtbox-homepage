@@ -10,11 +10,11 @@ const ADMIN_JS = __ADMIN_JS__;
 const ADMIN_CSS = __ADMIN_CSS__;
 const SCHEMA = __SCHEMA__;
 
-const VERSION = '20261024-verwaltung';
+const VERSION = '20261031-buchhaltung';
 const PUBLIC_WORKER = 'https://shirtbox-email.r-n.workers.dev';
 const SITE = 'https://shirtbox.ch';
 const STATUS = ['neu', 'bearbeitung', 'produziert', 'versendet', 'abgeschlossen', 'storniert'];
-const ZAHLUNG = ['offen', 'bezahlt', 'rueckerstattet'];
+const ZAHLUNG = ['offen', 'teilweise', 'bezahlt', 'rueckerstattet']; // „teilweise“ entsteht nur über Teilzahlungen in der Buchhaltung
 const DEFAULTS = {
   test_email: 'r-n@gmx.ch', absender_name: 'ShirtBOX', absender_email: 'newsletter@shirtbox.ch', antwort_email: 'info@shirtbox.ch',
   adresse: 'ShirtBOX.ch · Rudi Nagl · Leinackerweg 19 · 5014 Gretzenbach · Schweiz', tageslimit: '80', monatslimit: '2500', timeout: '30'
@@ -93,6 +93,7 @@ async function route(request, env, ctx, url, settings) {
     if (method === 'DELETE') { await env.DB.prepare('DELETE FROM abonnenten WHERE id = ?').bind(id).run(); await log(env, `Abonnent #${id} gelöscht`); return json({ok: true}); }
   }
   if (part[1] === 'newsletter') return newsletterRoute(request, env, ctx, part, settings);
+  if (part[1] === 'bh') return bhRoute(request, env, part, q);
   if (path === '/api/bild' && method === 'GET') return image(env, q.get('k') || '');
   if (path === '/api/bild' && method === 'POST') return uploadImage(request, env);
   if (part[1] === 'export') return exportCsv(env, part[2] || '');
@@ -108,7 +109,9 @@ async function route(request, env, ctx, url, settings) {
 let schemaReady = false;
 async function ensureSchema(env) {
   if (schemaReady) return;
-  const exists = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'protokoll'").first();
+  // Alle Anweisungen sind wiederholbar (IF NOT EXISTS / INSERT OR IGNORE): fehlt die neueste Tabelle, wird nur Fehlendes ergänzt –
+  // bestehende Tabellen und Daten bleiben unverändert.
+  const exists = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'bh_rechnungen'").first();
   if (!exists) {
     const statements = SCHEMA.replace(/--[^\n]*/g, '').split(';').map(s => s.trim()).filter(Boolean);
     await env.DB.batch(statements.map(s => env.DB.prepare(s)));
@@ -255,7 +258,7 @@ async function dashboard(env) {
       SUM(datum = ?1) AS heute, SUM(datum >= ?2) AS woche, SUM(datum >= ?3) AS monat, COUNT(*) AS total,
       SUM(CASE WHEN datum = ?1 THEN total_rappen END) AS umsatz_heute, SUM(CASE WHEN datum >= ?2 THEN total_rappen END) AS umsatz_woche,
       SUM(CASE WHEN datum >= ?3 THEN total_rappen END) AS umsatz_monat, SUM(total_rappen) AS umsatz_total,
-      SUM(zahlung = 'offen') AS offen, SUM(zahlung = 'bezahlt') AS bezahlt, SUM(anzahl) AS shirts,
+      SUM(zahlung IN ('offen', 'teilweise')) AS offen, SUM(zahlung = 'bezahlt') AS bezahlt, SUM(anzahl) AS shirts,
       SUM(CASE WHEN zahlung = 'bezahlt' THEN total_rappen END) AS bezahlt_rappen
     FROM bestellungen WHERE status != 'storniert'`).bind(today, week, month).first();
   const extra = await env.DB.prepare(`SELECT
@@ -294,7 +297,7 @@ async function revenue(env, range, art) {
   const map = Object.fromEntries(rows.map(r => [r.periode, r]));
   const totals = await env.DB.prepare(`SELECT SUM(CASE WHEN status != 'storniert' THEN total_rappen END) AS bestellwert,
       SUM(CASE WHEN zahlung = 'bezahlt' THEN total_rappen END) AS bezahlt, SUM(CASE WHEN zahlung = 'rueckerstattet' THEN total_rappen END) AS rueckerstattet,
-      SUM(CASE WHEN zahlung = 'offen' AND status != 'storniert' THEN total_rappen END) AS offen FROM bestellungen WHERE datum >= ?`).bind(range === '12m' ? labels[0] + '-01' : labels[0]).first();
+      SUM(CASE WHEN zahlung IN ('offen', 'teilweise') AND status != 'storniert' THEN total_rappen END) AS offen FROM bestellungen WHERE datum >= ?`).bind(range === '12m' ? labels[0] + '-01' : labels[0]).first();
   return {zeitraum: range, art, punkte: labels.map(p => ({periode: p, summe: Number(map[p]?.summe) || 0, anzahl: Number(map[p]?.anzahl) || 0})),
     summen: {bestellwert: Number(totals.bestellwert) || 0, bezahlt: Number(totals.bezahlt) || 0, rueckerstattet: Number(totals.rueckerstattet) || 0, offen: Number(totals.offen) || 0}};
 }
@@ -342,10 +345,16 @@ async function deleteCustomer(request, env, id) {
   if (data.bestaetigung !== 'LÖSCHEN') return fail(400, 'Bitte zur Bestätigung LÖSCHEN eingeben.');
   const k = await env.DB.prepare('SELECT email FROM kunden WHERE id = ?').bind(id).first();
   if (!k) return fail(404, 'Kunde nicht gefunden.');
+  // Buchhaltung: Zahlungen und Rechnungen sind Geschäftsunterlagen (10 Jahre Aufbewahrungspflicht) und werden nie mitgelöscht.
+  const booked = await env.DB.prepare(`SELECT (SELECT COUNT(*) FROM bh_zahlungen WHERE bestellung_id IN (SELECT id FROM bestellungen WHERE kunde_id = ?1))
+      + (SELECT COUNT(*) FROM bh_rechnungen WHERE bestellung_id IN (SELECT id FROM bestellungen WHERE kunde_id = ?1))
+      + (SELECT COUNT(*) FROM bh_einnahmen WHERE bestellung_id IN (SELECT id FROM bestellungen WHERE kunde_id = ?1)) AS n`).bind(id).first();
+  if (booked.n) return fail(409, 'Zu diesem Kunden gibt es gebuchte Zahlungen oder Rechnungen. Diese Geschäftsunterlagen müssen 10 Jahre aufbewahrt werden – der Kunde kann deshalb nicht gelöscht werden.');
   const designs = (await env.DB.prepare('SELECT d.bild_vorschau, d.bild_druck, d.bilder_original FROM bestell_designs d JOIN bestellungen b ON b.id = d.bestellung_id WHERE b.kunde_id = ?').bind(id).all()).results;
   const keys = designs.flatMap(d => [d.bild_vorschau, d.bild_druck, ...JSON.parse(d.bilder_original || '[]')]).filter(Boolean);
   if (env.BILDER && keys.length) for (let i = 0; i < keys.length; i += 1000) await env.BILDER.delete(keys.slice(i, i + 1000));
   await env.DB.batch([
+    env.DB.prepare('DELETE FROM bh_kosten WHERE bestellung_id IN (SELECT id FROM bestellungen WHERE kunde_id = ?)').bind(id),
     env.DB.prepare('DELETE FROM bestell_groessen WHERE design_id IN (SELECT d.id FROM bestell_designs d JOIN bestellungen b ON b.id = d.bestellung_id WHERE b.kunde_id = ?)').bind(id),
     env.DB.prepare('DELETE FROM bestell_designs WHERE bestellung_id IN (SELECT id FROM bestellungen WHERE kunde_id = ?)').bind(id),
     env.DB.prepare('DELETE FROM bestellungen WHERE kunde_id = ?').bind(id),
@@ -394,14 +403,15 @@ async function updateOrder(request, env, id) {
   const data = await request.json().catch(() => ({}));
   const current = await env.DB.prepare('SELECT bestellnummer, zahlung FROM bestellungen WHERE id = ?').bind(id).first();
   if (!current) return fail(404, 'Bestellung nicht gefunden.');
-  const changes = [];
-  if (data.status !== undefined) { if (!STATUS.includes(data.status)) return fail(400, 'Unbekannter Status.'); changes.push(env.DB.prepare('UPDATE bestellungen SET status = ? WHERE id = ?').bind(data.status, id)); }
+  // Zahlung: läuft über die Buchhaltung (erzeugt die Zahlungsbuchung, nie doppelt) – siehe bhSetOrderPayment.
   if (data.zahlung !== undefined) {
     if (!ZAHLUNG.includes(data.zahlung)) return fail(400, 'Unbekannter Zahlungsstatus.');
-    const paid = data.zahlung === 'bezahlt' ? (current.zahlung === 'bezahlt' ? undefined : zurichDay()) : null;
-    changes.push(paid === undefined ? env.DB.prepare('UPDATE bestellungen SET zahlung = ? WHERE id = ?').bind(data.zahlung, id)
-      : env.DB.prepare('UPDATE bestellungen SET zahlung = ?, bezahlt_am = ? WHERE id = ?').bind(data.zahlung, paid, id));
+    if (data.status === undefined && data.notiz === undefined) return bhSetOrderPayment(env, id, data.zahlung);
+    const res = await bhSetOrderPayment(env, id, data.zahlung);
+    if (!res.ok) return res;
   }
+  const changes = [];
+  if (data.status !== undefined) { if (!STATUS.includes(data.status)) return fail(400, 'Unbekannter Status.'); changes.push(env.DB.prepare('UPDATE bestellungen SET status = ? WHERE id = ?').bind(data.status, id)); }
   if (data.notiz !== undefined) changes.push(env.DB.prepare('UPDATE bestellungen SET notiz = ? WHERE id = ?').bind(clean(data.notiz, 4000) || null, id));
   if (!changes.length) return fail(400, 'Keine Änderung.');
   await env.DB.batch(changes);

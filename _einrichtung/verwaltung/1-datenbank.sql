@@ -121,3 +121,128 @@ CREATE TABLE IF NOT EXISTS protokoll (
   zeit TEXT NOT NULL,
   aktion TEXT NOT NULL                           -- nur Aktionen, keine Kundendaten
 );
+
+-- ===== Bereich 3: Buchhaltung (vereinfachte Einnahmen-/Ausgabenrechnung) =====
+-- Nur neue Tabellen. Beträge in Rappen (ganze Zahlen). Nichts wird gelöscht: storniert = Zeitpunkt der Stornierung.
+CREATE TABLE IF NOT EXISTS bh_kategorien (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  art TEXT NOT NULL,                             -- ausgabe, einnahme
+  name TEXT NOT NULL,
+  aktiv INTEGER NOT NULL DEFAULT 1,
+  UNIQUE(art, name)
+);
+INSERT OR IGNORE INTO bh_kategorien (art, name) VALUES ('ausgabe', 'Textilien'), ('ausgabe', 'DTF-Druckmaterial'), ('ausgabe', 'Druckfolien und Verbrauchsmaterial'),
+  ('ausgabe', 'Verpackungsmaterial'), ('ausgabe', 'Versandkosten'), ('ausgabe', 'Software und Hosting'), ('ausgabe', 'Werbung und Marketing'),
+  ('ausgabe', 'Maschinen und Geräte'), ('ausgabe', 'Büromaterial'), ('ausgabe', 'Sonstige Betriebsausgaben'),
+  ('einnahme', 'Sonstige Verkäufe'), ('einnahme', 'Dienstleistungen'), ('einnahme', 'Sonstige Einnahmen');
+
+CREATE TABLE IF NOT EXISTS bh_lieferanten (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  kontakt TEXT, email TEXT, telefon TEXT, adresse TEXT, website TEXT, notiz TEXT,
+  erstellt TEXT NOT NULL,
+  geaendert TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS bh_belege (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,          -- Belegreferenz B-00001
+  schluessel TEXT NOT NULL UNIQUE,               -- R2-Schlüssel belege/JJJJ/…
+  dateiname TEXT NOT NULL,
+  typ TEXT NOT NULL,
+  groesse INTEGER NOT NULL,
+  sha256 TEXT UNIQUE,                            -- gleiche Datei nur einmal
+  notiz TEXT,
+  hochgeladen TEXT NOT NULL,
+  archiviert TEXT,                               -- nie endgültig gelöscht, nur archiviert
+  archiv_grund TEXT
+);
+
+CREATE TABLE IF NOT EXISTS bh_ausgaben (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,          -- Belegreferenz A-00001
+  datum TEXT NOT NULL,
+  lieferant_id INTEGER REFERENCES bh_lieferanten(id),
+  beschreibung TEXT NOT NULL,
+  kategorie_id INTEGER NOT NULL REFERENCES bh_kategorien(id),
+  netto_rappen INTEGER NOT NULL,
+  mwst_satz REAL NOT NULL DEFAULT 0,
+  mwst_rappen INTEGER NOT NULL DEFAULT 0,
+  brutto_rappen INTEGER NOT NULL,
+  zahlungsart TEXT,
+  zahlung TEXT NOT NULL DEFAULT 'bezahlt',       -- offen, bezahlt
+  bezahlt_am TEXT,
+  beleg_id INTEGER REFERENCES bh_belege(id),
+  wiederkehrend TEXT NOT NULL DEFAULT '',        -- '', monatlich, jaehrlich
+  vorlage_id INTEGER,                            -- automatisch erzeugt aus dieser wiederkehrenden Ausgabe
+  periode TEXT,                                  -- JJJJ-MM der automatischen Erfassung
+  notiz TEXT,
+  storniert TEXT,
+  storno_grund TEXT,
+  erstellt TEXT NOT NULL,
+  geaendert TEXT NOT NULL,
+  UNIQUE(vorlage_id, periode)
+);
+CREATE INDEX IF NOT EXISTS bh_ausgaben_datum ON bh_ausgaben(datum);
+CREATE INDEX IF NOT EXISTS bh_ausgaben_lieferant ON bh_ausgaben(lieferant_id);
+
+CREATE TABLE IF NOT EXISTS bh_einnahmen (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,          -- nur manuelle Einnahmen (Bestellungen laufen über bh_zahlungen), Referenz E-00001
+  datum TEXT NOT NULL,
+  beschreibung TEXT NOT NULL,
+  kunde TEXT,
+  kategorie_id INTEGER NOT NULL REFERENCES bh_kategorien(id),
+  betrag_rappen INTEGER NOT NULL,
+  mwst_satz REAL NOT NULL DEFAULT 0,
+  mwst_rappen INTEGER NOT NULL DEFAULT 0,
+  zahlungsart TEXT,
+  beleg_id INTEGER REFERENCES bh_belege(id),
+  bestellung_id INTEGER REFERENCES bestellungen(id),
+  notiz TEXT,
+  storniert TEXT,
+  storno_grund TEXT,
+  erstellt TEXT NOT NULL,
+  geaendert TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS bh_einnahmen_datum ON bh_einnahmen(datum);
+
+CREATE TABLE IF NOT EXISTS bh_zahlungen (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,          -- Zahlungseingänge und Rückerstattungen zu Bestellungen, Referenz Z-00001
+  bestellung_id INTEGER NOT NULL REFERENCES bestellungen(id),
+  datum TEXT NOT NULL,
+  betrag_rappen INTEGER NOT NULL,                -- Rückerstattung negativ
+  art TEXT NOT NULL,                             -- zahlung, rueckerstattung
+  zahlungsart TEXT,
+  quelle TEXT NOT NULL DEFAULT 'manuell',        -- manuell, status (aus Bestellansicht), uebernahme
+  notiz TEXT,
+  storniert TEXT,
+  storno_grund TEXT,
+  erstellt TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS bh_zahlungen_bestellung ON bh_zahlungen(bestellung_id);
+CREATE INDEX IF NOT EXISTS bh_zahlungen_datum ON bh_zahlungen(datum);
+
+CREATE TABLE IF NOT EXISTS bh_kosten (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,          -- direkte Kosten pro Bestellung (Kalkulation, nicht als Ausgabe gezählt)
+  bestellung_id INTEGER NOT NULL REFERENCES bestellungen(id),
+  art TEXT NOT NULL,                             -- textilien, druck, verpackung, versand, gebuehren, sonstiges
+  betrag_rappen INTEGER NOT NULL,
+  notiz TEXT,
+  geaendert TEXT NOT NULL,
+  UNIQUE(bestellung_id, art)
+);
+
+CREATE TABLE IF NOT EXISTS bh_rechnungen (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nummer TEXT NOT NULL UNIQUE,                   -- RE-2026-0001 bzw. GS-2026-0001, fortlaufend, nie verändert
+  art TEXT NOT NULL,                             -- rechnung, gutschrift
+  bestellung_id INTEGER REFERENCES bestellungen(id),
+  bezug_id INTEGER REFERENCES bh_rechnungen(id), -- Gutschrift: zugehörige Rechnung
+  datum TEXT NOT NULL,
+  faellig TEXT NOT NULL,
+  betrag_rappen INTEGER NOT NULL,
+  daten TEXT NOT NULL,                           -- festgehaltener Rechnungsinhalt (JSON)
+  beleg_id INTEGER REFERENCES bh_belege(id),
+  storniert TEXT,
+  storno_grund TEXT,
+  erstellt TEXT NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS bh_rechnung_je_bestellung ON bh_rechnungen(bestellung_id) WHERE art = 'rechnung' AND storniert IS NULL;

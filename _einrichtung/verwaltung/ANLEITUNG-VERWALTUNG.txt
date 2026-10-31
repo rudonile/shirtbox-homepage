@@ -33,6 +33,15 @@ REIHENFOLGE
     Signing Secret als RESEND_WEBHOOK_SECRET im Worker shirtbox-email
 14. TEST: Newsletter-Anmeldung auf shirtbox.ch/newsletter.html, Bestätigung, Test-Newsletter, Versand
 
+BUCHHALTUNG (ab 31.10.2026 im Verwaltungs-Worker enthalten)
+- Menü „Buchhaltung“: Übersicht, Einnahmen, Ausgaben, Rechnungen, Belege, Zahlungen, Lieferanten, Auswertungen, Einstellungen.
+- Vereinfachte Einnahmen-/Ausgabenrechnung (OR 957 Abs. 2), nicht MWST-pflichtig (in den Einstellungen umschaltbar).
+- Keine zusätzliche Einrichtung nötig: Die Tabellen werden beim ersten Aufruf automatisch ergänzt (bestehende Daten bleiben).
+  Belege liegen privat im selben Bildspeicher (R2) unter belege/.
+- Nichts wird gelöscht: Buchungen werden storniert, Belege archiviert. Kunden mit gebuchten Zahlungen/Rechnungen
+  können wegen der 10-jährigen Aufbewahrungspflicht nicht gelöscht werden.
+- Export für den Treuhänder: Buchhaltung → Auswertungen → „Journal (alle Geldflüsse)“.
+
 SICHERHEIT
 - Drei Schutzschichten: Cloudflare Access (Code per E-Mail) → Passwort → 6-stelliger App-Code.
 - Automatische Abmeldung nach 30 Minuten ohne Aktivität (in Einstellungen änderbar).

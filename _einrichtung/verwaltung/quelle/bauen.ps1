@@ -23,9 +23,9 @@ function To-Literal($text) {
   [void]$sb.Append('"')
   $sb.ToString()
 }
-$worker = Read-Text 'admin-worker.js'
+$worker = (Read-Text 'admin-worker.js') + "`n" + (Read-Text 'buchhaltung-worker.js')
 $worker = $worker.Replace('__ADMIN_HTML__', (To-Literal (Read-Text 'admin.html')))
-$worker = $worker.Replace('__ADMIN_JS__', (To-Literal (Read-Text 'admin.js')))
+$worker = $worker.Replace('__ADMIN_JS__', (To-Literal ((Read-Text 'admin.js') + "`n" + (Read-Text 'buchhaltung.js'))))
 $worker = $worker.Replace('__ADMIN_CSS__', (To-Literal (Read-Text 'admin.css')))
 $worker = $worker.Replace('__SCHEMA__', (To-Literal ([IO.File]::ReadAllText((Join-Path $here '..\1-datenbank.sql'), $utf8))))
 $out = Join-Path $here '..\2-shirtbox-admin-worker.js'

@@ -167,3 +167,40 @@ details.table-view{margin-top:10px}details.table-view summary{cursor:pointer;col
   .design{break-inside:avoid;grid-template-columns:1.4fr 1fr}
   a{color:inherit;text-decoration:none}
 }
+/* ===== Buchhaltung ===== */
+.side{overflow-y:auto}
+.side nav .nav-group{margin:14px 12px 4px;color:#7d889c;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.side nav a.sub{padding-top:7px;padding-bottom:7px;padding-left:22px;font-size:14px}
+.bh-note{margin:4px 0 0;color:var(--ink-3);font-size:12.5px}
+.bh-quick{margin:0 0 14px}
+.kpi.alert{border-color:#f3b8b1;background:var(--bad-soft)}.kpi.alert strong{color:var(--bad)}
+.neg{color:var(--bad)}.pos{color:var(--good)}
+tr.bh-storno td{color:var(--ink-3);text-decoration:line-through;text-decoration-color:#c42b1c88}
+tr.bh-storno td .small,tr.bh-storno td button{text-decoration:none}
+.chart .bar-out{fill:#2f5bd3}.chart rect.bar:hover{opacity:.85}
+.bh-legend{display:flex;gap:14px;align-items:center;margin:0 0 6px;font-size:12.5px;color:var(--ink-2)}
+.bh-legend i{display:inline-block;width:12px;height:12px;margin-right:5px;border-radius:3px;vertical-align:-1px}.bh-legend .in{background:#ff6a2b}.bh-legend .out{background:#2f5bd3}
+.bh-bars{display:grid;gap:8px}
+.bh-bar{display:grid;grid-template-columns:minmax(110px,40%) 1fr auto;gap:10px;align-items:center;font-size:13.5px}
+.bh-bar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bh-bar i{display:block;height:12px;border-radius:999px;background:var(--fire)}.bh-bar b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.bh-warn{background:var(--info-soft)}
+.dialog.wide{width:min(720px,calc(100vw - 24px))}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px}
+.form-grid .span{grid-column:1/-1}
+.bh-receipt{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.bh-preview iframe,.bh-preview img{display:block;width:100%;height:min(70vh,720px);border:1px solid var(--line);border-radius:10px;background:#fff;object-fit:contain}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{min-height:34px;padding:0 12px;border:1px solid var(--line-2);border-radius:999px;background:#fff;color:var(--ink);font-size:13.5px;font-weight:650;cursor:pointer}
+.chip.off{color:var(--ink-3);border-style:dashed}
+.check-row{display:flex;align-items:center;gap:8px;font-weight:650}.check-row input{width:auto;min-height:0}
+/* Rechnung: druckfertig (A4), Drucken → „Als PDF speichern“ */
+.invoice{max-width:800px;margin:0 auto;padding:44px 48px;background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);color:#131c30;font-size:14.5px;line-height:1.5}
+.invoice header{display:flex;justify-content:space-between;gap:24px;margin-bottom:36px}
+.invoice header img{display:block;margin-bottom:8px}
+.invoice header .to{min-width:220px;padding-top:56px}
+.invoice h2{margin:0 0 12px;font-size:24px}
+.invoice table{margin:18px 0}.invoice tfoot td{border-bottom:0;border-top:2px solid var(--ink)}
+.invoice footer{margin-top:36px;padding-top:12px;border-top:1px solid var(--line);color:var(--ink-3);font-size:12px}
+.invoice.is-storno{position:relative}.invoice.is-storno::after{content:"STORNIERT";position:absolute;top:40%;left:50%;translate:-50% -50%;rotate:-18deg;color:#c42b1c55;font-size:72px;font-weight:900;letter-spacing:.1em;pointer-events:none}
+@media(max-width:1100px){.seg{flex-wrap:wrap;border-radius:16px}.card h2 .seg{margin-top:6px}.form-grid{grid-template-columns:1fr}.invoice{padding:24px 20px}.invoice header{flex-direction:column}.invoice header .to{padding-top:0}.bh-bar{grid-template-columns:1fr auto}.bh-bar i{grid-column:1/-1;order:3}}
+@media print{.invoice{max-width:none;border:0;box-shadow:none;padding:0}.content{padding:0!important}}

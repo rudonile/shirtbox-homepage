@@ -13,7 +13,7 @@
   const time = iso => iso ? timeFmt.format(new Date(iso)) : '–';
   const kNr = id => `K-${10000 + Number(id)}`;
   const STATUS = {neu: ['Neu', 'info'], bearbeitung: ['In Bearbeitung', 'warn'], produziert: ['Produziert', 'accent'], versendet: ['Versendet', 'info'], abgeschlossen: ['Abgeschlossen', 'good'], storniert: ['Storniert', 'bad']};
-  const ZAHLUNG = {offen: ['Offen', 'warn'], bezahlt: ['Bezahlt', 'good'], rueckerstattet: ['Rückerstattet', 'bad']};
+  const ZAHLUNG = {offen: ['Offen', 'warn'], teilweise: ['Teilweise bezahlt', 'info'], bezahlt: ['Bezahlt', 'good'], rueckerstattet: ['Rückerstattet', 'bad']};
   const ABO = {aktiv: ['Aktiv', 'good'], ausstehend: ['Bestätigung ausstehend', 'warn'], abgemeldet: ['Abgemeldet', ''], unzustellbar: ['Unzustellbar', 'bad'], beschwerde: ['Spam-Beschwerde', 'bad']};
   const NL = {entwurf: ['Entwurf', ''], versand: ['Wird versendet', 'warn'], versendet: ['Versendet', 'good']};
   const EMPF = {wartend: 'Wartet', gesendet: 'Gesendet', zugestellt: 'Zugestellt', fehler: 'Fehler', unzustellbar: 'Unzustellbar', beschwerde: 'Spam-Beschwerde', uebersprungen: 'Übersprungen'};
@@ -255,7 +255,11 @@
     after(() => {
       const save = async body => { try { await api('/api/bestellungen/' + id, {method: 'PATCH', body}); toast('Gespeichert.'); } catch (e) { failed(e); } };
       $('o-status').addEventListener('change', e => save({status: e.target.value}).then(() => $('o-status-badge').innerHTML = badge(STATUS, e.target.value)));
-      $('o-zahlung').addEventListener('change', e => save({zahlung: e.target.value}).then(() => $('o-zahlung-badge').innerHTML = badge(ZAHLUNG, e.target.value)));
+      // Zahlung: Der Server bucht die passende Zahlung in der Buchhaltung und meldet den tatsächlichen Stand zurück.
+      $('o-zahlung').addEventListener('change', async e => {
+        try { const r = await api('/api/bestellungen/' + id, {method: 'PATCH', body: {zahlung: e.target.value}}); e.target.value = o.zahlung = r.zahlung; $('o-zahlung-badge').innerHTML = badge(ZAHLUNG, r.zahlung); toast(r.hinweis || 'Gespeichert – Zahlung in der Buchhaltung erfasst.'); }
+        catch (err) { failed(err); e.target.value = o.zahlung; }
+      });
       $('o-notiz-save').addEventListener('click', () => save({notiz: $('o-notiz').value}));
       $('o-print').addEventListener('click', () => window.print());
     });
@@ -482,6 +486,9 @@
         <div class="card"><h2>Protokoll</h2><p class="muted small">Letzte Aktionen (ohne Kundendaten).</p><div class="table-wrap"><table><tbody>${d.protokoll.map(p => `<tr><td class="small" style="white-space:nowrap">${time(p.zeit)}</td><td class="small">${esc(p.aktion)}</td></tr>`).join('') || '<tr><td class="muted">Noch keine Einträge.</td></tr>'}</tbody></table></div></div>
       </div>`;
   };
+
+  // Bausteine für die Buchhaltung (buchhaltung.js wird von bauen.ps1 direkt dahinter angehängt und läuft vor dem ersten Seitenaufbau).
+  window.ShirtboxAdmin = {PAGES, TITLES, api, esc, chf, money, date, time, kpi, badge, options, pager, bindFilters, bindPager, query, after, toast, failed, confirmDialog, render, content, $, STATUS, ZAHLUNG};
 
   // ---- Start ----
   fetch('/api/sitzung', {headers: {'X-ShirtBOX': '1'}, credentials: 'same-origin'}).then(r => r.json().then(d => ({ok: r.ok, d}))).then(({ok, d}) => {
