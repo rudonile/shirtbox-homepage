@@ -133,7 +133,7 @@
   const SPEECH_ERRORS = {'not-allowed': 'Bitte erlauben Sie den Mikrofonzugriff im Browser.', 'service-not-allowed': 'Der Sprachdienst ist hier nicht verfügbar. Nutzen Sie das Mikrofon Ihrer Tastatur.',
     'audio-capture': 'Kein Mikrofon gefunden. Bitte prüfen Sie Ihr Mikrofon.', 'no-speech': 'Keine Sprache erkannt. Bitte nochmals den Mund antippen und sprechen.',
     'network': 'Die Spracherkennung ist nicht erreichbar. Bitte Internetverbindung prüfen.'};
-  const FATAL = ['not-allowed', 'service-not-allowed', 'audio-capture', 'network'];
+  const FATAL = ['not-allowed', 'service-not-allowed', 'audio-capture', 'network', 'language-not-supported'];
   // Handy/Tablet: Android-Chrome und iOS-Safari liefern im Dauer-Modus (continuous) oft gar keinen Text.
   // Dort wird darum Satz für Satz erkannt und nach jedem Satz automatisch weiter zugehört.
   const MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) || matchMedia('(pointer: coarse)').matches;
@@ -145,23 +145,25 @@
   let dict = null;
   function endDictation(d, text) {
     if (dict !== d) return;
+    clearTimeout(d.watchdog);
     dict = null; d.show(false);
     if (text) d.report(text);
     d.done?.();
   }
-  // Sofort beenden (z. B. beim Wechsel ins andere Feld): der angezeigte Text bleibt stehen.
   function stopDictation() {
     const d = dict; if (!d) return;
     d.want = false; const s = d.session; d.session = null;
     try { s?.abort(); } catch {}
     endDictation(d);
   }
-  // Sauber beenden und die letzten Wörter noch abwarten (höchstens 1,5 Sekunden).
   function finishDictation() {
     const d = dict; if (!d) return Promise.resolve();
     d.want = false;
     return new Promise(resolve => {
-      const timer = setTimeout(() => { if (dict === d) { const s = d.session; d.session = null; try { s?.abort(); } catch {} endDictation(d); } resolve(); }, 1500);
+      const timer = setTimeout(() => {
+        if (dict === d) { const s = d.session; d.session = null; try { s?.abort(); } catch {} endDictation(d); }
+        resolve();
+      }, 1500);
       d.done = () => { clearTimeout(timer); resolve(); };
       if (!d.session) { endDictation(d); return; }
       try { d.session.stop(); } catch { d.session = null; endDictation(d); }
@@ -169,63 +171,88 @@
   }
   function listen(d) {
     const session = new Recognition(), field = d.field;
-    d.session = session; d.base = field.value.trim(); d.heard = false;
-    session.lang = 'de-DE'; session.continuous = !MOBILE; session.interimResults = true; session.maxAlternatives = 1;
-    // „Ich höre zu“ erst anzeigen, wenn das Mikrofon wirklich läuft.
-    session.onstart = () => { trace(d, 'start'); };
-    session.onaudiostart = () => { trace(d, 'Mikrofon an'); if (d.session === session && !d.live) { d.live = true; if (!DEBUG) d.report(d.hint); } };
-    session.onspeechstart = () => trace(d, 'Sprache erkannt');
+    d.session = session;
+    d.base = field.value.trim();
+    d.lastFinal = ''; d.heard = false; d.started = false;
+    session.lang = 'de-DE';
+    // iOS Safari does not reliably support continuous speech recognition.
+    // Do not restart automatically on iOS: subsequent starts require a fresh user gesture.
+    session.continuous = !MOBILE;
+    session.interimResults = true; session.maxAlternatives = 1;
+    const armWatchdog = () => {
+      clearTimeout(d.watchdog);
+      d.watchdog = setTimeout(() => {
+        if (dict !== d || d.session !== session || !d.want) return;
+        d.want = false; d.error = 'Keine Antwort vom Sprachdienst. Bitte das Mikrofon Ihrer Tastatur verwenden oder erneut versuchen.';
+        try { session.abort(); } catch {}
+        endDictation(d, d.error);
+      }, 12000);
+    };
+    session.onstart = () => {
+      if (d.session !== session) return;
+      d.started = true; d.show(true);
+      trace(d, 'start');
+      if (!DEBUG) d.report(d.hint);
+      armWatchdog();
+    };
+    session.onaudiostart = () => trace(d, 'Mikrofon an');
+    session.onspeechstart = () => { trace(d, 'Sprache erkannt'); armWatchdog(); };
     session.onnomatch = () => trace(d, 'nicht verstanden');
     session.onresult = event => {
       if (d.session !== session) return;
-      trace(d, 'Text'); d.live = true;
+      trace(d, 'Text'); armWatchdog();
       let final = '', interim = '';
-      for (const result of event.results) (result.isFinal ? (final += result[0].transcript + ' ') : (interim += result[0].transcript + ' '));
-      if (final.trim() || interim.trim()) { d.heard = true; d.quiet = 0; }
+      for (const result of event.results) {
+        if (!result[0]) continue;
+        (result.isFinal ? (final += result[0].transcript + ' ') : (interim += result[0].transcript + ' '));
+      }
+      if (final.trim() || interim.trim()) d.heard = true;
+      d.lastFinal = final.trim();
       field.value = [d.base, final.trim(), interim.trim()].filter(Boolean).join(' ');
       field.scrollTop = field.scrollHeight; d.changed();
     };
     session.onerror = event => {
-      trace(d, 'Fehler ' + event.error);
       if (d.session !== session) return;
-      d.lastError = event.error;
-      if (FATAL.includes(event.error)) { d.want = false; d.error = SPEECH_ERRORS[event.error]; }
+      trace(d, 'Fehler ' + event.error);
+      d.want = false;
+      d.error = SPEECH_ERRORS[event.error] || (event.error === 'language-not-supported'
+        ? 'Diese Sprache wird vom Browser nicht unterstützt. Bitte das Mikrofon Ihrer Tastatur verwenden.'
+        : 'Die Spracherkennung konnte nicht gestartet werden. Bitte das Mikrofon Ihrer Tastatur verwenden.');
+      // On some iOS versions onend is not delivered after an error.
+      setTimeout(() => { if (dict === d && d.session === session) endDictation(d, d.error); }, 400);
     };
     session.onend = () => {
-      trace(d, 'Ende');
       if (d.session !== session) return;
+      trace(d, 'Ende'); clearTimeout(d.watchdog);
+      // Keep only confirmed words; never delete existing text on a failed attempt.
+      field.value = [d.base, d.lastFinal].filter(Boolean).join(' ');
+      d.changed();
       d.session = null;
       if (dict !== d) return;
-      if (d.want) {
-        d.quiet = d.heard ? 0 : d.quiet + 1;
-        if (d.quiet < 3) { try { listen(d); return; } catch { d.session = null; } }
-        const nothing = !d.field.value.trim() || d.field.value.trim() === d.start;
-        endDictation(d, DEBUG ? '' : !d.live ? 'Das Mikrofon ist nicht angesprungen. Bitte Mikrofonzugriff für diese Seite erlauben und nochmals den Mund antippen.'
-          : nothing && d.quiet >= 3 ? 'Es wurde nichts verstanden. Bitte nahe am Gerät deutlich sprechen und nochmals den Mund antippen.'
-          : d.quiet >= 3 ? 'Diktat beendet. Prüfen Sie den Text – zum Weitersprechen den Mund antippen.' : 'Die Spracheingabe wurde unterbrochen. Bitte nochmals den Mund antippen.');
-        return;
-      }
-      endDictation(d, d.error || '');
+      endDictation(d, d.error || (d.heard
+        ? 'Diktat beendet. Prüfen Sie den Text – zum Weitersprechen den Mund antippen.'
+        : 'Keine Sprache erkannt. Bitte erneut antippen oder das Mikrofon Ihrer Tastatur verwenden.'));
     };
     session.start();
   }
   function dictation(button, field, report, changed, hint) {
     const box = field.parentElement, label = button.querySelector('span'), idle = label.textContent;
     const show = on => {
-      box.classList.toggle('is-listening', on); button.classList.toggle('is-on', on); button.setAttribute('aria-pressed', String(on));
-      label.textContent = on ? 'Stopp' : idle; field.readOnly = on;
-      controls();
+      box.classList.toggle('is-listening', on); button.classList.toggle('is-on', on);
+      button.setAttribute('aria-pressed', String(on));
+      label.textContent = on ? 'Stopp' : idle;
+      field.readOnly = on; controls();
     };
     button.addEventListener('click', () => {
-      if (dict?.button === button) { finishDictation().then(() => report('Diktat beendet. Prüfen Sie den Text – zum Weitersprechen den Mund antippen.')); return; }
+      if (dict?.button === button) { finishDictation(); return; }
       stopDictation(); stopTour(); if (field === keyword) robotStop();
-      // Offene Bildschirmtastatur schliessen – auf dem iPad blockiert sie sonst das Mikrofon.
       if (document.activeElement === field) field.blur();
-      const d = {button, field, report, changed, show, hint, want: true, quiet: 0, error: '', live: false, start: field.value.trim()};
-      debugLog = [];
-      dict = d; show(true); report('Mikrofon wird gestartet …');
-      // start() muss direkt im Antippen passieren (Safari), darum ohne Warten.
-      try { listen(d); } catch { endDictation(d, 'Die Spracheingabe konnte nicht gestartet werden. Bitte nochmals versuchen.'); }
+      const d = {button, field, report, changed, show, hint, want: true, error: '', start: field.value.trim()};
+      debugLog = []; dict = d;
+      report('Mikrofon wird gestartet …');
+      // Must be invoked synchronously inside the user tap on Safari.
+      try { listen(d); }
+      catch { endDictation(d, 'Die Spracheingabe konnte nicht gestartet werden. Bitte das Mikrofon Ihrer Tastatur verwenden.'); }
     });
   }
   const speakButton = field => field.parentElement.querySelector('.studio-icon-btn[data-act=speak]');
@@ -310,6 +337,8 @@
   // Gilt für jeden Entwurf und jede Änderung: Das Design ist aufgedruckt und endet an der Shirt-Kante.
   const INSIDE = 'WICHTIG: Das gesamte Design liegt vollständig INNERHALB der Shirt-Umrisse, wie aufgedruckt. Motive, Figuren und Körperteile (z. B. Füsse, Hände, Köpfe, Flügel, Schwänze), Schriften, Flammen, Spritzer und Effekte dürfen nie über Kragen, Schultern, Ärmel, Seiten oder Saum hinausragen und nie in den Hintergrund reichen. Was nicht ganz hineinpasst, wird an der Shirt-Kante abgeschnitten oder kleiner dargestellt. Form, Grösse und Position beider Shirts exakt wie in der Vorlage; der graue Hintergrund bleibt leer und unverändert.';
 
+  const CENTER_LAYOUT = 'STANDARDPOSITION: Alle Hauptmotive, Tabellen, Listen, Zahlen und Schriftzüge horizontal MITTIG auf der jeweils gewünschten Shirt-Seite ausrichten, ausser der Kunde verlangt ausdrücklich links, rechts oder eine andere Position. Tabellen und Zahlenkolonnen vollständig und mit grosszügigem Sicherheitsabstand zu Seitennähten und Achseln setzen. Nie Buchstaben oder Zahlen um die Seitenkante wickeln oder am Rand abschneiden; bei Platzmangel das gesamte Motiv proportional verkleinern. Shirt-Schnitt und Achselkonturen exakt nach Vorlage, keine zusätzlichen Spitzen, Dreiecke oder Ausstülpungen unter den Ärmeln.';
+
   // Hilft der Kundeneingabe nach: ergänzt Aufbau, Farben, Schrift und Druckqualität zu einem vollständigen Briefing.
   // Ein eigenes Textfeld gibt es nicht mehr: Schriftzüge nennt die Kundschaft direkt in der Beschreibung.
   // Bewusst kompakt: Der live Worker nimmt höchstens 2000 Zeichen an (siehe MAX_PROMPT). Die ausführliche Randregel (INSIDE)
@@ -324,6 +353,7 @@
     p += `Stil: ${(STYLES[styleChoice]?.brief || RANDOM_STYLES[Math.floor(Math.random() * RANDOM_STYLES.length)]).replace(/\.$/, '')}. `;
     if (!hasPhoto) p += 'Vorderseite mit Blickfang auf Brusthöhe, Rückseite mit dem grössten Hauptmotiv, Ärmel und Kragen mit passenden Akzenten. ';
     p += 'Höchstens 3–4 harmonische Farben. ';
+    p += CENTER_LAYOUT + ' ';
     p += word ? 'Schrift nur, wenn der Kundenwunsch ausdrücklich einen Schriftzug nennt – dann Buchstabe für Buchstabe korrekt, gut lesbar, an der genannten Stelle (sonst hinten). Die Beschreibung selbst nicht als Text drucken. ' : 'Keine Schriftzüge ausser im Foto. ';
     p += `Alles bleibt innerhalb der Shirt-Umrisse, grauer Hintergrund leer. Keine rechteckige Foto-Auflage, keine Marken-Logos, keine Wasserzeichen. Schnitt und Perspektive der Vorlage beibehalten, druckfertige Qualität. Variante ${Date.now()}`;
     return fit(p, INSIDE);
@@ -512,11 +542,11 @@
       const rgb = d => `rgb(${d[0]},${d[1]},${d[2]})`, mid = px.getImageData(TW / 2 - 2, TH / 2, 4, 4).data, edge = px.getImageData(4, 4, 4, 4).data;
       const grad = bx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.hypot(W, H) / 2);
       grad.addColorStop(0, rgb(mid)); grad.addColorStop(1, rgb(edge)); bx.fillStyle = grad; bx.fillRect(0, 0, W, H);
-      const grow = Math.max(3, Math.round(W * .004)); // schmaler Rand, damit die Shirt-Kante selbst nie angeschnitten wird
+      // Kein radiales Aufweiten der Silhouette: gerade unter den Achseln erzeugt
+      // die 16-fache versetzte Maske kuenstliche Spitzen und Ausstuelpungen.
       fits.forEach((f, half) => {
         const k = f.s * (W / ow) / (TW / tw), dx = f.tx * W / ow, dy = f.ty * H / oh;
         mx.save(); mx.beginPath(); mx.rect(half * W / 2, 0, W / 2, H); mx.clip(); mx.setTransform(k, 0, 0, k, dx, dy);
-        for (let a = 0; a < 16; a++) mx.drawImage(templateMasks[src], Math.cos(a * Math.PI / 8) * grow / k, Math.sin(a * Math.PI / 8) * grow / k);
         mx.drawImage(templateMasks[src], 0, 0);
         mx.restore();
       });
@@ -671,7 +701,7 @@
     editStatus.textContent = '';
     run(async () => {
       const cut = MODELS[d.model]?.cut;
-      const blob = await keepInside(await request(fit(`Bisheriges Shirt und Gestaltung beibehalten${cut ? ` (Schnitt: ${cut})` : ''}. Ändere nur Folgendes: ${change}\nErhalte alle anderen Merkmale.`, INSIDE), d.blob), d.model);
+      const blob = await keepInside(await request(fit(`Bisheriges Shirt und Gestaltung beibehalten${cut ? ` (Schnitt: ${cut})` : ''}. Ändere nur Folgendes: ${change}\nErhalte alle anderen Merkmale.`, CENTER_LAYOUT, INSIDE), d.blob), d.model);
       URL.revokeObjectURL(d.url); d.blob = blob; d.url = URL.createObjectURL(blob); d.edited = true;
       d.prompt = `${d.prompt}\nÄnderung: ${change}`.slice(-1500); editInput.value = '';
       say(`Design ${active + 1} wurde angepasst. Weitere Änderungen sind jederzeit möglich.`);
