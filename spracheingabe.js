@@ -6,6 +6,8 @@
   const prompt = document.getElementById('ai-design-prompt');
   const status = document.getElementById('ai-speech-status');
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!form || !prompt || !status) return;
+  const isAppleMobile = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   if (!Recognition || !window.isSecureContext) {
     button.disabled = true; button.dataset.unsupported = 'true';
     status.textContent = 'Spracheingabe ist in diesem Browser nicht verfügbar. Nutzen Sie die Diktierfunktion Ihrer Tastatur oder schreiben Sie Ihre Idee.';
@@ -29,6 +31,7 @@
     const old = recognition; recognition = null;
     try { if (old) old.abort(); } catch { /* Always restore the controls. */ }
     active(false);
+    button.disabled = false;
   }
   function awaitEnd(session) {
     clearFinishTimer();
@@ -55,8 +58,8 @@
     if (recognition) { stop(); return; }
     base = prompt.value.trim(); committed = base; error = false;
     const session = new Recognition(); recognition = session;
-    session.lang = 'de-DE'; session.continuous = true; session.interimResults = true;
-    session.onstart = () => { if (recognition === session) status.textContent = 'Ich höre zu … Beschreiben Sie Ihr Shirt.'; };
+    session.lang = 'de-CH'; session.continuous = !isAppleMobile; session.interimResults = true;
+    session.onstart = () => { if (recognition === session) { active(true); status.textContent = 'Ich höre zu … Beschreiben Sie Ihr Shirt.'; } };
     session.onresult = event => {
       if (recognition !== session) return;
       let final = '', interim = '';
@@ -64,8 +67,8 @@
         if (result.isFinal) final += result[0].transcript + ' ';
         else interim += result[0].transcript + ' ';
       }
-      committed = [base, final.trim()].filter(Boolean).join(' ').slice(0, prompt.maxLength);
-      prompt.value = [base, final.trim(), interim.trim()].filter(Boolean).join(' ').slice(0, prompt.maxLength);
+      committed = [base, final.trim()].filter(Boolean).join(' ').slice(0, prompt.maxLength > 0 ? prompt.maxLength : undefined);
+      prompt.value = [base, final.trim(), interim.trim()].filter(Boolean).join(' ').slice(0, prompt.maxLength > 0 ? prompt.maxLength : undefined);
       prompt.dispatchEvent(new Event('input', {bubbles: true}));
     };
     session.onerror = event => {
@@ -84,14 +87,14 @@
     session.onend = () => {
       if (recognition !== session) return;
       clearFinishTimer();
-      recognition = null; prompt.value = committed; active(false);
+      recognition = null; prompt.value = committed; prompt.dispatchEvent(new Event('input', {bubbles:true})); active(false); button.disabled = false;
       if (!error) status.textContent = committed !== base ? 'Diktat eingefügt. Prüfen Sie den Text und erstellen oder ändern Sie Ihren Entwurf.' : 'Diktat beendet. Sie können erneut einsprechen oder Ihre Idee schreiben.';
     };
-    active(true); status.textContent = 'Mikrofon wird gestartet …';
+    status.textContent = 'Mikrofon wird gestartet …';
     try { session.start(); }
     catch { cancel(); status.textContent = 'Die Spracheingabe konnte nicht gestartet werden. Bitte versuchen Sie es erneut.'; }
   });
-  document.getElementById('ai-reset').addEventListener('click', () => { cancel(); status.textContent = ''; });
+  document.getElementById('ai-reset')?.addEventListener('click', () => { cancel(); status.textContent = ''; });
   window.addEventListener('pagehide', cancel);
   document.addEventListener('visibilitychange', () => { if (document.hidden && recognition) stop(); });
 })();
