@@ -54,7 +54,11 @@
       const head = document.createElement('div'); head.className = 'studio-card-head';
       const title = document.createElement('p'); title.className = 'studio-card-title'; title.textContent = `Design ${i + 1}`;
       head.append(title);
-      card.append(view);
+      // Über dem Bild: „Bild weiter bearbeiten“ – holt das Design nach oben in die Vorschau und führt zum Änderungsfeld.
+      const edit = document.createElement('button'); edit.type = 'button'; edit.className = 'studio-card-edit'; edit.disabled = busy;
+      edit.textContent = '✎ Bild weiter bearbeiten'; edit.setAttribute('aria-label', `Design ${i + 1} weiter bearbeiten`);
+      edit.addEventListener('click', () => editDesign(i));
+      card.append(edit, view);
       // Kleiner roter Löschknopf oben rechts auf dem Bild.
       if (!editingOrder) {
         const del = document.createElement('button'); del.type = 'button'; del.className = 'studio-card-delete'; del.disabled = busy;
@@ -598,6 +602,9 @@
     // verschwindet, damit niemand aus Versehen dort ein neues Shirt startet. Klappt es nicht, kommt das Formular samt Fehler zurück.
     let made = false;
     showResult(true);
+    // Nur beim Erstellen über „T-Shirt designen“ (nicht bei Änderungen): Fusszeile (WhatsApp, Newsletter …) weg,
+    // unter dem Shirt „Deine Idee wird jetzt verwirklicht“. Ist das Shirt fertig, ist alles wieder wie vorher.
+    document.body.classList.add('is-generating');
     await run(async () => {
       // Das Polo-Shirt holt der Worker selbst; alle anderen Modelle schicken ihre leere Vorlage mit.
       const blob = await keepInside(await request(surprisePrompt(word, !!file), file ? await withPhoto(file) : model === 'polo' ? null : await template()), model);
@@ -606,6 +613,7 @@
       active = designs.length - 1; startOver = false; made = true;
       say(`Design ${active + 1} ist fertig. Sie können es unten noch ändern oder direkt bestellen.`);
     });
+    document.body.classList.remove('is-generating');
     if (!made) { showResult(false); error.scrollIntoView({behavior: 'smooth', block: 'center'}); }
   });
 
@@ -622,6 +630,20 @@
     // Vorschau wieder leer (Vorlage vorne/hinten) statt des letzten Designs.
     active = -1; startOver = true; showResult(false); render();
     window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+
+  // „Bild weiter bearbeiten“ auf einer Karte: dieses Design oben zeigen (auch aus „Weiteres T-Shirt designen“ heraus)
+  // und zum Änderungsfeld scrollen, das kurz aufleuchtet.
+  function editDesign(i) {
+    if (busy || !designs[i]) return;
+    stopDictation(); stopTour();
+    active = i; startOver = false; showResult(true); editStatus.textContent = ''; fail('');
+    say(`Design ${i + 1}: Beschreiben Sie unten, was geändert werden soll.`);
+    render();
+    requestAnimationFrame(() => {
+      editRow.scrollIntoView({behavior: 'smooth', block: 'center'});
+      editRow.classList.remove('is-called'); void editRow.offsetWidth; editRow.classList.add('is-called');
+    });
   }
 
   // Design löschen (Papierkorb auf der Karte). War es das letzte, beginnt man direkt mit einem neuen Shirt.
