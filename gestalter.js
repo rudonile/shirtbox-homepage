@@ -354,7 +354,8 @@
       if (keyword.value.trim()) { stopTour(); return; }
       parts.forEach(p => p.classList.remove('is-lit'));
       const el = parts[i % parts.length]; el.classList.add('is-lit');
-      if (i < parts.length) el.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+      // Nicht wegscrollen, solange navigation.js gerade „Jetzt hier weiter“ zeigt (Rückweg nach einer fehlenden Angabe).
+      if (i < parts.length && !document.querySelector('.sb-next')) el.scrollIntoView({behavior: 'smooth', block: 'nearest'});
       i++; tourTimer = setTimeout(next, 2000);
     };
     tourTimer = setTimeout(next, 700);
@@ -591,7 +592,7 @@
     if (!speakButton(keyword).hidden) hear('');
     const word = keyword.value.trim(), file = photo.files[0];
     if (!model) { fail('Bitte wählen Sie zuerst ein Shirt-Modell (Polo-Shirt oder Zip-Shirt).'); modelField.classList.add('attention'); missing(modelField, modelButtons[0], en() ? '👇 Please pick a shirt' : '👇 Bitte ein Shirt anklicken'); return; }
-    if (!word && !file && !styleChoice) { fail('Bitte beschreiben Sie Ihr Design oder laden Sie ein Foto hoch.'); missing(keyword.parentElement, keyword, en() ? '👇 Describe your shirt here' : '👇 Hier Ihr Shirt beschreiben'); return; }
+    if (!word && !file && !styleChoice) { fail('Bitte beschreiben Sie Ihr Design oder laden Sie ein Foto hoch.'); missing(keyword.parentElement, null,en() ? '👇 Describe your shirt here' : '👇 Hier Ihr Shirt beschreiben'); return; }
     if (!rights.checked) { fail('Bitte bestätigen Sie Ihre Inhalts- und Bildrechte.'); rights.closest('label').classList.add('attention'); missing(rights.closest('label'), rights, en() ? '👇 Please tick this box' : '👇 Bitte Häkchen setzen'); return; }
     // Ab dem Klick nur noch das Shirt zeigen (auch Computer/iPad quer): Die linke Seite mit Modell, Idee und Knopf
     // verschwindet, damit niemand aus Versehen dort ein neues Shirt startet. Klappt es nicht, kommt das Formular samt Fehler zurück.
@@ -642,7 +643,7 @@
     const d = designs[active], change = editInput.value.trim();
     if (!d || !change) {
       if (!change && spoke) editStatus.textContent = 'Keine Sprache erkannt. Bitte nochmals den Mund antippen und sprechen.';
-      if (d && !change) missing(editInput.parentElement, spoke ? null : editInput, en() ? '👇 Describe your changes here' : '👇 Hier die Änderung beschreiben');
+      if (d && !change) missing(editInput.parentElement, null,en() ? '👇 Describe your changes here' : '👇 Hier die Änderung beschreiben');
       return;
     }
     editStatus.textContent = '';
@@ -689,7 +690,9 @@
       items.forEach((e, i) => { const blob = e.blob || e; if (blob instanceof Blob) designs.push({blob, url: URL.createObjectURL(blob), prompt: e.prompt || '', model: /Modell: Zip-Shirt/.test(e.prompt || '') ? 'zip' : 'polo', selected: true, number: e.number || i + 1, entry: e.blob ? e : {blob: e, number: i + 1}}); });
       editingOrder = true; showResult(true); active = designs.findIndex(d => String(d.number) === number);
       say('Ihr Design wurde geladen. Beschreiben Sie unten die gewünschte Änderung.');
-      render(); editInput.focus({preventScroll: true});
+      // Bewusst kein automatischer Cursor im Änderungsfeld: Sonst sind „Antippen & schreiben / sprechen“ versteckt,
+      // bis man woanders hintippt. Die beiden Zeichen sollen sofort sichtbar sein.
+      render();
     } catch { fail('Das gespeicherte Design konnte nicht geladen werden.'); }
   }
 
