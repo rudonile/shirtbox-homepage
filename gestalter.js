@@ -130,6 +130,13 @@
     'audio-capture': 'Kein Mikrofon gefunden. Bitte prüfen Sie Ihr Mikrofon.', 'no-speech': 'Keine Sprache erkannt. Bitte nochmals den Mund antippen und sprechen.',
     'network': 'Die Spracherkennung ist nicht erreichbar. Bitte Internetverbindung prüfen.'};
   const FATAL = ['not-allowed', 'service-not-allowed', 'audio-capture', 'network'];
+  // Handy/Tablet: Android-Chrome und iOS-Safari liefern im Dauer-Modus (continuous) oft gar keinen Text.
+  // Dort wird darum Satz für Satz erkannt und nach jedem Satz automatisch weiter zugehört.
+  const MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) || matchMedia('(pointer: coarse)').matches;
+  // Testmodus: Adresse mit ?sprachtest öffnen – dann zeigt die Statuszeile, was der Browser meldet.
+  const DEBUG = /[?&]sprachtest\b/.test(location.search);
+  let debugLog = [];
+  const trace = (d, text) => { if (!DEBUG) return; debugLog = [...debugLog.slice(-7), text]; d.report('Sprachtest (' + (MOBILE ? 'Handy' : 'Computer') + '): ' + debugLog.join(' → ')); };
   // dict = laufendes Diktat {button, field, report, changed, show, session, base, want, quiet, error, done}
   let dict = null;
   function endDictation(d, text) {
@@ -159,9 +166,15 @@
   function listen(d) {
     const session = new Recognition(), field = d.field;
     d.session = session; d.base = field.value.trim(); d.heard = false;
-    session.lang = 'de-DE'; session.continuous = true; session.interimResults = true;
+    session.lang = 'de-DE'; session.continuous = !MOBILE; session.interimResults = true; session.maxAlternatives = 1;
+    // „Ich höre zu“ erst anzeigen, wenn das Mikrofon wirklich läuft.
+    session.onstart = () => { trace(d, 'start'); };
+    session.onaudiostart = () => { trace(d, 'Mikrofon an'); if (d.session === session && !d.live) { d.live = true; if (!DEBUG) d.report(d.hint); } };
+    session.onspeechstart = () => trace(d, 'Sprache erkannt');
+    session.onnomatch = () => trace(d, 'nicht verstanden');
     session.onresult = event => {
       if (d.session !== session) return;
+      trace(d, 'Text'); d.live = true;
       let final = '', interim = '';
       for (const result of event.results) (result.isFinal ? (final += result[0].transcript + ' ') : (interim += result[0].transcript + ' '));
       if (final.trim() || interim.trim()) { d.heard = true; d.quiet = 0; }
@@ -169,17 +182,23 @@
       field.scrollTop = field.scrollHeight; d.changed();
     };
     session.onerror = event => {
+      trace(d, 'Fehler ' + event.error);
       if (d.session !== session) return;
+      d.lastError = event.error;
       if (FATAL.includes(event.error)) { d.want = false; d.error = SPEECH_ERRORS[event.error]; }
     };
     session.onend = () => {
+      trace(d, 'Ende');
       if (d.session !== session) return;
       d.session = null;
       if (dict !== d) return;
       if (d.want) {
         d.quiet = d.heard ? 0 : d.quiet + 1;
         if (d.quiet < 3) { try { listen(d); return; } catch { d.session = null; } }
-        endDictation(d, d.quiet >= 3 ? 'Diktat beendet. Prüfen Sie den Text – zum Weitersprechen den Mund antippen.' : 'Die Spracheingabe wurde unterbrochen. Bitte nochmals den Mund antippen.');
+        const nothing = !d.field.value.trim() || d.field.value.trim() === d.start;
+        endDictation(d, DEBUG ? '' : !d.live ? 'Das Mikrofon ist nicht angesprungen. Bitte Mikrofonzugriff für diese Seite erlauben und nochmals den Mund antippen.'
+          : nothing && d.quiet >= 3 ? 'Es wurde nichts verstanden. Bitte nahe am Gerät deutlich sprechen und nochmals den Mund antippen.'
+          : d.quiet >= 3 ? 'Diktat beendet. Prüfen Sie den Text – zum Weitersprechen den Mund antippen.' : 'Die Spracheingabe wurde unterbrochen. Bitte nochmals den Mund antippen.');
         return;
       }
       endDictation(d, d.error || '');
@@ -198,8 +217,9 @@
       stopDictation(); stopTour(); if (field === keyword) robotStop();
       // Offene Bildschirmtastatur schliessen – auf dem iPad blockiert sie sonst das Mikrofon.
       if (document.activeElement === field) field.blur();
-      const d = {button, field, report, changed, show, want: true, quiet: 0, error: ''};
-      dict = d; show(true); report(hint);
+      const d = {button, field, report, changed, show, hint, want: true, quiet: 0, error: '', live: false, start: field.value.trim()};
+      debugLog = [];
+      dict = d; show(true); report('Mikrofon wird gestartet …');
       // start() muss direkt im Antippen passieren (Safari), darum ohne Warten.
       try { listen(d); } catch { endDictation(d, 'Die Spracheingabe konnte nicht gestartet werden. Bitte nochmals versuchen.'); }
     });
@@ -346,13 +366,25 @@
   const [typedHead, typedTail] = robot.querySelectorAll('.studio-robot-typed > strong, .studio-robot-typed > span');
   const robotText = () => [robotSource.querySelector('strong').textContent, ' ' + robotSource.querySelector('span').textContent];
   let robotTimer = null, robotDone = false;
+  // Statt des Worts „unten“ (EN: „below“) zeigt Shirti klein Tastatur und Mund mit Pfeil nach unten –
+  // dieselben Zeichen wie im Eingabefeld darunter. Die unsichtbare Vorlage (Vorlesen, Übersetzung) behält das Wort.
+  const robotTools = document.createElement('span');
+  robotTools.className = 'studio-robot-tools'; robotTools.setAttribute('aria-hidden', 'true');
+  keyword.parentElement.querySelectorAll('.studio-icon-btn svg').forEach(svg => robotTools.append(svg.cloneNode(true)));
+  robotTools.append(Object.assign(document.createElement('i'), {textContent: '↓'}));
+  function setHead(head, n) {
+    const m = /\b(unten|below)\b/i.exec(head);
+    if (!m || n <= m.index) { typedHead.textContent = head.slice(0, n); return; }
+    // Während das Wort „getippt“ würde, bleiben die Zeichen schon stehen; danach geht der Satz normal weiter.
+    typedHead.replaceChildren(head.slice(0, m.index), robotTools, head.slice(m.index + m[0].length, Math.max(n, m.index + m[0].length)));
+  }
   function robotType() {
     clearTimeout(robotTimer);
     const [head, tail] = robotText();
-    if (robotDone || matchMedia('(prefers-reduced-motion: reduce)').matches) { typedHead.textContent = head; typedTail.textContent = tail; robot.classList.remove('is-typing'); return; }
+    if (robotDone || matchMedia('(prefers-reduced-motion: reduce)').matches) { setHead(head, head.length); typedTail.textContent = tail; robot.classList.remove('is-typing'); return; }
     let n = 0; typedHead.textContent = typedTail.textContent = ''; robot.classList.add('is-typing');
     const step = () => {
-      n++; typedHead.textContent = head.slice(0, n); typedTail.textContent = n > head.length ? tail.slice(0, n - head.length) : '';
+      n++; setHead(head, n); typedTail.textContent = n > head.length ? tail.slice(0, n - head.length) : '';
       if (n < head.length + tail.length) robotTimer = setTimeout(step, 42);
       else { robot.classList.remove('is-typing'); robotTimer = setTimeout(robotType, 6000); }
     };
@@ -491,9 +523,9 @@
     } catch { return blob; }
   }
 
-  // Ergebnis-Ansicht: Sobald ein Shirt fertig ist, blendet das Handy (eine Spalte) Überschrift und Formular aus –
+  // Ergebnis-Ansicht: Ab „T-Shirt designen“ sind Überschrift und Formular weg (Handy, iPad und Computer) –
   // das Shirt steht oben, darunter Änderungen / weiteres Shirt, darunter die Bestellung. Zurück nur über „Weiteres T-Shirt designen“.
-  const studio = form.closest('.studio'), oneColumn = matchMedia('(max-width: 900px)');
+  const studio = form.closest('.studio');
   const showResult = on => studio.classList.toggle('is-result', on);
 
   // Computer: rechte Seite senkrecht mittig zwischen Kopf- und Fusszeile festhalten (CSS position:sticky, Abstand hier berechnet).
@@ -519,7 +551,7 @@
 
   // T-Shirt-Vorschau mittig in den sichtbaren Bereich unter der fixen Kopfzeile scrollen.
   function showPreview() {
-    if (studio.classList.contains('is-result') && oneColumn.matches) { window.scrollTo({top: 0, behavior: 'smooth'}); return; }
+    if (studio.classList.contains('is-result')) { window.scrollTo({top: 0, behavior: 'smooth'}); return; }
     // Computer/iPad quer: rechte Seite in sich nach oben, damit das Shirt sichtbar ist.
     if (wide.matches && stage.scrollTop) stage.scrollTo({top: 0, behavior: 'smooth'});
     const figure = picture.closest('figure'); if (!figure) return;
@@ -534,7 +566,12 @@
     busy = true; fail(''); say(''); render();
     requestAnimationFrame(showPreview);
     try { await task(); }
-    catch (e) { fail(['TimeoutError', 'AbortError'].includes(e.name) ? 'Die Anfrage dauert zu lange. Bitte später erneut versuchen.' : e.message === 'Failed to fetch' ? 'Die Bildgestaltung ist nicht erreichbar. Bitte später erneut versuchen.' : e.message); }
+    catch (e) {
+      const text = ['TimeoutError', 'AbortError'].includes(e.name) ? 'Die Anfrage dauert zu lange. Bitte später erneut versuchen.' : e.message === 'Failed to fetch' ? 'Die Bildgestaltung ist nicht erreichbar. Bitte später erneut versuchen.' : e.message;
+      fail(text);
+      // In der Ergebnis-Ansicht ist das Formular ausgeblendet – Fehler beim Ändern dann direkt unter dem Änderungsfeld zeigen.
+      if (designs[active]) editStatus.textContent = text;
+    }
     finally { busy = false; render(); requestAnimationFrame(showPreview); }
   }
 
@@ -556,14 +593,19 @@
     if (!model) { fail('Bitte wählen Sie zuerst ein Shirt-Modell (Polo-Shirt oder Zip-Shirt).'); modelField.classList.add('attention'); missing(modelField, modelButtons[0], en() ? '👇 Please pick a shirt' : '👇 Bitte ein Shirt anklicken'); return; }
     if (!word && !file && !styleChoice) { fail('Bitte beschreiben Sie Ihr Design oder laden Sie ein Foto hoch.'); missing(keyword.parentElement, keyword, en() ? '👇 Describe your shirt here' : '👇 Hier Ihr Shirt beschreiben'); return; }
     if (!rights.checked) { fail('Bitte bestätigen Sie Ihre Inhalts- und Bildrechte.'); rights.closest('label').classList.add('attention'); missing(rights.closest('label'), rights, en() ? '👇 Please tick this box' : '👇 Bitte Häkchen setzen'); return; }
-    run(async () => {
+    // Ab dem Klick nur noch das Shirt zeigen (auch Computer/iPad quer): Die linke Seite mit Modell, Idee und Knopf
+    // verschwindet, damit niemand aus Versehen dort ein neues Shirt startet. Klappt es nicht, kommt das Formular samt Fehler zurück.
+    let made = false;
+    showResult(true);
+    await run(async () => {
       // Das Polo-Shirt holt der Worker selbst; alle anderen Modelle schicken ihre leere Vorlage mit.
       const blob = await keepInside(await request(surprisePrompt(word, !!file), file ? await withPhoto(file) : model === 'polo' ? null : await template()), model);
       const summary = [`Modell: ${MODELS[model].label}`, styleChoice && `Stil: ${STYLES[styleChoice].label}`, word && `Design: ${word}`, file && 'mit eigenem Foto'].filter(Boolean).join(' · ');
       designs.push({blob, url: URL.createObjectURL(blob), prompt: `KI-Design – ${summary}`, model, selected: true, number: editingOrder ? Math.max(0, ...designs.map(d => d.number || 0)) + 1 : null});
-      active = designs.length - 1; startOver = false; showResult(true);
+      active = designs.length - 1; startOver = false; made = true;
       say(`Design ${active + 1} ist fertig. Sie können es unten noch ändern oder direkt bestellen.`);
     });
+    if (!made) { showResult(false); error.scrollIntoView({behavior: 'smooth', block: 'center'}); }
   });
 
   // Weiteres T-Shirt: alle Eingaben (Modell, Stil, Beschreibung, Foto) zurücksetzen und oben bei Schritt 1 neu beginnen.
@@ -607,7 +649,7 @@
     run(async () => {
       const cut = MODELS[d.model]?.cut;
       const blob = await keepInside(await request(fit(`Bisheriges Shirt und Gestaltung beibehalten${cut ? ` (Schnitt: ${cut})` : ''}. Ändere nur Folgendes: ${change}\nErhalte alle anderen Merkmale.`, INSIDE), d.blob), d.model);
-      URL.revokeObjectURL(d.url); d.blob = blob; d.url = URL.createObjectURL(blob);
+      URL.revokeObjectURL(d.url); d.blob = blob; d.url = URL.createObjectURL(blob); d.edited = true;
       d.prompt = `${d.prompt}\nÄnderung: ${change}`.slice(-1500); editInput.value = '';
       say(`Design ${active + 1} wurde angepasst. Weitere Änderungen sind jederzeit möglich.`);
     });
@@ -616,7 +658,10 @@
   orderButton.addEventListener('click', async () => {
     const picked = chosen(); if (busy) return;
     if (!picked.length) { missing(collection, list.querySelector('.studio-card-pick'), en() ? '👇 Please add a shirt to the cart' : '👇 Bitte ein T-Shirt „In den Warenkorb“ legen'); return; }
-    const items = picked.map(d => ({blob: d.blob, number: d.number, prompt: d.prompt, originals: [], placement: ''}));
+    // Aus der Bestellung geladene Designs: unverändert → Eintrag 1:1 zurück (inkl. Originalbilder und Platzierung);
+    // geändert → neues Bild, aber Originalbilder und Platzierung bleiben für den Druck dabei.
+    const items = picked.map(d => d.entry && !d.edited ? d.entry
+      : {...(d.entry || {}), blob: d.blob, number: d.number, prompt: d.prompt, originals: d.entry?.originals || [], placement: d.entry?.placement || ''});
     busy = true; controls();
     try {
       const previous = (await window.ShirtboxDesignTransfer.load())?.blobs || [];
@@ -641,7 +686,7 @@
       const items = (await window.ShirtboxDesignTransfer.load())?.blobs || [];
       const index = items.findIndex((x, i) => String(x.number || i + 1) === number);
       if (index < 0) throw Error();
-      items.forEach((e, i) => { const blob = e.blob || e; if (blob instanceof Blob) designs.push({blob, url: URL.createObjectURL(blob), prompt: e.prompt || '', model: /Modell: Zip-Shirt/.test(e.prompt || '') ? 'zip' : 'polo', selected: true, number: e.number || i + 1}); });
+      items.forEach((e, i) => { const blob = e.blob || e; if (blob instanceof Blob) designs.push({blob, url: URL.createObjectURL(blob), prompt: e.prompt || '', model: /Modell: Zip-Shirt/.test(e.prompt || '') ? 'zip' : 'polo', selected: true, number: e.number || i + 1, entry: e.blob ? e : {blob: e, number: i + 1}}); });
       editingOrder = true; showResult(true); active = designs.findIndex(d => String(d.number) === number);
       say('Ihr Design wurde geladen. Beschreiben Sie unten die gewünschte Änderung.');
       render(); editInput.focus({preventScroll: true});

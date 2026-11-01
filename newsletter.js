@@ -43,10 +43,12 @@
   $('nl-form').addEventListener('submit', async e => {
     e.preventDefault();
     const msg = $('nl-msg'), button = $('nl-submit'), email = $('nl-email').value.trim(), vorname = $('nl-vorname').value.trim();
-    if (!vorname) { show(msg, 'Bitte geben Sie Ihren Vornamen ein.', false); $('nl-vorname').focus(); return; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { show(msg, 'Bitte geben Sie eine gültige E-Mail-Adresse ein.', false); $('nl-email').focus(); return; }
+    // Fehlende Angabe: hinscrollen und orange pulsierend markieren (window.sbMissing aus navigation.js).
+    const missing = (field, focus) => { if (window.sbMissing) window.sbMissing(field, focus); else focus?.focus(); };
+    if (!vorname) { show(msg, 'Bitte geben Sie Ihren Vornamen ein.', false); missing($('nl-vorname'), $('nl-vorname')); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { show(msg, 'Bitte geben Sie eine gültige E-Mail-Adresse ein.', false); missing($('nl-email'), $('nl-email')); return; }
     const turnstile = window.turnstile?.getResponse() || '';
-    if (!turnstile) { show(msg, 'Bitte warten Sie kurz, bis die Sicherheitsprüfung abgeschlossen ist.', false); return; }
+    if (!turnstile) { show(msg, 'Bitte warten Sie kurz, bis die Sicherheitsprüfung abgeschlossen ist.', false); missing(document.querySelector('#nl-form .cf-turnstile') || msg); return; }
     button.disabled = true;
     try {
       const {status} = await post('anmelden', {email, vorname, nachname: $('nl-nachname').value.trim(), website: $('nl-website').value, turnstile});

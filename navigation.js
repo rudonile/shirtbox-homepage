@@ -1,4 +1,41 @@
 (() => {
+  // Fehlende Angabe deutlich zeigen (auf allen Seiten gleich): Fehlt etwas, damit es weitergeht (z. B. kein T-Shirt
+  // angeklickt, Häkchen nicht gesetzt, Feld leer), scrollt die Seite genau dorthin und die Stelle leuchtet orange und
+  // pulsiert mit dem Hinweis „Bitte hier …“. Die Markierung verschwindet, sobald man dort etwas anklickt oder eingibt.
+  // Aufruf: window.sbMissing(element, fokusElement?, text?)
+  const style = document.createElement('style');
+  style.textContent = '@keyframes sbMissingPulse{0%,100%{box-shadow:0 0 0 0 #ffb43a00,0 0 0 0 #ff7a2b00}50%{box-shadow:0 0 0 8px #ffb43a80,0 0 34px 6px #ff7a2bb3}}'
+    + '.sb-missing{position:relative;outline:3px solid #ffb43a!important;outline-offset:4px;border-radius:14px;animation:sbMissingPulse 1.1s ease-in-out infinite;scroll-margin:130px 0 150px}'
+    + '.sb-missing-tag{position:absolute;z-index:50;left:50%;top:0;translate:-50% -60%;padding:5px 12px;border-radius:999px;background:#ffb43a;color:#1a1206;font:800 13px/1.2 system-ui,sans-serif;white-space:nowrap;box-shadow:0 6px 18px #0008;pointer-events:none}'
+    + '@media(prefers-reduced-motion:reduce){.sb-missing{animation:none;box-shadow:0 0 0 6px #ffb43a80}}';
+  document.head.append(style);
+  let marked = null;
+  function clear() {
+    if (!marked) return;
+    marked.el.classList.remove('sb-missing'); marked.tag?.remove();
+    marked.off.forEach(([type, fn]) => marked.el.removeEventListener(type, fn, true));
+    marked = null;
+  }
+  window.sbMissing = (el, focus, text) => {
+    if (!el) return;
+    clear();
+    // Ein einzelnes Feld oder Häkchen hat keinen Platz für ein Schild: dann das umgebende Feld markieren.
+    const box = ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) ? el.closest('label,.field,.studio-keyword-box') || el : el;
+    void box.offsetWidth; box.classList.add('sb-missing');
+    const tag = document.createElement('span'); tag.className = 'sb-missing-tag'; tag.setAttribute('aria-hidden', 'true');
+    tag.textContent = text || (document.documentElement.lang === 'en' ? '👇 Please complete this' : '👇 Bitte hier ergänzen');
+    if (getComputedStyle(box).position === 'static') box.style.position = 'relative';
+    box.append(tag);
+    const done = () => clear();
+    const off = [['pointerdown', done], ['input', done], ['change', done], ['keydown', done]];
+    off.forEach(([type, fn]) => box.addEventListener(type, fn, true));
+    marked = {el: box, tag, off};
+    box.scrollIntoView({behavior: 'smooth', block: 'center'});
+    if (focus) { try { focus.focus({preventScroll: true}); } catch { focus.focus(); } }
+  };
+})();
+
+(() => {
   // Beim Öffnen oben beginnen, auch nach mobilen Wiederherstellungen.
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 

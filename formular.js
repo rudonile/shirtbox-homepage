@@ -85,7 +85,7 @@
   }
   function selectFile(state) {
     const file = state.file.files[0] || null;
-    state.designNumber = Number(file?.name.match(/shirtbox-design-(\d+)\.jpg$/)?.[1]) || state.slot;
+    state.designNumber = Number(file?.name.match(/shirtbox-design-(\d+)\.(?:jpe?g|png)$/i)?.[1]) || state.slot;
     state.rights.checked = false; releasePreview(state);
     state.card.querySelector('.order-inline-view').hidden = !file;
     state.card.querySelector('.order-inline-edit').hidden = !file;
