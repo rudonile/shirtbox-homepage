@@ -32,7 +32,7 @@
   const fail = text => { error.textContent = text; error.hidden = !text; };
   // Fehlende Angabe: hinscrollen und deutlich markieren (window.sbMissing aus navigation.js).
   const en = () => document.documentElement.lang === 'en';
-  const missing = (el, focus, text) => { if (window.sbMissing) window.sbMissing(el, focus, text); else { el?.scrollIntoView({behavior: 'smooth', block: 'center'}); focus?.focus({preventScroll: true}); } };
+  const missing = (el, focus, text, then) => { if (window.sbMissing) window.sbMissing(el, focus, text, then); else { el?.scrollIntoView({behavior: 'smooth', block: 'center'}); focus?.focus({preventScroll: true}); } };
   const say = text => { status.textContent = text; };
   const ready = () => designs.filter(d => d.blob);
   const chosen = () => editingOrder ? ready() : ready().filter(d => d.selected);
@@ -76,7 +76,9 @@
     if (designs.length) list.append(another);
     another.hidden = !designs.length;
     const n = ready().length, c = chosen().length;
-    count.textContent = n ? `${n} Design${n === 1 ? '' : 's'}` : '';
+    if (count) count.textContent = n ? `${n} Design${n === 1 ? '' : 's'}` : '';
+    // Ohne Designs gibt es keinen leeren Platzhalter-Bereich mehr – der Bereich erscheint erst mit dem ersten Design.
+    collection.hidden = !designs.length;
     orderBar.hidden = !n;
     total.textContent = c ? `${c} T-Shirt${c === 1 ? '' : 's'} ausgewählt · ${window.ShirtboxOrder.money(window.ShirtboxOrder.totalForQuantity(c))}` : 'Kein T-Shirt ausgewählt';
     orderButton.textContent = editingOrder ? 'Zurück zur Bestellung →' : c > 1 ? `${c} T-Shirts zur Bestellung →` : 'T-Shirt zur Bestellung →';
@@ -102,6 +104,7 @@
   const stepItems = [...document.querySelectorAll('#studio-steps [data-step]')], idea = $('studio-idea'), go = $('studio-go'), collection = $('studio-collection');
   const hasIdea = () => !!(keyword.value.trim() || photo.files[0] || styleChoice);
   function steps() {
+    markStarted();
     const current = designs.length && !startOver ? 4 : !model ? 1 : hasIdea() ? 3 : 2;
     stepItems.forEach(item => {
       const n = Number(item.dataset.step);
@@ -173,7 +176,7 @@
     const session = new Recognition(), field = d.field;
     d.session = session;
     d.base = field.value.trim();
-    d.lastFinal = ''; d.heard = false; d.started = false;
+    d.lastFinal = ''; d.lastText = ''; d.heard = false; d.started = false;
     session.lang = 'de-DE';
     // iOS Safari does not reliably support continuous speech recognition.
     // Do not restart automatically on iOS: subsequent starts require a fresh user gesture.
@@ -208,6 +211,7 @@
       }
       if (final.trim() || interim.trim()) d.heard = true;
       d.lastFinal = final.trim();
+      d.lastText = [final.trim(), interim.trim()].filter(Boolean).join(' ');
       field.value = [d.base, final.trim(), interim.trim()].filter(Boolean).join(' ');
       field.scrollTop = field.scrollHeight; d.changed();
     };
@@ -224,8 +228,9 @@
     session.onend = () => {
       if (d.session !== session) return;
       trace(d, 'Ende'); clearTimeout(d.watchdog);
-      // Keep only confirmed words; never delete existing text on a failed attempt.
-      field.value = [d.base, d.lastFinal].filter(Boolean).join(' ');
+      // Handy/iPad: Safari (iPhone/iPad) und teils Android-Chrome markieren das Ergebnis nie als „final“ und beenden
+      // trotzdem – früher wurde der erkannte Text dann wieder gelöscht. Darum das zuletzt Erkannte behalten.
+      field.value = [d.base, d.lastFinal || d.lastText].filter(Boolean).join(' ');
       d.changed();
       d.session = null;
       if (dict !== d) return;
@@ -343,7 +348,9 @@
   // Ein eigenes Textfeld gibt es nicht mehr: Schriftzüge nennt die Kundschaft direkt in der Beschreibung.
   // Bewusst kompakt: Der live Worker nimmt höchstens 2000 Zeichen an (siehe MAX_PROMPT). Die ausführliche Randregel (INSIDE)
   // kommt nur dazu, wenn noch Platz ist – der Worker schickt dieselbe Regel ohnehin in seinen eigenen Anweisungen mit.
-  function surprisePrompt(word, hasPhoto) {
+  // printed = Kundentexte, die die Software selbst exakt setzt (shirt-form.js). Die KI zeichnet sie NICHT, sondern
+  // lässt an diesen Stellen eine ruhige Fläche frei; im Kundenwunsch stehen dafür nur Platzhalter [Schriftzug 1] usw.
+  function surprisePrompt(word, hasPhoto, printed = []) {
     const cut = MODELS[model].cut;
     let p = `Rundum bedrucktes 360-Grad-${cut} auf der Vorlage (links vorne, rechts hinten): EIN zusammenhängendes Design über Vorderseite, Rückseite, Kragen und Ärmel. `;
     // Foto-Regel: das Foto erscheint genau einmal und originalgetreu; die übrigen Flächen setzen nur Farben und Muster fort.
@@ -354,7 +361,10 @@
     if (!hasPhoto) p += 'Vorderseite mit Blickfang auf Brusthöhe, Rückseite mit dem grössten Hauptmotiv, Ärmel und Kragen mit passenden Akzenten. ';
     p += 'Höchstens 3–4 harmonische Farben. ';
     p += CENTER_LAYOUT + ' ';
-    p += word ? 'Schrift nur, wenn der Kundenwunsch ausdrücklich einen Schriftzug nennt – dann Buchstabe für Buchstabe korrekt, gut lesbar, an der genannten Stelle (sonst hinten). Die Beschreibung selbst nicht als Text drucken. ' : 'Keine Schriftzüge ausser im Foto. ';
+    if (printed.length) {
+      const areas = [...new Set(printed.map(t => window.ShirtboxForm.areaName(t)))].join(' und ');
+      p += `Die Platzhalter [Schriftzug …] setzt ShirtBOX nachträglich als echte Schrift ein: KEINE Buchstaben, Wörter oder Zahlen ins Design zeichnen (auch keine Platzhalter). Auf ${areas} eine ruhige, einheitliche Fläche mit gutem Kontrast ohne Figuren oder Gesichter frei lassen. `;
+    } else p += word ? 'Schrift nur, wenn der Kundenwunsch ausdrücklich einen Schriftzug nennt – dann Buchstabe für Buchstabe korrekt, gut lesbar, an der genannten Stelle (sonst hinten). Die Beschreibung selbst nicht als Text drucken. ' : 'Keine Schriftzüge ausser im Foto. ';
     p += `Alles bleibt innerhalb der Shirt-Umrisse, grauer Hintergrund leer. Keine rechteckige Foto-Auflage, keine Marken-Logos, keine Wasserzeichen. Schnitt und Perspektive der Vorlage beibehalten, druckfertige Qualität. Variante ${Date.now()}`;
     return fit(p, INSIDE);
   }
@@ -369,7 +379,24 @@
     modelField.classList.remove('attention');
     if (active < 0) render(); else steps();
     tour();
+    if (needModel) setTimeout(afterModel, 500);
   }));
+
+  // „T-Shirt designen“ ohne Shirt-Modell gedrückt → oben gelb markiert. Ist das Shirt dann angeklickt, geht es
+  // automatisch wieder nach unten zum nächsten Schritt: Fehlt noch die Idee, führt die Tour (unten) dorthin;
+  // fehlt das Häkchen, wird es markiert; ist alles da, leuchtet „T-Shirt designen“ mit „Jetzt hier weiter“.
+  let needModel = false;
+  function afterModel() {
+    if (!needModel || busy || !model) return;
+    needModel = false;
+    if (!hasIdea()) { if (!tourTimer) idea.scrollIntoView({behavior: 'smooth', block: 'center'}); return; }
+    if (!rights.checked) {
+      rights.closest('label').classList.add('attention');
+      missing(rights.closest('label'), rights, en() ? '👇 Please tick this box' : '👇 Bitte Häkchen setzen', surprise);
+      return;
+    }
+    if (window.sbNext) window.sbNext(surprise); else surprise.scrollIntoView({behavior: 'smooth', block: 'center'});
+  }
 
   // Führung nach der ersten Modellwahl: Roboter mit Sprechblase, Foto-Feld und Eingabefeld
   // leuchten nacheinander je 2 Sekunden auf – immer wieder von vorne, bis man ins Eingabefeld klickt (oder dort etwas steht).
@@ -421,13 +448,20 @@
     const step = () => {
       n++; setHead(head, n); typedTail.textContent = n > head.length ? tail.slice(0, n - head.length) : '';
       if (n < head.length + tail.length) robotTimer = setTimeout(step, 42);
-      else { robot.classList.remove('is-typing'); robotTimer = setTimeout(robotType, 6000); }
+      // Nur einmal „sprechen“, dann bleibt der Satz stehen: Eine sich immer wieder leerende Blase wirkte wie ein Eingabefeld.
+      else { robot.classList.remove('is-typing'); robotDone = true; }
     };
     robotTimer = setTimeout(step, 500);
   }
   function robotStop() { robotDone = true; robotType(); }
   robotType();
+  // Sprachwechsel (DE/EN übersetzt die unsichtbare Vorlage): fertig getippten Satz sofort in der neuen Sprache zeigen.
+  new MutationObserver(() => { if (robotDone) robotType(); }).observe(robotSource, {subtree: true, childList: true, characterData: true});
   ['pointerdown', 'focus'].forEach(type => keyword.addEventListener(type, robotStop)); keyword.addEventListener('input', () => { if (keyword.value.trim()) stopTour(); });
+  // Orange Pfeil über dem Eingabefeld: weg, sobald man ins Feld tippt, schreibt oder diktiert;
+  // wieder da, wenn das Feld leer ist und man woanders hintippt. (Auch über steps() nach jedem Diktat-Wort.)
+  function markStarted() { keyword.closest('.sub-idea')?.classList.toggle('is-started', document.activeElement === keyword || !!keyword.value.trim() || keyword.parentElement.classList.contains('is-listening')); }
+  ['pointerdown', 'focus', 'blur', 'input'].forEach(type => keyword.addEventListener(type, () => setTimeout(markStarted)));
 
   // Stil-Knöpfe: einer aktiv, erneuter Klick hebt die Auswahl auf.
   const styleButtons = [...document.querySelectorAll('#studio-styles [data-style]')];
@@ -449,114 +483,11 @@
     return new Blob([bytes], {type: bytes[0] === 0x89 && bytes[1] === 0x50 ? 'image/png' : 'image/jpeg'});
   }
 
-  // Sicherheitsnetz: Nichts darf ausserhalb der Shirts stehen (z. B. ein Fuss, der über den Saum ragt).
-  // Der Umriss der leeren Vorlage wird auf jedes Shirt im KI-Bild ausgerichtet; alles ausserhalb wird durch den grauen Hintergrund ersetzt.
-  // Passt der Umriss nicht sicher (KI hat die Form stark verändert), bleibt das Bild unverändert.
-  const canvasOf = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
-  const pixels = (img, w, h) => { const c = canvasOf(w, h), x = c.getContext('2d', {willReadFrequently: true}); x.drawImage(img, 0, 0, w, h); return x.getImageData(0, 0, w, h).data; };
-  // 1 = Shirt, 0 = Hintergrund (vom Bildrand aus erreichbare, randfarbene Fläche).
-  // Zusätzlich: Randfarbe und wie stark der Rand davon abweicht (für die Prüfung, ob der Hintergrund noch grau und ruhig ist).
-  function silhouette(data, w, h) {
-    let r = 0, g = 0, b = 0, n = 0;
-    const border = [];
-    for (let x = 0; x < w; x++) border.push(x, (h - 1) * w + x);
-    for (let y = 0; y < h; y++) border.push(y * w, y * w + w - 1);
-    for (const i of border) { r += data[i * 4]; g += data[i * 4 + 1]; b += data[i * 4 + 2]; n++; }
-    r /= n; g /= n; b /= n;
-    const bg = i => { const dr = data[i * 4] - r, dg = data[i * 4 + 1] - g, db = data[i * 4 + 2] - b; return dr * dr + dg * dg + db * db < 2025; };
-    const m = new Uint8Array(w * h).fill(1), stack = [];
-    const visit = i => { if (m[i] && bg(i)) { m[i] = 0; stack.push(i); } };
-    for (let x = 0; x < w; x++) { visit(x); visit((h - 1) * w + x); }
-    for (let y = 0; y < h; y++) { visit(y * w); visit(y * w + w - 1); }
-    while (stack.length) {
-      const i = stack.pop(), x = i % w;
-      if (x > 0) visit(i - 1); if (x < w - 1) visit(i + 1); if (i >= w) visit(i - w); if (i < w * (h - 1)) visit(i + w);
-    }
-    m.color = [r, g, b]; m.calm = border.filter(i => !m[i]).length / border.length;
-    return m;
-  }
-  // Vorlage: nur die zwei grössten zusammenhängenden Flächen (die beiden Shirts) behalten, helle Flecken im Hintergrund zählen nicht.
-  function twoShirts(m, w, h) {
-    const label = new Int32Array(w * h), sizes = [0], stack = [];
-    for (let s = 0; s < m.length; s++) {
-      if (!m[s] || label[s]) continue;
-      const id = sizes.length; let n = 0; label[s] = id; stack.push(s);
-      while (stack.length) {
-        const i = stack.pop(), x = i % w; n++;
-        for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i - w, i + w]) if (j >= 0 && j < m.length && m[j] && !label[j]) { label[j] = id; stack.push(j); }
-      }
-      sizes.push(n);
-    }
-    const keep = sizes.map((n, id) => [n, id]).slice(1).sort((a, b) => b[0] - a[0]).slice(0, 2).map(e => e[1]);
-    for (let i = 0; i < m.length; i++) if (m[i] && !keep.includes(label[i])) m[i] = 0;
-    return m;
-  }
-  // Ausrichtung pro Shirt (links/rechts): Schwerpunkt und Fläche als Start, dann Feinsuche nach der besten Überdeckung.
-  function align(out, ow, oh, tpl, tw, th, half) {
-    const ox0 = half * ow / 2, ox1 = ox0 + ow / 2, tx0 = half * tw / 2, tx1 = tx0 + tw / 2;
-    const moments = (m, w, h, x0, x1) => { let a = 0, sx = 0, sy = 0; for (let y = 0; y < h; y++) for (let x = x0; x < x1; x++) if (m[y * w + x]) { a++; sx += x; sy += y; } return {a, cx: sx / a, cy: sy / a}; };
-    const mo = moments(out, ow, oh, ox0, ox1), mt = moments(tpl, tw, th, tx0, tx1);
-    if (!mo.a || !mt.a) return null;
-    const iou = (s, tx, ty) => {
-      let inter = 0, union = 0;
-      for (let y = 0; y < oh; y++) for (let x = ox0; x < ox1; x++) {
-        const u = Math.round((x - tx) / s), v = Math.round((y - ty) / s);
-        const t = u >= tx0 && u < tx1 && v >= 0 && v < th && tpl[v * tw + u], o = out[y * ow + x];
-        if (t && o) inter++; if (t || o) union++;
-      }
-      return union ? inter / union : 0;
-    };
-    const s0 = Math.sqrt(mo.a / mt.a);
-    let best = {score: -1};
-    for (let s = s0 * .94; s <= s0 * 1.061; s += s0 * .02) {
-      const bx = mo.cx - s * mt.cx, by = mo.cy - s * mt.cy;
-      for (let dx = -5; dx <= 5; dx++) for (let dy = -5; dy <= 5; dy++) {
-        const score = iou(s, bx + dx, by + dy);
-        if (score > best.score) best = {score, s, tx: bx + dx, ty: by + dy};
-      }
-    }
-    return best;
-  }
-  const templateMasks = {};
-  async function keepInside(blob, modelKey) {
-    try {
-      const src = MODELS[modelKey]?.template || MODELS.polo.template;
-      const [shirt, tpl] = await Promise.all([createImageBitmap(blob), fetch(src).then(r => r.blob()).then(b => createImageBitmap(b))]);
-      const W = shirt.width, H = shirt.height, TW = tpl.width, TH = tpl.height;
-      const ow = 256, oh = Math.round(H * ow / W), tw = 256, th = Math.round(TH * tw / TW);
-      const out = silhouette(pixels(shirt, ow, oh), ow, oh), small = silhouette(pixels(tpl, tw, th), tw, th);
-      twoShirts(small, tw, th);
-      // Nur eingreifen, wenn der Hintergrund noch grau wie in der Vorlage ist und beide Umrisse sehr gut passen.
-      const sameBack = Math.hypot(...out.color.map((v, i) => v - small.color[i])) < 40 && out.calm > .9;
-      const fits = sameBack ? [0, 1].map(half => align(out, ow, oh, small, tw, th, half)) : [];
-      if (!sameBack || fits.some(f => !f || f.score < .8)) { shirt.close(); tpl.close(); return blob; }
-      // Vorlagen-Umriss in voller Grösse als Maske (einmal pro Modell).
-      if (!templateMasks[src]) {
-        const m = twoShirts(silhouette(pixels(tpl, TW, TH), TW, TH), TW, TH), c = canvasOf(TW, TH), x = c.getContext('2d'), img = x.createImageData(TW, TH);
-        for (let i = 0; i < m.length; i++) if (m[i]) { img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = img.data[i * 4 + 3] = 255; }
-        x.putImageData(img, 0, 0); templateMasks[src] = c;
-      }
-      const mask = canvasOf(W, H), mx = mask.getContext('2d'), back = canvasOf(W, H), bx = back.getContext('2d');
-      // Hintergrund: grauer Verlauf wie in der Vorlage (Mitte zwischen den Shirts heller, Ecken dunkler) – ohne Shirts.
-      const probe = canvasOf(TW, TH), px = probe.getContext('2d', {willReadFrequently: true}); px.drawImage(tpl, 0, 0);
-      const rgb = d => `rgb(${d[0]},${d[1]},${d[2]})`, mid = px.getImageData(TW / 2 - 2, TH / 2, 4, 4).data, edge = px.getImageData(4, 4, 4, 4).data;
-      const grad = bx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.hypot(W, H) / 2);
-      grad.addColorStop(0, rgb(mid)); grad.addColorStop(1, rgb(edge)); bx.fillStyle = grad; bx.fillRect(0, 0, W, H);
-      // Kein radiales Aufweiten der Silhouette: gerade unter den Achseln erzeugt
-      // die 16-fache versetzte Maske kuenstliche Spitzen und Ausstuelpungen.
-      fits.forEach((f, half) => {
-        const k = f.s * (W / ow) / (TW / tw), dx = f.tx * W / ow, dy = f.ty * H / oh;
-        mx.save(); mx.beginPath(); mx.rect(half * W / 2, 0, W / 2, H); mx.clip(); mx.setTransform(k, 0, 0, k, dx, dy);
-        mx.drawImage(templateMasks[src], 0, 0);
-        mx.restore();
-      });
-      const front = canvasOf(W, H), fx = front.getContext('2d');
-      fx.drawImage(shirt, 0, 0); fx.globalCompositeOperation = 'destination-in'; fx.drawImage(mask, 0, 0);
-      bx.drawImage(front, 0, 0); shirt.close(); tpl.close();
-      // Verlustfrei speichern: keine zusätzliche JPG-Kompression des Designs.
-      return await new Promise(resolve => back.toBlob(b => resolve(b || blob), 'image/png'));
-    } catch { return blob; }
-  }
+  // Form und Druckflächen bestimmt die Software (shirt-form.js): Das KI-Design wird auf die feste Vorlage übertragen,
+  // Kundentexte werden exakt als echte Schrift gesetzt und geprüft. Ohne shirt-form.js bleibt das KI-Bild unverändert.
+  const shape = (blob, modelKey, options) => window.ShirtboxForm
+    ? window.ShirtboxForm.fit(blob, MODELS[modelKey]?.template || MODELS.polo.template, options)
+    : Promise.resolve({blob, layouts: [], locked: false});
 
   // Ergebnis-Ansicht: Ab „T-Shirt designen“ sind Überschrift und Formular weg (Handy, iPad und Computer) –
   // das Shirt steht oben, darunter Änderungen / weiteres Shirt, darunter die Bestellung. Zurück nur über „Weiteres T-Shirt designen“.
@@ -571,6 +502,17 @@
   const probe = document.createElement('div');
   probe.style.cssText = 'position:fixed;top:0;left:-9999px;width:1px;height:100vh;height:100svh;visibility:hidden;pointer-events:none';
   document.body.append(probe);
+  // Höhe der festen Kopfzeile (--sb-head) und der unten angehefteten Fusszeile (--sb-foot) für die mitlaufende
+  // Shirt-Vorschau in der Ergebnis-Ansicht. Bewusst ausserhalb des ResizeObservers (sonst Warnung „ResizeObserver loop“).
+  function measureBars() {
+    const headHeight = `${document.querySelector('.masthead')?.offsetHeight || 0}px`;
+    if (document.documentElement.style.getPropertyValue('--sb-head') !== headHeight) document.documentElement.style.setProperty('--sb-head', headHeight);
+    // Unten angeheftete Fusszeile (Computer) ebenfalls abziehen, damit nichts dahinter verschwindet.
+    const footEl = document.querySelector('.site-footer');
+    const footHeight = `${footEl && ['sticky', 'fixed'].includes(getComputedStyle(footEl).position) && footEl.offsetHeight ? footEl.offsetHeight : 0}px`;
+    if (document.documentElement.style.getPropertyValue('--sb-foot') !== footHeight) document.documentElement.style.setProperty('--sb-foot', footHeight);
+  }
+  measureBars(); window.addEventListener('resize', measureBars); window.addEventListener('load', measureBars);
   function placeStage() {
     if (!wide.matches) { stage.style.removeProperty('--stage-top'); stage.style.removeProperty('--stage-max'); return; }
     const head = document.querySelector('.masthead')?.offsetHeight || 0, footer = document.querySelector('.site-footer');
@@ -583,6 +525,18 @@
   }
   new ResizeObserver(placeStage).observe(stage);
   window.addEventListener('resize', placeStage); wide.addEventListener('change', placeStage);
+
+  // Handy/iPad hoch: Während das Shirt gestaltet wird, steht das Bild mit der Sanduhr senkrecht mittig im
+  // sichtbaren Bereich unter der Kopfzeile (nicht ganz oben). Die rechte Seite wird dafür so hoch wie der Rest des Bildschirms.
+  // Ab 760 px Breite (iPad hoch, Tablets, Computer) ist die Ergebnis-Ansicht zweispaltig: links Bedienung, rechts das Shirt.
+  // Darunter (Handy) eine Spalte – nur dort wird das Shirt beim Gestalten senkrecht mittig gestellt.
+  const twoCol = matchMedia('(min-width: 760px)');
+  function centerWhileGenerating() {
+    if (twoCol.matches || !document.body.classList.contains('is-generating')) { stage.style.removeProperty('min-height'); return; }
+    const top = stage.getBoundingClientRect().top + window.scrollY;
+    stage.style.minHeight = `${Math.max(0, Math.round((probe.offsetHeight || window.innerHeight) - top - 12))}px`;
+  }
+  window.addEventListener('resize', centerWhileGenerating); twoCol.addEventListener('change', centerWhileGenerating);
 
   // T-Shirt-Vorschau mittig in den sichtbaren Bereich unter der fixen Kopfzeile scrollen.
   function showPreview() {
@@ -625,7 +579,7 @@
     if (busy || !(await afterDictation())) return;
     if (!speakButton(keyword).hidden) hear('');
     const word = keyword.value.trim(), file = photo.files[0];
-    if (!model) { fail('Bitte wählen Sie zuerst ein Shirt-Modell (Polo-Shirt oder Zip-Shirt).'); modelField.classList.add('attention'); missing(modelField, modelButtons[0], en() ? '👇 Please pick a shirt' : '👇 Bitte ein Shirt anklicken'); return; }
+    if (!model) { fail('Bitte wählen Sie zuerst ein Shirt-Modell (Polo-Shirt oder Zip-Shirt).'); modelField.classList.add('attention'); needModel = true; missing(modelField, modelButtons[0], en() ? '👇 Please pick a shirt' : '👇 Bitte ein Shirt anklicken', afterModel); return; }
     if (!word && !file && !styleChoice) { fail('Bitte beschreiben Sie Ihr Design oder laden Sie ein Foto hoch.'); missing(keyword.parentElement, null,en() ? '👇 Describe your shirt here' : '👇 Hier Ihr Shirt beschreiben'); return; }
     if (!rights.checked) { fail('Bitte bestätigen Sie Ihre Inhalts- und Bildrechte.'); rights.closest('label').classList.add('attention'); missing(rights.closest('label'), rights, en() ? '👇 Please tick this box' : '👇 Bitte Häkchen setzen'); return; }
     // Ab dem Klick nur noch das Shirt zeigen (auch Computer/iPad quer): Die linke Seite mit Modell, Idee und Knopf
@@ -634,16 +588,19 @@
     showResult(true);
     // Nur beim Erstellen über „T-Shirt designen“ (nicht bei Änderungen): Fusszeile (WhatsApp, Newsletter …) weg,
     // unter dem Shirt „Deine Idee wird jetzt verwirklicht“. Ist das Shirt fertig, ist alles wieder wie vorher.
-    document.body.classList.add('is-generating');
+    document.body.classList.add('is-generating'); centerWhileGenerating();
     await run(async () => {
       // Das Polo-Shirt holt der Worker selbst; alle anderen Modelle schicken ihre leere Vorlage mit.
-      const blob = await keepInside(await request(surprisePrompt(word, !!file), file ? await withPhoto(file) : model === 'polo' ? null : await template()), model);
+      // Kundentexte in Anführungszeichen (oder nach „Text:“) setzt die Software exakt – die KI bekommt nur Platzhalter.
+      const own = window.ShirtboxForm ? window.ShirtboxForm.extractTexts(word) : {texts: [], prompt: word};
+      const result = await shape(await request(surprisePrompt(own.prompt, !!file, own.texts), file ? await withPhoto(file) : model === 'polo' ? null : await template()), model, {texts: own.texts});
+      const blob = result.blob, layouts = result.layouts;
       const summary = [`Modell: ${MODELS[model].label}`, styleChoice && `Stil: ${STYLES[styleChoice].label}`, word && `Design: ${word}`, file && 'mit eigenem Foto'].filter(Boolean).join(' · ');
-      designs.push({blob, url: URL.createObjectURL(blob), prompt: `KI-Design – ${summary}`, model, selected: true, number: editingOrder ? Math.max(0, ...designs.map(d => d.number || 0)) + 1 : null});
+      designs.push({blob, layouts, url: URL.createObjectURL(blob), prompt: `KI-Design – ${summary}`, model, selected: true, number: editingOrder ? Math.max(0, ...designs.map(d => d.number || 0)) + 1 : null});
       active = designs.length - 1; startOver = false; made = true;
-      say(`Design ${active + 1} ist fertig. Sie können es unten noch ändern oder direkt bestellen.`);
+      say(`Design ${active + 1} ist fertig. Sie können es im Änderungsfeld noch ändern oder direkt bestellen.`);
     });
-    document.body.classList.remove('is-generating');
+    document.body.classList.remove('is-generating'); centerWhileGenerating();
     if (!made) { showResult(false); error.scrollIntoView({behavior: 'smooth', block: 'center'}); }
   });
 
@@ -651,7 +608,7 @@
   // Die fertigen Designs bleiben unten in „Ihre T-Shirts“ erhalten.
   another.addEventListener('click', () => { if (!busy) startNew(); });
   function startNew() {
-    model = ''; modelButtons.forEach(b => b.setAttribute('aria-pressed', 'false'));
+    model = ''; needModel = false; modelButtons.forEach(b => b.setAttribute('aria-pressed', 'false'));
     styleChoice = ''; styleButtons.forEach(b => b.setAttribute('aria-pressed', 'false'));
     stopTour(); toured = false; robotDone = false; robotType();
     stopDictation(); if (!speakButton(keyword).hidden) hear(''); keyword.value = ''; photo.value = ''; photoProblem(''); photo.dispatchEvent(new Event('change'));
@@ -668,7 +625,7 @@
     if (busy || !designs[i]) return;
     stopDictation(); stopTour();
     active = i; startOver = false; showResult(true); editStatus.textContent = ''; fail('');
-    say(`Design ${i + 1}: Beschreiben Sie unten, was geändert werden soll.`);
+    say(`Design ${i + 1}: Beschreiben Sie im Änderungsfeld, was geändert werden soll.`);
     render();
     requestAnimationFrame(() => {
       editRow.scrollIntoView({behavior: 'smooth', block: 'center'});
@@ -701,7 +658,16 @@
     editStatus.textContent = '';
     run(async () => {
       const cut = MODELS[d.model]?.cut;
-      const blob = await keepInside(await request(fit(`Bisheriges Shirt und Gestaltung beibehalten${cut ? ` (Schnitt: ${cut})` : ''}. Ändere nur Folgendes: ${change}\nErhalte alle anderen Merkmale.`, CENTER_LAYOUT, INSIDE), d.blob), d.model);
+      // Texte bei Änderungen: Neue Texte in Anführungszeichen setzt wieder die Software. Betrifft die Änderung keine
+      // Schrift, werden die bisher gesetzten Schriftzüge danach identisch (Ort, Grösse, Farbe) neu aufgedruckt.
+      const own = window.ShirtboxForm ? window.ShirtboxForm.extractTexts(change) : {texts: [], prompt: change};
+      const aboutText = own.texts.length || /\b(text\w*|schrift\w*|aufschrift|beschriftung|buchstab\w*|wort|wörter|name|namen|slogan)\b/i.test(change);
+      const keepLayouts = !aboutText && d.layouts?.length ? d.layouts : [];
+      let ask = `Bisheriges Shirt und Gestaltung beibehalten${cut ? ` (Schnitt: ${cut})` : ''}. Ändere nur Folgendes: ${own.prompt}\nErhalte alle anderen Merkmale.`;
+      if (own.texts.length) ask += ` Die Platzhalter [Schriftzug …] setzt ShirtBOX selbst als Schrift ein – nicht zeichnen; auf ${[...new Set(own.texts.map(t => window.ShirtboxForm.areaName(t)))].join(' und ')} vorhandene Schrift entfernen und eine ruhige Fläche lassen.`;
+      else if (keepLayouts.length) ask += ' Vorhandene Schriftzüge exakt unverändert lassen.';
+      const result = await shape(await request(fit(ask, CENTER_LAYOUT, INSIDE), d.blob), d.model, {texts: own.texts, layouts: keepLayouts});
+      const blob = result.blob; d.layouts = result.layouts;
       URL.revokeObjectURL(d.url); d.blob = blob; d.url = URL.createObjectURL(blob); d.edited = true;
       d.prompt = `${d.prompt}\nÄnderung: ${change}`.slice(-1500); editInput.value = '';
       say(`Design ${active + 1} wurde angepasst. Weitere Änderungen sind jederzeit möglich.`);
@@ -741,7 +707,7 @@
       if (index < 0) throw Error();
       items.forEach((e, i) => { const blob = e.blob || e; if (blob instanceof Blob) designs.push({blob, url: URL.createObjectURL(blob), prompt: e.prompt || '', model: /Modell: Zip-Shirt/.test(e.prompt || '') ? 'zip' : 'polo', selected: true, number: e.number || i + 1, entry: e.blob ? e : {blob: e, number: i + 1}}); });
       editingOrder = true; showResult(true); active = designs.findIndex(d => String(d.number) === number);
-      say('Ihr Design wurde geladen. Beschreiben Sie unten die gewünschte Änderung.');
+      say('Ihr Design wurde geladen. Beschreiben Sie im Änderungsfeld die gewünschte Änderung.');
       // Bewusst kein automatischer Cursor im Änderungsfeld: Sonst sind „Antippen & schreiben / sprechen“ versteckt,
       // bis man woanders hintippt. Die beiden Zeichen sollen sofort sichtbar sein.
       render();
