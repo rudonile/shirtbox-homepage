@@ -670,3 +670,101 @@ body.studio-page main.shell>.site-footer{flex:none}
   .studio:not(.is-result) .studio-rights{margin-bottom:6px;padding:5px 10px}
   .studio:not(.is-result) .studio-panel{padding-top:4px;padding-bottom:4px}
 }
+
+/* ===== NUR iPad (Klasse is-ipad, gesetzt in designhilfe.html/navigation.js; Querformat ist gesperrt) =====
+   Alles EINSPALTIG und zentriert: Status → Shirt → Änderungen → Bestellen/Weiteres T-Shirt → Designs.
+   Das Shirt wird so gross, dass alles darunter ohne Scrollen passt (--sb-ipad-below misst gestalter.js).
+   Computer, Mac, Android und iPhone haben diese Klasse nicht und bleiben unverändert. */
+html.is-ipad .studio:not(.is-result) .studio-grid,html.is-ipad .studio.is-result .studio-grid{grid-template-columns:minmax(0,1fr);gap:14px}
+html.is-ipad .studio:not(.is-result) .studio-panel{width:100%;max-width:720px;margin:0 auto}
+html.is-ipad .studio:not(.is-result) .studio-stage,html.is-ipad .studio.is-result .studio-stage{position:static;max-height:none;overflow:visible;align-self:auto;width:100%;max-width:760px;margin:0 auto;padding:0}
+html.is-ipad .studio:not(.is-result) .studio-preview{width:100%;max-width:640px;margin:0 auto}
+/* Ergebnis-Ansicht (erstes Shirt, Änderungen, weitere Shirts, zurück aus der Bestellung): eine Spalte statt links/rechts. */
+html.is-ipad .studio.is-result{max-width:none;padding-top:8px;padding-bottom:8px}
+html.is-ipad .studio.is-result .studio-stage{display:flex;flex-direction:column;align-items:center;gap:10px}
+html.is-ipad .studio.is-result .studio-stage>*{width:100%;margin:0}
+html.is-ipad .studio.is-result .studio-wait{order:-1;min-height:0;padding:8px 14px}
+html.is-ipad .studio.is-result .studio-preview{position:static;grid-column:auto;grid-row:auto;justify-self:auto;align-self:center;width:100%;min-width:min(100%,360px);max-width:min(100%,calc((100svh - var(--sb-head,60px) - var(--sb-foot,0px) - var(--sb-ipad-below,0px) - 24px - 38px) * 1.5))}
+html.is-ipad .studio.is-result .studio-edit{padding:12px 14px}
+html.is-ipad .studio.is-result .studio-edit-label{margin-bottom:6px}
+html.is-ipad .studio.is-result .studio-edit-label span{display:none}
+html.is-ipad .studio.is-result .studio-edit-row{flex-direction:row;gap:10px}
+html.is-ipad .studio.is-result .studio-edit .studio-edit-field textarea{min-height:92px}
+html.is-ipad .studio.is-result .studio-edit-field .studio-keyword-icons svg{width:44px;height:44px}
+html.is-ipad .studio.is-result .studio-edit #studio-edit-button{width:170px;flex:none;min-height:0;padding:6px 12px;font-size:15px;white-space:normal}
+html.is-ipad .studio.is-result .studio-collection{display:flex;flex-direction:column;padding:12px}
+html.is-ipad .studio.is-result .studio-collection .studio-order{order:-1;flex-direction:row;align-items:center;gap:12px;margin:0 0 10px;padding:0 0 10px;border-top:0;border-bottom:1px solid var(--line);text-align:left}
+html.is-ipad .studio.is-result .studio-order>div:first-child{flex:1;min-width:0}
+html.is-ipad .studio.is-result .studio-order p{font-size:12px}
+html.is-ipad .studio.is-result .studio-order-actions{flex:0 0 auto;flex-direction:row;gap:8px}
+html.is-ipad .studio.is-result .studio-order .studio-order-actions .studio-card-another,html.is-ipad .studio.is-result .studio-order button{flex:0 0 auto;min-height:46px;padding:6px 14px;font-size:14.5px;width:auto}
+/* Designs als niedrige Querkärtchen in einer seitlich scrollbaren Reihe (wie am PC). */
+html.is-ipad .studio-designs{display:flex;gap:10px;overflow-x:auto;margin:0;padding:0 0 6px}
+html.is-ipad .studio .studio-designs .studio-card{flex:0 0 290px;display:grid;grid-template-columns:132px minmax(0,1fr);grid-template-areas:"media head" "media edit" "media pick";column-gap:8px;row-gap:4px;align-items:center;padding:6px}
+html.is-ipad .studio-designs .studio-card-media{grid-area:media}
+html.is-ipad .studio-designs .studio-card-head{grid-area:head;margin:0}
+html.is-ipad .studio-designs .studio-card-edit{grid-area:edit;margin:0;min-height:30px;padding:4px 6px;font-size:12px;line-height:1.15}
+html.is-ipad .studio-designs .studio-card-pick{grid-area:pick;min-height:30px;padding:3px 6px;font-size:12px}
+/* Formular mit fertigen Designs (nach "Weiteres T-Shirt designen"): Bestellteil über der Design-Reihe. */
+html.is-ipad .studio:not(.is-result) .studio-collection{display:flex;flex-direction:column;padding:12px}
+html.is-ipad .studio:not(.is-result) .studio-collection .studio-order{order:-1;flex-direction:row;align-items:center;margin:0 0 10px;padding:0 0 10px;border:0;border-bottom:1px solid var(--line);text-align:left}
+html.is-ipad .studio:not(.is-result) .studio-order-actions{flex-direction:row}
+
+/* ===== NUR Handy (bis 600 px): im leeren Ideen-Feld kein Platzhaltertext, nur "Antippen & schreiben / sprechen" =====
+   Der Platzhalter bleibt technisch erhalten (daran erkennt die Seite ein leeres Feld), ist aber unsichtbar;
+   die beiden Zeichen stehen wieder mittig im Feld. iPad und Computer sind davon nicht betroffen. */
+@media(max-width:600px){
+  #studio-keyword::placeholder{color:transparent}
+  #studio-keyword::-webkit-input-placeholder{color:transparent}
+  .studio-keyword-main .studio-keyword-icons{padding-top:0}
+}
+/* iPad: Gestaltungs-Formular ohne leere Vorlage-Vorschau (wie am Handy – das echte Shirt erscheint beim Gestalten),
+   Überschrift und Fusszeile kompakt, damit Formular, Knopf und Designs ohne Scrollen passen. */
+html.is-ipad .studio:not(.is-result) .studio-preview{display:none}
+html.is-ipad .studio:not(.is-result) .studio-stage{gap:10px}
+html.is-ipad .studio:not(.is-result){padding-top:6px;padding-bottom:10px}
+html.is-ipad .studio:not(.is-result) .studio-head{margin-bottom:10px}
+html.is-ipad .studio:not(.is-result) .studio-head h1{font-size:30px}
+html.is-ipad .studio:not(.is-result) .studio-head>p{display:none}
+html.is-ipad .studio:not(.is-result) .studio-steps{margin-top:10px}
+html.is-ipad body.studio-page .masthead{padding-top:6px;padding-bottom:6px}
+html.is-ipad body.studio-page .site-footer{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 18px;padding:6px 16px}
+html.is-ipad body.studio-page .site-footer .footer-inner{flex:0 1 auto;flex-direction:row;align-items:center;max-width:none;margin:0;padding:0;gap:8px 14px;flex-wrap:nowrap}
+html.is-ipad body.studio-page .site-footer .brand{display:inline-flex}
+html.is-ipad body.studio-page .site-footer .logo-icon{width:28px;height:28px}
+html.is-ipad body.studio-page .site-footer .logo-word{font-size:18px}
+html.is-ipad body.studio-page .site-footer .footer-links{flex-wrap:nowrap;width:auto;overflow:visible}
+html.is-ipad body.studio-page .site-footer .footer-links a{padding:5px 10px;font-size:12.5px}
+html.is-ipad body.studio-page .site-footer .footer-legal{display:block;max-width:none;margin:0;padding:0;font-size:11px}
+html.is-ipad .studio:not(.is-result) .studio-field textarea#studio-keyword{height:110px;min-height:0;max-height:110px;resize:none;overflow-y:auto}
+html.is-ipad .studio:not(.is-result) .studio-keyword-main .studio-keyword-icons{padding-top:0;gap:30px}
+html.is-ipad .studio:not(.is-result) .studio-keyword-main .studio-keyword-icons svg{width:40px;height:40px}
+html.is-ipad .studio:not(.is-result) .studio-models small,html.is-ipad .studio:not(.is-result) #studio-go .studio-step-title small{display:none}
+html.is-ipad .studio:not(.is-result) .studio-models img{width:44px;height:44px}
+html.is-ipad .studio:not(.is-result) .studio-panel{padding:10px 16px 12px}
+html.is-ipad .studio:not(.is-result) .studio-model-field,html.is-ipad .studio:not(.is-result) .studio-step{padding-top:6px;margin-bottom:2px}
+html.is-ipad .studio:not(.is-result) .studio-step-title{margin-bottom:6px}
+html.is-ipad .studio:not(.is-result) .studio-sub{padding:8px 10px 8px 12px;margin-bottom:2px}
+html.is-ipad .studio:not(.is-result) .studio-rights{margin-bottom:8px;padding:7px 10px}
+html.is-ipad .studio:not(.is-result) .studio-surprise{min-height:50px}
+html.is-ipad .studio:not(.is-result) .studio-steps button{padding:6px 8px}
+html.is-ipad .studio:not(.is-result) .studio-collection{padding:10px 12px}
+html.is-ipad .studio:not(.is-result) .studio-order p{display:none}
+html.is-ipad .studio:not(.is-result) .studio-order button,html.is-ipad .studio:not(.is-result) .studio-order .studio-order-actions .studio-card-another{min-height:44px;padding:5px 14px;font-size:14px;width:auto;flex:0 0 auto}
+/* iPad-Formular mit fertigen Designs: Design-Reihe und Aktionen in EINER Zeile (Kärtchen links, Preis + Knöpfe rechts). */
+html.is-ipad .studio:not(.is-result) .studio-collection{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:12px;align-items:center}
+html.is-ipad .studio:not(.is-result) .studio-collection .studio-designs{grid-column:1;grid-row:1}
+html.is-ipad .studio:not(.is-result) .studio-collection .studio-order{grid-column:2;grid-row:1;flex-direction:column;align-items:stretch;gap:6px;margin:0;padding:0 0 0 12px;border:0;border-left:1px solid var(--line);text-align:center}
+html.is-ipad .studio:not(.is-result) .studio-order strong{font-size:14px}
+html.is-ipad .studio:not(.is-result) .studio-order-actions{flex-direction:column;gap:6px}
+html.is-ipad .studio:not(.is-result) .studio-order button,html.is-ipad .studio:not(.is-result) .studio-order .studio-order-actions .studio-card-another{width:100%;min-height:40px}
+html.is-ipad .studio:not(.is-result){padding-bottom:4px}
+/* Niedrigere iPads (Fensterhöhe unter 1050 px, z. B. iPad 10,2"): Textfeld und Kopf etwas knapper. */
+@media(max-height:1050px){
+  html.is-ipad .studio:not(.is-result) .studio-field textarea#studio-keyword{height:88px;max-height:88px}
+  html.is-ipad .studio:not(.is-result) .studio-keyword-main .studio-keyword-icons svg{width:32px;height:32px}
+  html.is-ipad .studio:not(.is-result) .studio-head h1{font-size:26px}
+  html.is-ipad .studio:not(.is-result) .studio-head{margin-bottom:6px}
+  html.is-ipad .studio:not(.is-result) .studio-steps{margin-top:6px}
+  html.is-ipad .studio:not(.is-result) .studio-text-tip{margin-top:3px;font-size:12px}
+}

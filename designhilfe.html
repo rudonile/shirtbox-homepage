@@ -5,9 +5,11 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="ShirtBOX – Stichwort, Text oder Foto eingeben und Ihr individuelles 360°-Shirt mit KI gestalten." name="description"/>
 <title>Designen Sie Ihr T-Shirt · ShirtBOX.ch</title>
-<script>if ("scrollRestoration" in history) history.scrollRestoration = "manual";</script>
+<script>if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+/* iPad früh erkennen (vor dem ersten Anzeigen): eigenes einspaltiges Layout nur für iPad. Neuere iPads melden sich als Mac mit Touchscreen. */
+(function(){var u=navigator.userAgent;if(/iPad/.test(u)||(/Macintosh/.test(u)&&navigator.maxTouchPoints>1))document.documentElement.classList.add("is-ipad");})();</script>
 <link href="shirtbox-icon.svg" rel="icon" type="image/svg+xml"/><link href="shirtbox.css?v=20261025-raster" rel="stylesheet"/><link href="marke.css?v=20261025-raster" rel="stylesheet"/>
-<link href="gestalter.css?v=20261102-hoehe3" rel="stylesheet"/>
+<link href="gestalter.css?v=20261102-ipad5" rel="stylesheet"/>
 </head>
 <body class="design-page studio-page">
 <main class="shell">
@@ -103,9 +105,9 @@
 <script defer src="design-uebernahme.js?v=20261102-bestell"></script>
 <script defer src="bestell-logik.js?v=20261023-unbegrenzt"></script>
 <script defer src="shirt-form.js?v=20261102-form"></script>
-<script defer src="gestalter.js?v=20261102-mehrere"></script>
-<script defer src="navigation.js?v=20261102-mobil"></script>
-<script defer src="language.js?v=20261102-seite1"></script>
+<script defer src="gestalter.js?v=20261102-ipad"></script>
+<script defer src="navigation.js?v=20261102-ipad"></script>
+<script defer src="language.js?v=20261102-ipad"></script>
 <script defer src="shirti.js?v=20261102-layout"></script>
 <script src="studio-flying-designs.js" defer></script>
 </body>

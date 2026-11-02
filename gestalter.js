@@ -494,6 +494,13 @@
     const coll = document.getElementById('studio-collection'), inForm = !document.querySelector('.studio')?.classList.contains('is-result');
     const collHeight = `${coll && inForm && !coll.hidden && coll.offsetHeight ? coll.offsetHeight + 16 : 0}px`;
     if (document.documentElement.style.getPropertyValue('--sb-coll') !== collHeight) document.documentElement.style.setProperty('--sb-coll', collHeight);
+    // Nur iPad (einspaltig): Höhe von allem, was in der Ergebnis-Ansicht über und unter dem Shirt steht (Status,
+    // Änderungen, Bestellen, Designs). Das Shirt wird so gross, dass all das ohne Scrollen darunter passt.
+    let below = 0;
+    const stageEl = document.querySelector('.studio-stage'), previewEl = stageEl?.querySelector('.studio-preview');
+    if (document.documentElement.classList.contains('is-ipad') && stageEl && !inForm)
+      below = [...stageEl.children].filter(el => el !== previewEl && el.tagName !== 'DIALOG' && el.getClientRects().length).reduce((sum, el) => sum + el.offsetHeight + 10, 0);
+    if (document.documentElement.style.getPropertyValue('--sb-ipad-below') !== `${below}px`) document.documentElement.style.setProperty('--sb-ipad-below', `${below}px`);
   }
   measureBars(); window.addEventListener('resize', measureBars); window.addEventListener('load', measureBars);
   function placeStage() {
@@ -617,7 +624,7 @@
     requestAnimationFrame(() => {
       // Handy (eine Spalte): ganz nach oben – dann ist das Shirt vollständig zu sehen und direkt darunter das
       // Änderungsfeld mit „Antippen & schreiben / sprechen“. Computer/Tablet: Änderungsfeld links in die Mitte holen.
-      if (twoCol.matches) editRow.scrollIntoView({behavior: 'smooth', block: 'center'});
+      if (twoCol.matches && !document.documentElement.classList.contains('is-ipad')) editRow.scrollIntoView({behavior: 'smooth', block: 'center'});
       else window.scrollTo({top: 0, behavior: 'smooth'});
       editRow.classList.remove('is-called'); void editRow.offsetWidth; editRow.classList.add('is-called');
     });
