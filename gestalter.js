@@ -409,7 +409,7 @@
   function tour() {
     if (toured || keyword.value.trim()) return;
     toured = true;
-    const parts = [$('studio-guide'), photoBox, keyword].filter(Boolean);
+    const parts = [keyword, photoBox].filter(Boolean);
     let i = 0;
     const next = () => {
       if (keyword.value.trim()) { stopTour(); return; }
@@ -422,41 +422,11 @@
     tourTimer = setTimeout(next, 700);
   }
   ['pointerdown', 'focus'].forEach(type => keyword.addEventListener(type, stopTour));
-  // Roboter „schreibt“ seine Nachricht Buchstabe für Buchstabe (sein Mund bewegt sich dabei), wartet und beginnt von vorne –
-  // bis man ins Eingabefeld klickt; dann bleibt der ganze Text stehen. Text aus .studio-robot-source (von language.js übersetzbar).
-  const robot = $('studio-guide'), robotSource = robot.querySelector('.studio-robot-source');
-  const [typedHead, typedTail] = robot.querySelectorAll('.studio-robot-typed > strong, .studio-robot-typed > span');
-  const robotText = () => [robotSource.querySelector('strong').textContent, ' ' + robotSource.querySelector('span').textContent];
-  let robotTimer = null, robotDone = false;
-  // Statt des Worts „unten“ (EN: „below“) zeigt Shirti klein Tastatur und Mund mit Pfeil nach unten –
-  // dieselben Zeichen wie im Eingabefeld darunter. Die unsichtbare Vorlage (Vorlesen, Übersetzung) behält das Wort.
-  const robotTools = document.createElement('span');
-  robotTools.className = 'studio-robot-tools'; robotTools.setAttribute('aria-hidden', 'true');
-  keyword.parentElement.querySelectorAll('.studio-icon-btn svg').forEach(svg => robotTools.append(svg.cloneNode(true)));
-  robotTools.append(Object.assign(document.createElement('i'), {textContent: '↓'}));
-  function setHead(head, n) {
-    const m = /\b(unten|below)\b/i.exec(head);
-    if (!m || n <= m.index) { typedHead.textContent = head.slice(0, n); return; }
-    // Während das Wort „getippt“ würde, bleiben die Zeichen schon stehen; danach geht der Satz normal weiter.
-    typedHead.replaceChildren(head.slice(0, m.index), robotTools, head.slice(m.index + m[0].length, Math.max(n, m.index + m[0].length)));
-  }
-  function robotType() {
-    clearTimeout(robotTimer);
-    const [head, tail] = robotText();
-    if (robotDone || matchMedia('(prefers-reduced-motion: reduce)').matches) { setHead(head, head.length); typedTail.textContent = tail; robot.classList.remove('is-typing'); return; }
-    let n = 0; typedHead.textContent = typedTail.textContent = ''; robot.classList.add('is-typing');
-    const step = () => {
-      n++; setHead(head, n); typedTail.textContent = n > head.length ? tail.slice(0, n - head.length) : '';
-      if (n < head.length + tail.length) robotTimer = setTimeout(step, 42);
-      // Nur einmal „sprechen“, dann bleibt der Satz stehen: Eine sich immer wieder leerende Blase wirkte wie ein Eingabefeld.
-      else { robot.classList.remove('is-typing'); robotDone = true; }
-    };
-    robotTimer = setTimeout(step, 500);
-  }
-  function robotStop() { robotDone = true; robotType(); }
-  robotType();
-  // Sprachwechsel (DE/EN übersetzt die unsichtbare Vorlage): fertig getippten Satz sofort in der neuen Sprache zeigen.
-  new MutationObserver(() => { if (robotDone) robotType(); }).observe(robotSource, {subtree: true, childList: true, characterData: true});
+  // Der Roboter mit Sprechblase ist aus dem Formular entfernt (Kundenwunsch 02.11.2026): Das Eingabefeld steht direkt da.
+  // robotType/robotStop bleiben als leere Funktionen, weil Diktat und "Weiteres T-Shirt designen" sie aufrufen.
+  let robotDone = true;
+  function robotType() {}
+  function robotStop() {}
   ['pointerdown', 'focus'].forEach(type => keyword.addEventListener(type, robotStop)); keyword.addEventListener('input', () => { if (keyword.value.trim()) stopTour(); });
   // Orange Pfeil über dem Eingabefeld: weg, sobald man ins Feld tippt, schreibt oder diktiert;
   // wieder da, wenn das Feld leer ist und man woanders hintippt. (Auch über steps() nach jedem Diktat-Wort.)
@@ -511,6 +481,10 @@
     const footEl = document.querySelector('.site-footer');
     const footHeight = `${footEl && ['sticky', 'fixed'].includes(getComputedStyle(footEl).position) && footEl.offsetHeight ? footEl.offsetHeight : 0}px`;
     if (document.documentElement.style.getPropertyValue('--sb-foot') !== footHeight) document.documentElement.style.setProperty('--sb-foot', footHeight);
+    // Überschrift + Schritte über dem Formular: Die Shirt-Vorschau der ersten Seite wird so gross, wie der Rest erlaubt.
+    const studioHead = document.querySelector('.studio-head');
+    const studioHeadHeight = `${studioHead && studioHead.offsetHeight ? Math.round(studioHead.offsetHeight + parseFloat(getComputedStyle(studioHead).marginBottom) + parseFloat(getComputedStyle(studioHead.parentElement).paddingTop)) : 0}px`;
+    if (document.documentElement.style.getPropertyValue('--sb-studio-head') !== studioHeadHeight) document.documentElement.style.setProperty('--sb-studio-head', studioHeadHeight);
   }
   measureBars(); window.addEventListener('resize', measureBars); window.addEventListener('load', measureBars);
   function placeStage() {
@@ -556,7 +530,11 @@
     requestAnimationFrame(showPreview);
     try { await task(); }
     catch (e) {
-      const text = ['TimeoutError', 'AbortError'].includes(e.name) ? 'Die Anfrage dauert zu lange. Bitte später erneut versuchen.' : e.message === 'Failed to fetch' ? 'Die Bildgestaltung ist nicht erreichbar. Bitte später erneut versuchen.' : e.message;
+      // Der Bild-Worker nimmt nur Anfragen von freigegebenen Adressen an (shirtbox.ch …). Lokale Testversion (Doppelklick)
+      // oder eine nicht freigegebene Test-Adresse werden blockiert – dann klar sagen, woran es liegt, statt „später erneut“.
+      const blocked = location.protocol === 'file:' || /^(localhost|127\.|192\.168\.)/.test(location.hostname) || /raspy-firefly/.test(location.hostname);
+      const unreachable = blocked ? 'Die Bildgestaltung funktioniert nur auf shirtbox.ch – diese Test-Adresse ist beim Bild-Dienst nicht freigeschaltet.' : 'Die Bildgestaltung ist nicht erreichbar. Bitte später erneut versuchen.';
+      const text = ['TimeoutError', 'AbortError'].includes(e.name) ? 'Die Anfrage dauert zu lange. Bitte später erneut versuchen.' : /Failed to fetch|Load failed|NetworkError/.test(e.message) ? unreachable : e.message;
       fail(text);
       // In der Ergebnis-Ansicht ist das Formular ausgeblendet – Fehler beim Ändern dann direkt unter dem Änderungsfeld zeigen.
       if (designs[active]) editStatus.textContent = text;

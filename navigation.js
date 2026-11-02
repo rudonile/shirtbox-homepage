@@ -3,33 +3,108 @@
   // angeklickt, Häkchen nicht gesetzt, Feld leer), scrollt die Seite genau dorthin und die Stelle leuchtet orange und
   // pulsiert mit dem Hinweis „Bitte hier …“. Die Markierung verschwindet, sobald man dort etwas anklickt oder eingibt.
   // Aufruf: window.sbMissing(element, fokusElement?, text?)
+  //
+  // Hin und zurück: Die Seite merkt sich den Knopf, mit dem man weiter wollte (z. B. „T-Shirt designen“, „Zur Bestellung“,
+  // „Bestellen“). Ist die fehlende Angabe angeklickt (Shirt gewählt, Häkchen gesetzt, Grösse gewählt …), springt sie
+  // von selbst dorthin zurück und zeigt „Jetzt hier weiter“. Bei Textfeldern (Schreiben/Diktieren dauert) springt sie nicht
+  // von selbst, sondern unten erscheint ein Knopf „Weiter zu …“, der zurückführt. Fehlt danach noch etwas, geht es wieder hin.
   const style = document.createElement('style');
   style.textContent = '@keyframes sbMissingPulse{0%,100%{box-shadow:0 0 0 0 #ffb43a00,0 0 0 0 #ff7a2b00}50%{box-shadow:0 0 0 8px #ffb43a80,0 0 34px 6px #ff7a2bb3}}'
+    + '@keyframes sbNextPulse{0%,100%{box-shadow:0 0 0 0 #4ade8000}50%{box-shadow:0 0 0 8px #4ade8080,0 0 30px 6px #22c55e99}}'
     + '.sb-missing{position:relative;outline:3px solid #ffb43a!important;outline-offset:4px;border-radius:14px;animation:sbMissingPulse 1.1s ease-in-out infinite;scroll-margin:130px 0 150px}'
-    + '.sb-missing-tag{position:absolute;z-index:50;left:50%;top:0;translate:-50% -60%;padding:5px 12px;border-radius:999px;background:#ffb43a;color:#1a1206;font:800 13px/1.2 system-ui,sans-serif;white-space:nowrap;box-shadow:0 6px 18px #0008;pointer-events:none}'
-    + '@media(prefers-reduced-motion:reduce){.sb-missing{animation:none;box-shadow:0 0 0 6px #ffb43a80}}';
+    + '.sb-missing-tag,.sb-next-tag{position:absolute;z-index:50;left:50%;top:0;translate:-50% -60%;padding:5px 12px;border-radius:999px;background:#ffb43a;color:#1a1206;font:800 13px/1.2 system-ui,sans-serif;white-space:nowrap;box-shadow:0 6px 18px #0008;pointer-events:none}'
+    + '.sb-next{outline:3px solid #4ade80!important;outline-offset:4px;animation:sbNextPulse 1.1s ease-in-out infinite!important;scroll-margin:130px 0 150px}'
+    + '.sb-next-tag{background:#4ade80;color:#05210f;translate:-50% -115%}'
+    + '.sb-back{position:fixed;z-index:9999;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));translate:-50% 0;max-width:calc(100vw - 32px);padding:12px 20px;border:0;border-radius:999px;background:#4ade80;color:#05210f;font:800 15px/1.2 system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 10px 30px #000a;cursor:pointer}'
+    + '@media(prefers-reduced-motion:reduce){.sb-missing{animation:none;box-shadow:0 0 0 6px #ffb43a80}.sb-next{animation:none!important;box-shadow:0 0 0 6px #4ade8080}}';
   document.head.append(style);
-  let marked = null;
-  function clear() {
+  const en = () => document.documentElement.lang === 'en';
+  // Zuletzt angeklickter Knopf = dorthin geht es nach dem Ergänzen zurück.
+  let lastAction = null;
+  document.addEventListener('click', e => {
+    const el = e.target.closest?.('button,a,[role=button],input[type=submit]');
+    if (el) lastAction = {el, at: Date.now()};
+  }, true);
+  const isText = el => el?.matches?.('textarea,input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=button]):not([type=submit]):not([type=hidden])');
+  const visible = el => el && el.isConnected && el.getClientRects().length > 0;
+  let marked = null, next = null;
+  function unmark() {
     if (!marked) return;
     marked.el.classList.remove('sb-missing'); marked.tag?.remove();
+  }
+  function clear() {
+    if (!marked) return;
+    unmark();
     marked.off.forEach(([type, fn]) => marked.el.removeEventListener(type, fn, true));
+    marked.back?.remove(); document.removeEventListener('click', marked.reached, true);
     marked = null;
   }
-  window.sbMissing = (el, focus, text) => {
+  function clearNext() {
+    if (!next) return;
+    clearTimeout(next.timer); next.el.classList.remove('sb-next'); next.tag.remove();
+    document.removeEventListener('click', next.off, true); next = null;
+  }
+  // Zurück zum gemerkten Knopf und ihn grün „Jetzt hier weiter“ leuchten lassen (nicht selbst anklicken).
+  function goBack(target) {
+    clear(); clearNext();
+    if (!visible(target)) return;
+    const tag = document.createElement('span'); tag.className = 'sb-next-tag'; tag.setAttribute('aria-hidden', 'true');
+    tag.textContent = en() ? '👉 Continue here' : '👉 Jetzt hier weiter';
+    // Knöpfe können kein Schild tragen, das herausragt: Schild an das umgebende Element hängen.
+    const holder = target.parentElement || target;
+    if (getComputedStyle(holder).position === 'static') holder.style.position = 'relative';
+    tag.style.left = `${target.offsetLeft + target.offsetWidth / 2}px`; tag.style.top = `${target.offsetTop}px`; tag.style.translate = '-50% -115%';
+    holder.append(tag); target.classList.add('sb-next');
+    const off = () => clearNext();
+    next = {el: target, tag, off, timer: setTimeout(off, 8000)};
+    document.addEventListener('click', off, true);
+    target.scrollIntoView({behavior: 'smooth', block: 'center'});
+  }
+  // Von aussen nutzbar: direkt zu einem Knopf springen und „Jetzt hier weiter“ zeigen.
+  window.sbNext = target => goBack(target);
+  // Optional 4. Angabe „then“: ein Element = fester Rückweg (statt des zuletzt angeklickten Knopfs),
+  // eine Funktion = wird nach dem Ergänzen aufgerufen und entscheidet selbst, wohin es weitergeht.
+  window.sbMissing = (el, focus, text, then) => {
     if (!el) return;
-    clear();
+    clear(); clearNext();
     // Ein einzelnes Feld oder Häkchen hat keinen Platz für ein Schild: dann das umgebende Feld markieren.
     const box = ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) ? el.closest('label,.field,.studio-keyword-box') || el : el;
     void box.offsetWidth; box.classList.add('sb-missing');
     const tag = document.createElement('span'); tag.className = 'sb-missing-tag'; tag.setAttribute('aria-hidden', 'true');
-    tag.textContent = text || (document.documentElement.lang === 'en' ? '👇 Please complete this' : '👇 Bitte hier ergänzen');
+    tag.textContent = text || (en() ? '👇 Please complete this' : '👇 Bitte hier ergänzen');
     if (getComputedStyle(box).position === 'static') box.style.position = 'relative';
     box.append(tag);
-    const done = () => clear();
-    const off = [['pointerdown', done], ['input', done], ['change', done], ['keydown', done]];
+    // Rückweg: der Knopf, der eben angeklickt wurde (höchstens 6 Sekunden her, nicht im fehlenden Bereich selbst).
+    const after = typeof then === 'function' ? then : null;
+    const target = then instanceof Element ? then
+      : lastAction && Date.now() - lastAction.at < 6000 && !box.contains(lastAction.el) && lastAction.el !== box ? lastAction.el : null;
+    const touched = () => unmark();
+    // Fertig angeklickt? Kurz warten, damit man die Auswahl sieht – dann zurück. Nicht bei Textfeldern,
+    // Mund/Tastatur und solange im Bereich noch etwas fehlt (z. B. Grösse gewählt, Stückzahl noch leer).
+    const completed = e => {
+      if ((!target && !after) || isText(e.target) || e.target.closest?.('[data-act],input[type=file]')) return;
+      setTimeout(() => {
+        if (!marked || marked.el !== box) return;
+        const open = [...box.querySelectorAll('input,select,textarea')].some(f => !f.disabled && f.type !== 'hidden' && !f.hidden && f.validity && !f.validity.valid);
+        if (open) return;
+        if (after) { clear(); clearNext(); after(); } else goBack(target);
+      }, 450);
+    };
+    const off = [['pointerdown', touched], ['input', touched], ['keydown', touched], ['change', touched], ['click', completed], ['change', completed]];
     off.forEach(([type, fn]) => box.addEventListener(type, fn, true));
     marked = {el: box, tag, off};
+    if (target) {
+      // Knopf unten „Weiter zu …“ – führt jederzeit zurück (vor allem nach dem Schreiben oder Diktieren).
+      const name = (target.textContent || target.value || '').replace(/\s+/g, ' ').trim().slice(0, 40);
+      const back = document.createElement('button'); back.type = 'button'; back.className = 'sb-back';
+      back.textContent = name ? (en() ? `↩ Continue: ${name}` : `↩ Weiter zu: ${name}`) : (en() ? '↩ Continue' : '↩ Weiter');
+      back.addEventListener('click', e => { e.stopPropagation(); goBack(target); });
+      document.body.append(back);
+      marked.back = back;
+      // Klickt man selbst direkt wieder auf den Knopf, ist der Rückweg erledigt.
+      marked.reached = e => { if (target.contains(e.target)) clear(); };
+      document.addEventListener('click', marked.reached, true);
+    }
     box.scrollIntoView({behavior: 'smooth', block: 'center'});
     if (focus) { try { focus.focus({preventScroll: true}); } catch { focus.focus(); } }
   };
