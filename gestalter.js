@@ -58,13 +58,15 @@
       const edit = document.createElement('button'); edit.type = 'button'; edit.className = 'studio-card-edit'; edit.disabled = busy;
       edit.textContent = '✎ Bild weiter bearbeiten'; edit.setAttribute('aria-label', `Design ${i + 1} weiter bearbeiten`);
       edit.addEventListener('click', () => editDesign(i));
-      card.append(edit, view);
-      // Kleiner roter Löschknopf oben rechts auf dem Bild.
+      // Bild und roter Löschknopf in einem eigenen Rahmen: Der Knopf sitzt immer oben rechts auf dem Bild,
+      // egal wie viele Zeilen „Bild weiter bearbeiten“ darüber braucht (der Text wird nicht mehr abgeschnitten).
+      const media = document.createElement('div'); media.className = 'studio-card-media'; media.append(view);
+      card.append(edit, media);
       if (!editingOrder) {
         const del = document.createElement('button'); del.type = 'button'; del.className = 'studio-card-delete'; del.disabled = busy;
         del.textContent = '×'; del.title = 'Design löschen'; del.setAttribute('aria-label', `Design ${i + 1} löschen`);
         del.addEventListener('click', () => removeDesign(i));
-        card.append(del);
+        media.append(del);
       }
       const pick = document.createElement('button'); pick.type = 'button'; pick.className = 'studio-card-pick';
       pick.setAttribute('aria-pressed', String(inCart)); pick.disabled = editingOrder || busy;
@@ -72,8 +74,8 @@
       pick.addEventListener('click', () => { if (busy) return; item.selected = !item.selected; render(); });
       card.append(head, pick); list.append(card);
     });
-    // „Weiteres T-Shirt designen“ als gleich grosse Karte direkt neben den Designs – bewusst getrennt von den Änderungen.
-    if (designs.length) list.append(another);
+    // „Weiteres T-Shirt designen“ steht fest neben dem Bestellknopf (nicht mehr als Karte hinter den Designs –
+    // dort rutschte er mit jedem weiteren Shirt nach unten aus dem Bildschirm).
     another.hidden = !designs.length;
     const n = ready().length, c = chosen().length;
     if (count) count.textContent = n ? `${n} Design${n === 1 ? '' : 's'}` : '';
@@ -83,6 +85,8 @@
     total.textContent = c ? `${c} T-Shirt${c === 1 ? '' : 's'} ausgewählt · ${window.ShirtboxOrder.money(window.ShirtboxOrder.totalForQuantity(c))}` : 'Kein T-Shirt ausgewählt';
     orderButton.textContent = editingOrder ? 'Zurück zur Bestellung →' : c > 1 ? `${c} T-Shirts zur Bestellung →` : 'T-Shirt zur Bestellung →';
     controls();
+    // Höhe der Design-Leiste neu messen (die Vorschau im Formular rechnet sie ein).
+    if (typeof measureBars === 'function') requestAnimationFrame(measureBars);
   }
 
   function controls() {
@@ -462,7 +466,7 @@
   // Ergebnis-Ansicht: Ab „T-Shirt designen“ sind Überschrift und Formular weg (Handy, iPad und Computer) –
   // das Shirt steht oben, darunter Änderungen / weiteres Shirt, darunter die Bestellung. Zurück nur über „Weiteres T-Shirt designen“.
   const studio = form.closest('.studio');
-  const showResult = on => studio.classList.toggle('is-result', on);
+  const showResult = on => { studio.classList.toggle('is-result', on); requestAnimationFrame(measureBars); };
 
   // Computer: rechte Seite senkrecht mittig zwischen Kopf- und Fusszeile festhalten (CSS position:sticky, Abstand hier berechnet).
   // Ist sie höher als der Bildschirm, bleibt sie oben unter der Kopfzeile stehen.
@@ -485,6 +489,11 @@
     const studioHead = document.querySelector('.studio-head');
     const studioHeadHeight = `${studioHead && studioHead.offsetHeight ? Math.round(studioHead.offsetHeight + parseFloat(getComputedStyle(studioHead).marginBottom) + parseFloat(getComputedStyle(studioHead.parentElement).paddingTop)) : 0}px`;
     if (document.documentElement.style.getPropertyValue('--sb-studio-head') !== studioHeadHeight) document.documentElement.style.setProperty('--sb-studio-head', studioHeadHeight);
+    // Gestaltungs-Formular mit bereits fertigen Designs: Unter der Vorschau steht die Design-Leiste mit Bestellknopf.
+    // Die Vorschau wird um deren Höhe kleiner, damit Formular-Knopf und Leiste ohne Scrollen sichtbar bleiben.
+    const coll = document.getElementById('studio-collection'), inForm = !document.querySelector('.studio')?.classList.contains('is-result');
+    const collHeight = `${coll && inForm && !coll.hidden && coll.offsetHeight ? coll.offsetHeight + 16 : 0}px`;
+    if (document.documentElement.style.getPropertyValue('--sb-coll') !== collHeight) document.documentElement.style.setProperty('--sb-coll', collHeight);
   }
   measureBars(); window.addEventListener('resize', measureBars); window.addEventListener('load', measureBars);
   function placeStage() {
@@ -606,7 +615,10 @@
     say(`Design ${i + 1}: Beschreiben Sie im Änderungsfeld, was geändert werden soll.`);
     render();
     requestAnimationFrame(() => {
-      editRow.scrollIntoView({behavior: 'smooth', block: 'center'});
+      // Handy (eine Spalte): ganz nach oben – dann ist das Shirt vollständig zu sehen und direkt darunter das
+      // Änderungsfeld mit „Antippen & schreiben / sprechen“. Computer/Tablet: Änderungsfeld links in die Mitte holen.
+      if (twoCol.matches) editRow.scrollIntoView({behavior: 'smooth', block: 'center'});
+      else window.scrollTo({top: 0, behavior: 'smooth'});
       editRow.classList.remove('is-called'); void editRow.offsetWidth; editRow.classList.add('is-called');
     });
   }
