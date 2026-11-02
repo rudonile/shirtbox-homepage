@@ -439,3 +439,58 @@ body.is-generating .site-footer{display:none}
 .studio-wait .sb-wait-flying svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
 @keyframes sbWaitFly{0%{opacity:0;transform:translate(var(--from-x),var(--from-y)) scale(.35) rotate(-35deg)}30%{opacity:.3}70%{opacity:.24}100%{opacity:0;transform:translate(var(--to-x),var(--to-y)) scale(1.3) rotate(35deg)}}
 @media(prefers-reduced-motion:reduce){.studio-wait .sb-wait-flying i{animation:none;opacity:.14;transform:none}}
+
+/* ===== Kompakte Gestaltungs-Ansicht „Designen Sie Ihr T-Shirt“ =====
+   Ziel: Auf Laptop/PC alles auf einen Blick – LINKS gestalten, RECHTS das Shirt –, ohne die Seite einfach zu verkleinern.
+   Statt untereinander stehen die Schritte nebeneinander; Schriftgrössen und Tippflächen bleiben gleich gross. */
+
+/* Alle Bildschirme: Modellwahl als kompakte Zeile (kleines Bild + Name) statt grosser quadratischer Bilder. */
+.studio-models button{flex-direction:row;align-items:center;gap:10px;padding:6px 10px 6px 6px}
+.studio-models img{width:56px;height:56px;flex:none;border-radius:10px}
+.studio-models span{padding:0;font-size:14.5px;line-height:1.25;min-width:0}
+/* Schmale Handys: zwei Zeilen untereinander, damit nichts über den Rand ragt. */
+@media(max-width:519px){.studio-models{grid-template-columns:minmax(0,1fr);gap:8px}}
+.studio-step-title,.studio-field>.studio-step-title{margin-bottom:10px}
+.studio-model-field,.studio-step{padding-top:10px;margin-bottom:6px}
+/* Roboter niedriger: kleineres Symbol, Blase mit weniger Innenabstand. */
+.studio-robot{margin:0 0 8px;padding:4px 6px;gap:10px}
+.studio-robot-icon{width:44px;height:44px}
+.studio-robot-bubble{padding:7px 12px}
+.studio-photo.studio-photo-small{margin-bottom:6px}
+.studio-keyword-label{margin:4px 0 0}
+.studio-keyword-arrow{height:24px;margin:0 0 5px}
+.studio-keyword-arrow svg{width:24px;height:24px}
+/* Eingabefeld: kompakte Anfangshöhe, wächst bei Bedarf (Ziehen am Rand) bzw. scrollt intern. */
+.studio-field textarea#studio-keyword{min-height:132px;max-height:50vh;overflow-y:auto}
+.studio-keyword-main .studio-keyword-icons{padding-top:40px;gap:22px}
+.studio-keyword-main .studio-keyword-icons svg{width:48px;height:48px}
+.studio-keyword-main.is-listening .studio-keyword-icons{padding-top:0}
+.studio-text-tip{margin-top:6px;font-size:12.5px}
+.studio-sub{margin-bottom:8px;padding:10px 10px 10px 12px}
+.studio-rights{margin:0 0 10px;padding:9px 11px}
+.studio-surprise{min-height:54px;padding:10px 18px}
+
+/* Ab 1000 px Breite (Tablet quer, Laptop, PC): Kopf in einer Zeile, Gestaltung links in zwei Spalten, Shirt rechts. */
+@media(min-width:1000px){
+  .studio:not(.is-result){max-width:1640px}
+  .studio:not(.is-result) .studio-head{display:flex;align-items:center;gap:clamp(16px,2vw,32px);margin-bottom:14px;padding-top:8px;text-align:left}
+  .studio:not(.is-result) .studio-head h1{flex:none;font-size:clamp(26px,2.3vw,34px)}
+  .studio:not(.is-result) .studio-head>p{display:none}
+  .studio:not(.is-result) .studio-steps{flex:1;margin:0;max-width:none}
+  .studio:not(.is-result) .studio-steps button{padding:8px 10px}
+  .studio:not(.is-result) .studio-grid{grid-template-columns:minmax(560px,58%) minmax(0,1fr)}
+  .studio:not(.is-result) .studio-panel{display:grid;grid-template-columns:minmax(220px,.85fr) minmax(290px,1.15fr);grid-template-areas:"model idea" "go idea";column-gap:16px;align-content:start;padding:16px 18px}
+  .studio:not(.is-result) #studio-model-field{grid-area:model}
+  .studio:not(.is-result) #studio-idea{grid-area:idea;margin:0;align-self:start}
+  .studio:not(.is-result) #studio-go{grid-area:go;align-self:start}
+  .studio:not(.is-result) .studio-models{grid-template-columns:1fr;gap:8px}
+  /* Doppelte Info: Roboter und Foto-Feld sagen schon, was hier hingehört. */
+  #studio-idea .studio-step-title small{display:none}
+}
+/* Tablet quer / kleine Laptops: Gestaltung bekommt mehr Breite, damit links weniger umbricht. */
+@media(min-width:1000px) and (max-width:1199px){
+  .studio:not(.is-result) .studio-grid{grid-template-columns:minmax(600px,64%) minmax(0,1fr);gap:18px}
+  .studio:not(.is-result) .studio-panel{column-gap:12px;padding:14px}
+  /* "1 bis 3 Minuten" steht beim Gestalten ohnehin in der Sanduhr-Anzeige. */
+  #studio-go .studio-step-title small{display:none}
+}
