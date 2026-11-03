@@ -316,8 +316,28 @@
     });
   }
   const speakButton = field => field.parentElement.querySelector('.studio-icon-btn[data-act=speak]');
-  dictation(speakButton(keyword), keyword, hear, () => { fail(''); steps(); }, 'Ich höre dir zu … Wenn du fertig bist, einfach auf „T-Shirt designen“ tippen.');
-  dictation(speakButton(editInput), editInput, text => setStatus(editStatus, text), () => controls(), 'Ich höre dir zu … Wenn du fertig bist, einfach auf „Änderungen übernehmen“ tippen.');
+  // Handy und Tablet (iPhone, Android-Handy, iPad, Android-Tablet): nur EINE Schaltfläche „⌨️ 🎤 Antippen & schreiben
+  // oder sprechen“. Sie öffnet die normale Bildschirmtastatur; gesprochen wird über das Mikrofon DER TASTATUR.
+  // Das orange Mikrofon ist nur ein Hinweis darauf – auf diesen Geräten startet keine eigene Spracherkennung mehr.
+  // Erkennung am Gerät (User-Agent / Mac mit Touchscreen = iPad), NICHT an der Breite: ein iPad ist so breit wie ein
+  // Computer. Computer (Windows, Mac, auch mit Touchscreen) behalten beide Schaltflächen und die eigene Spracheingabe.
+  const TOUCH_DEVICE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+  if (TOUCH_DEVICE) {
+    document.documentElement.classList.add('sb-touch-input');
+    for (const field of [keyword, editInput]) {
+      const speak = speakButton(field), type = field.parentElement.querySelector('.studio-icon-btn[data-act=type]');
+      speak.hidden = true; speak.disabled = true; speak.tabIndex = -1; speak.setAttribute('aria-hidden', 'true');
+      const keys = type.querySelector('svg.icon-keys');
+      type.classList.add('studio-icon-combo');
+      type.innerHTML = '<span class="studio-icon-pair">' + keys.outerHTML
+        + '<svg class="icon-mic" viewBox="0 0 24 24"><rect x="8.5" y="2.5" width="7" height="12" rx="3.5"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5M8.5 21.5h7"/></svg>'
+        + '</span><span>Antippen &amp; schreiben oder sprechen</span>';
+      type.setAttribute('aria-label', 'Antippen & schreiben oder sprechen');
+    }
+  } else {
+    dictation(speakButton(keyword), keyword, hear, () => { fail(''); steps(); }, 'Ich höre dir zu … Wenn du fertig bist, einfach auf „T-Shirt designen“ tippen.');
+    dictation(speakButton(editInput), editInput, text => setStatus(editStatus, text), () => controls(), 'Ich höre dir zu … Wenn du fertig bist, einfach auf „Änderungen übernehmen“ tippen.');
+  }
   window.addEventListener('pagehide', stopDictation);
   // App gewechselt / Bildschirm aus: Diktat sauber beenden (der bisher erkannte Text bleibt).
   document.addEventListener('visibilitychange', () => { if (document.hidden && dict) finishDictation(); });

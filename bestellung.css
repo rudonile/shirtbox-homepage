@@ -109,10 +109,6 @@ form.was-submitted #design-validation:not([hidden]){display:block;margin:12px 0}
 /* Fehlende Pflichtangabe nach Klick auf „Bestellen“ */
 .missing-required{outline:3px solid var(--warn)!important;outline-offset:3px;border-radius:12px;scroll-margin-top:110px}
 
-/* Häufige Fragen unten */
-.quick-questions{margin-top:28px;padding:10px 28px 10px;border-radius:24px;background:var(--surface);border:1px solid var(--line)}
-.quick-questions h2{margin:20px 0 4px;font-size:24px}
-.quick-questions details:last-child{border-bottom:0}
 
 /* Grossansicht */
 .order-design-modal{width:min(1000px,96vw);max-height:92vh;padding:18px;border:0;border-radius:24px;background:var(--surface);box-shadow:var(--shadow-lg);text-align:center}
@@ -139,5 +135,66 @@ form.was-submitted #design-validation:not([hidden]){display:block;margin:12px 0}
   .order-design .order-inline-view:not([hidden]){display:none}
   .design-size-row{grid-template-columns:minmax(0,1fr) 92px 46px}
   .order-more,.order-empty a{width:100%}
-  .quick-questions{padding:6px 18px}
+}
+
+/* ===== Neues Bestellformular (03.11.2026): dunkel wie bisher, Orange für Aktionen/aktuellen Schritt, Grün für Erledigtes =====
+   Reine Gestaltung – Felder, Namen und Abläufe bleiben unverändert. Schrittzustände setzt formular.js (guide()). */
+.order-page .order-step,.order-page .order-side{border:1.5px solid #ffffff14;background:linear-gradient(180deg,#151b29,#10151f);transition:border-color .3s,box-shadow .3s}
+.order-page .order-step-title{flex-wrap:wrap;row-gap:6px}
+.order-page .order-step-title>span{background:#ff5b2e26;color:#ffb48f;box-shadow:inset 0 0 0 1.5px #ff7a2b80;transition:background .3s,color .3s}
+.order-step-badge{margin-left:auto;padding:4px 11px;border-radius:999px;font-family:var(--font);font-size:11.5px;font-style:normal;font-weight:850;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap}
+.order-step-badge:empty{display:none}
+/* Aktueller Schritt: dezenter orange Rahmen + Schild „Nächster Schritt“ */
+.order-page .is-current{border-color:#ff7a2b;box-shadow:0 0 0 3px #ff7a2b26,0 18px 40px #0007}
+.order-page .is-current .order-step-title>span{background:var(--fire);color:var(--on-accent);box-shadow:0 6px 16px #ff5b2e55}
+.order-page .is-current .order-step-badge{background:#ff5b2e2b;color:#ffb48f;box-shadow:inset 0 0 0 1px #ff7a2b99}
+/* Erledigt: grünes Häkchen + „Angaben vollständig“ */
+.order-page .is-done:not(.is-current){border-color:#2f7a5599}
+.order-page .is-done .order-step-title>span{background:#2f7a55;color:transparent;box-shadow:none;position:relative}
+.order-page .is-done .order-step-title>span::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:#eafff2;font-size:17px;font-weight:900}
+.order-page .is-done .order-step-badge{background:#2f7a5533;color:#7ff0a8;box-shadow:inset 0 0 0 1px #2f7a55}
+/* Eingabefelder: heller Kontrast, orange beim Bearbeiten statt blau */
+.order-page input:not([type]),.order-page input[type=text],.order-page input[type=email],.order-page input[type=tel],.order-page input[type=number],.order-page select{background-color:#ffffff0d;border-color:#ffffff24}
+.order-page input:focus,.order-page select:focus{border-color:#ff9a3d;box-shadow:0 0 0 4px #ff7a2b2e}
+.order-page input:not([type=checkbox]):valid:not(:placeholder-shown),.order-page select:valid{border-color:#ffffff33}
+.order-page input[type=checkbox]{accent-color:#2f9e63}
+.order-page .field label,.design-size-row .field>label{color:var(--ink)}
+/* Nächste fehlende Angabe im aktuellen Schritt */
+.order-page .is-next-field input,.order-page .is-next-field select{border-color:#ff9a3d;box-shadow:0 0 0 3px #ff7a2b33}
+.order-page .agb-consent.is-next-field{border-color:#ff9a3d;box-shadow:0 0 0 3px #ff7a2b33}
+/* Designkarten in der Liste */
+.order-page .order-design{border:1.5px solid #ffffff14;background:#0e131d}
+.order-page .order-design .order-inline-edit{background:#ff5b2e1f;color:#ffb48f;box-shadow:inset 0 0 0 1px #ff7a2b66}
+.order-page .order-design .order-inline-edit:hover{background:#ff5b2e33;color:#ffd2b8}
+.order-page .order-design .add-size,.order-page .size-guide summary{color:#ffb48f}
+.order-page .asian-size-notice::before{color:#ff9a3d}
+.order-page .design-subtotal{color:#ffd2b8}
+.order-page .order-more{box-shadow:inset 0 0 0 2px #ff7a2b80;color:#ffb48f}
+.order-page .order-more:hover{box-shadow:inset 0 0 0 2px #ff9a3d;color:#ffd2b8}
+/* Zusammenfassung = Bestellliste mit Vorschaubild, Grösse, Menge, Einzel- und Gesamtpreis */
+.order-page .order-summary td:first-child img{display:block!important;width:72px!important;max-width:72px!important;height:auto!important;max-height:none!important;aspect-ratio:3/2;object-fit:cover!important;margin:0 0 4px!important;border-radius:8px!important;background:#747474}
+.order-page .order-summary td:first-child a{display:none!important}
+.order-page .order-summary td{vertical-align:top}
+.summary-each{display:block;margin-top:3px;color:var(--ink-3);font-size:11.5px;font-weight:600;white-space:nowrap}
+.order-page .summary-total{margin-top:16px;padding:14px 16px;border-radius:16px;background:linear-gradient(135deg,#ff5b2e1f,#ff9a3d14);box-shadow:inset 0 0 0 1px #ff7a2b55}
+.order-page .summary-total strong{color:#ffb48f;font-size:32px}
+/* Einmalige Bestätigungen */
+.order-page .agb-consent{border-color:#ffffff24;background:#ffffff08;color:var(--ink-2)}
+.order-page .agb-consent:has(input:checked){border-color:#2f7a55;background:var(--mint-soft);color:var(--ink)}
+.order-page .rights-consent{font-size:14px}
+/* Bestellknopf: gross, orange, gut antippbar */
+.order-page #absenden{min-height:64px;padding:10px 20px;font-size:clamp(16px,2.2vw,19px);white-space:normal;line-height:1.2;text-align:center;box-shadow:0 12px 30px #ff5b2e59}
+.order-page #absenden[aria-disabled=true]{filter:saturate(.75);box-shadow:0 6px 18px #ff5b2e33}
+.order-page #absenden[aria-disabled=false]{animation:sbOrderReady 2.2s ease-in-out infinite}
+@keyframes sbOrderReady{0%,100%{box-shadow:0 12px 30px #ff5b2e59}50%{box-shadow:0 12px 30px #ff5b2e59,0 0 0 6px #ff7a2b38}}
+@media(prefers-reduced-motion:reduce){.order-page #absenden[aria-disabled=false]{animation:none}}
+.order-page .order-submit-progress{background:#ff5b2e1f;color:#ffd2b8}
+/* Handy: Schild unter die Überschrift, Tabelle ohne Querscrollen */
+@media(max-width:600px){
+  .order-step-badge{margin-left:46px}
+  .order-page .order-summary table{font-size:13px}
+  .order-page .order-summary td:first-child img{width:56px!important;max-width:56px!important}
+  .order-page .summary-total strong{font-size:26px}
+  .summary-each{white-space:normal}
+  .order-page .order-summary th,.order-page .order-summary td{padding-left:3px;padding-right:3px}
 }

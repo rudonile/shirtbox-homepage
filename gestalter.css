@@ -857,3 +857,13 @@ html body.studio-page .studio .studio-sub .studio-keyword-main .studio-icon-btn 
   html body.studio-page .studio .studio-sub .studio-keyword-main textarea#studio-keyword{height:112px;max-height:112px}
   html body.studio-page .studio .studio-sub .studio-keyword-main.is-listening textarea#studio-keyword{height:176px;max-height:176px}
 }
+/* ===== Handy & Tablet: EINE Schaltfläche „⌨️ 🎤 Antippen & schreiben oder sprechen“ (Klasse sb-touch-input setzt gestalter.js
+   nur auf iPhone, Android-Handy, iPad und Android-Tablet). Computer bleiben unverändert. ===== */
+.studio-keyword-icons .studio-icon-btn[hidden]{display:none!important}
+html.sb-touch-input .studio-keyword-icons .studio-icon-combo{gap:8px;max-width:92%;padding:10px 18px 9px;border:1px solid #ffffff1f;border-radius:18px;background:#ffffff0a}
+html.sb-touch-input .studio-keyword-icons .studio-icon-combo:active{background:#ffffff1a}
+html.sb-touch-input .studio-icon-combo .studio-icon-pair{display:flex;align-items:center;justify-content:center;gap:14px}
+html.sb-touch-input .studio-keyword-icons .studio-icon-combo .icon-keys{color:#7fa2ff}
+html.sb-touch-input .studio-keyword-icons .studio-icon-combo .icon-mic{color:#ff9a3d;animation-delay:0s}
+html.sb-touch-input .studio-keyword-icons .studio-icon-combo > span:last-child{color:#eef1ff;line-height:1.25;text-align:center;white-space:normal}
+html.sb-touch-input .studio-edit-field .studio-icon-combo{flex:0 1 auto;max-width:92%}

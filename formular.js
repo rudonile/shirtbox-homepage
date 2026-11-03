@@ -18,7 +18,12 @@
     return [...designs.values()].map(state => ({slot: state.slot, filename: state.file.files[0]?.name || '', rows: [...state.card.querySelectorAll('.design-size-row')].map(row => ({size: row.querySelector('select').value, quantity: row.querySelector('input').value}))}));
   }
   function cell(row, text) { const td = document.createElement('td'); td.textContent = text; row.append(td); }
+  // Nutzungs- und Bildrechte: EINE Bestätigung für alle T-Shirts dieser Bestellung (unter der Zusammenfassung).
+  // Sie wird auf die (unsichtbaren) Felder der einzelnen Designs übertragen – so erhalten Server, Bestellmail und
+  // Verwaltung die Zustimmung wie bisher pro Design. Nach einer abgeschlossenen Bestellung löscht danke.js die Angaben.
+  const allRights = document.getElementById('rechte-alle');
   function refresh() {
+    for (const state of designs.values()) state.rights.checked = !!allRights?.checked;
     const order = api.calculate(snapshot());
     const body = document.getElementById('order-summary-body'); body.replaceChildren();
     [...designs.values()].forEach((state, index) => {
@@ -38,7 +43,11 @@
       const tr = document.createElement('tr');
       const shirtCell=document.createElement('td'); const viewButton=document.createElement('button'); viewButton.type='button'; viewButton.className='order-view-design'; viewButton.textContent=item.filename ? `Design ${state.designNumber || index + 1}` : 'Noch kein Entwurf'; viewButton.disabled=!state.previewUrl; viewButton.addEventListener('click',()=>showDesign(state)); if(state.previewUrl){const thumb=document.createElement('img');thumb.src=state.previewUrl;thumb.alt='T-Shirt Design '+(state.designNumber||index+1);thumb.style.cssText='display:block;width:390px;max-width:100%;max-height:450px;object-fit:contain;margin:0 auto 8px;cursor:zoom-in;border-radius:8px';thumb.addEventListener('click',()=>showDesign(state));shirtCell.append(thumb);}shirtCell.append(viewButton);const editLink=document.createElement('a');editLink.href='designhilfe.html?weiterbearbeiten='+encodeURIComponent(state.designNumber||index+1);editLink.textContent='✎ Design '+(state.designNumber||index+1)+' mit KI bearbeiten und zurück zur Bestellung';editLink.style.cssText='display:block;margin-top:8px;color:#27b6ff';editLink.addEventListener('click',saveDetails);shirtCell.append(editLink);tr.append(shirtCell);
       cell(tr, item.rows.map(row => `${row.size ? row.size : '–'} × ${row.quantity || '–'}`).join(', '));
-      cell(tr, String(item.quantity)); cell(tr, money(item.subtotal)); body.append(tr);
+      cell(tr, String(item.quantity)); cell(tr, money(item.subtotal));
+      // Einzelpreise unter dem Betrag: erstes Shirt CHF 89.00, jedes weitere CHF 80.10.
+      const each = [item.standardQuantity ? `${item.standardQuantity} × ${money(api.PRICE_CENTS / 100)}` : '', item.discountedQuantity ? `${item.discountedQuantity} × ${money(api.DISCOUNTED_PRICE_CENTS / 100)}` : ''].filter(Boolean).join(' + ');
+      if (each) { const small = document.createElement('small'); small.className = 'summary-each'; small.textContent = each; tr.lastElementChild.append(small); }
+      body.append(tr);
     });
     document.getElementById('summary-quantity').textContent = `${order.quantity} Shirt${order.quantity === 1 ? '' : 's'}`;
     document.getElementById('summary-total').textContent = money(order.total);
@@ -65,7 +74,31 @@
     document.getElementById('telefon-komplett').value = `${prefix.value} ${number}`;
     const ready = online && order.valid && filesReady && [...form.querySelectorAll('[required]')].every(field => field.validity.valid);
     submit.disabled = false; submit.setAttribute('aria-disabled', String(!ready));
+    guide(order);
     return {order, valid: ready};
+  }
+  // Führung durch die Bestellung: Der erste noch offene Schritt ist orange umrandet („Nächster Schritt“), erledigte
+  // Schritte bekommen ein grünes Häkchen („✓ Angaben vollständig“). Im aktuellen Schritt leuchtet die nächste fehlende Angabe.
+  // Reine Anzeige – an Prüfung und Absenden ändert sich nichts.
+  function guide(order) {
+    const valid = ids => ids.every(id => document.getElementById(id)?.validity.valid);
+    const steps = [
+      {el: document.getElementById('step-shirts')?.closest('.order-step'), done: designs.size > 0 && order.valid},
+      {el: document.getElementById('step-contact')?.closest('.order-step'), done: valid(['vorname', 'nachname', 'email', 'telefon'])},
+      {el: document.getElementById('step-address')?.closest('.order-step'), done: valid(['strasse', 'plz', 'ort', 'land'])},
+      {el: document.querySelector('.order-side'), done: !!allRights?.checked && !!document.getElementById('agb-zustimmung')?.checked, last: true}
+    ].filter(s => s.el);
+    const current = steps.find(s => !s.done);
+    document.querySelectorAll('.is-next-field').forEach(el => el.classList.remove('is-next-field'));
+    for (const s of steps) {
+      s.el.classList.toggle('is-done', s.done); s.el.classList.toggle('is-current', s === current);
+      const badge = s.el.querySelector('.order-step-badge');
+      if (badge) badge.textContent = s === current ? 'Nächster Schritt' : s.done ? (s.last ? '✓ Bereit zum Bestellen' : '✓ Angaben vollständig') : '';
+    }
+    if (current) {
+      const next = [...current.el.querySelectorAll('input:not([type=hidden]):not([type=file]),select')].find(f => f.required && !f.disabled && f.offsetParent && !f.validity.valid);
+      next?.closest('.design-size-row .field, .field, .agb-consent')?.classList.add('is-next-field');
+    }
   }
   function addSize(state, values = {}) {
     if (state.card.querySelectorAll('.design-size-row').length >= api.SIZES.length) return;
@@ -108,7 +141,7 @@
   function addDesign() {
     const slot = ++nextSlot;
     const card = document.createElement('section'); card.className = 'order-design'; card.setAttribute('aria-labelledby', `design-${slot}-title`);
-    card.innerHTML = `<div class="design-heading-row"><h3 class="design-title" id="design-${slot}-title">Dein Shirt</h3><div class="design-heading-actions" hidden><button type="button" class="design-heading-zoom">🔍 Vergrössern</button><a class="design-heading-edit" href="designhilfe.html">✏️ Hier T-Shirt ändern</a></div></div><input id="design-${slot}-file" name="attachment_design_${slot}" type="file" accept="image/jpeg" hidden tabindex="-1" aria-hidden="true"><div class="design-file-preview"><img hidden alt="Dein übernommener Shirt-Entwurf"><p class="design-filename">Bitte zuerst deinen Entwurf im Shirt-Designer übernehmen.</p><button type="button" class="order-inline-view" hidden aria-hidden="true" tabindex="-1">🔍 Vergrössern</button><a class="order-inline-edit" href="designhilfe.html" hidden aria-hidden="true" tabindex="-1">✎ Mit KI weiterbearbeiten</a></div><div class="design-size-list"></div><button class="add-size" type="button">+ Weitere Grösse</button><div class="design-subtotal"></div><div class="agb-consent"><input id="design-${slot}-rights" name="Design_${slot}_Rechte_und_Inhalte" type="checkbox" value="Ja – erforderliche Rechte vorhanden und Inhaltsvorgaben eingehalten" required><label for="design-${slot}-rights">Ich bestätige die erforderlichen Nutzungs- und Bildrechte sowie zulässige Inhalte für meinen Entwurf. *</label></div><textarea class="design-data" name="Design_${slot}_Datei_und_Stückzahlen" hidden></textarea>`;
+    card.innerHTML = `<div class="design-heading-row"><h3 class="design-title" id="design-${slot}-title">Dein Shirt</h3><div class="design-heading-actions" hidden><button type="button" class="design-heading-zoom">🔍 Vergrössern</button><a class="design-heading-edit" href="designhilfe.html">✏️ Hier T-Shirt ändern</a></div></div><input id="design-${slot}-file" name="attachment_design_${slot}" type="file" accept="image/jpeg" hidden tabindex="-1" aria-hidden="true"><div class="design-file-preview"><img hidden alt="Dein übernommener Shirt-Entwurf"><p class="design-filename">Bitte zuerst deinen Entwurf im Shirt-Designer übernehmen.</p><button type="button" class="order-inline-view" hidden aria-hidden="true" tabindex="-1">🔍 Vergrössern</button><a class="order-inline-edit" href="designhilfe.html" hidden aria-hidden="true" tabindex="-1">✎ Mit KI weiterbearbeiten</a></div><div class="design-size-list"></div><button class="add-size" type="button">+ Weitere Grösse</button><div class="design-subtotal"></div><div class="agb-consent design-rights" hidden><input id="design-${slot}-rights" name="Design_${slot}_Rechte_und_Inhalte" type="checkbox" value="Ja – erforderliche Rechte vorhanden und Inhaltsvorgaben eingehalten" tabindex="-1"><label for="design-${slot}-rights">Ich bestätige die erforderlichen Nutzungs- und Bildrechte sowie zulässige Inhalte für meinen Entwurf. *</label></div><textarea class="design-data" name="Design_${slot}_Datei_und_Stückzahlen" hidden></textarea>`;
     const state = {slot, card, previewUrl: '', file: card.querySelector('input[type=file]'), rights: card.querySelector('input[type=checkbox]'), preview: card.querySelector('img'), filename: card.querySelector('.design-filename')};
     designs.set(slot, state); list.append(card); addSize(state, {quantity:1});
     state.preview.style.cursor='zoom-in'; state.preview.tabIndex=0; state.preview.setAttribute('role','button'); state.preview.setAttribute('aria-label','Design gross ansehen'); state.preview.addEventListener('click',()=>showDesign(state)); state.preview.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();showDesign(state);}});
@@ -265,6 +298,6 @@
       }
     })();
   });
-  window.addEventListener('pageshow', () => { const progress=document.getElementById('order-submit-progress');if(progress)progress.hidden=true;submit.disabled=false;submit.removeAttribute('aria-busy');submit.innerHTML='Zahlungspflichtig bestellen <span aria-hidden="true">↗</span>';refresh(); });
+  window.addEventListener('pageshow', () => { const progress=document.getElementById('order-submit-progress');if(progress)progress.hidden=true;submit.disabled=false;submit.removeAttribute('aria-busy');submit.innerHTML='<span aria-hidden="true">🛒</span> Jetzt zahlungspflichtig bestellen <span aria-hidden="true">→</span>';refresh(); });
   // Empty orders stay empty until a new design is added from the designer.
 })();

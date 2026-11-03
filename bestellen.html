@@ -8,7 +8,7 @@
 <title>Polo-Shirt bestellen · ShirtBOX.ch</title>
 <script>if ("scrollRestoration" in history) history.scrollRestoration = "manual";</script>
 <link href="shirtbox-icon.svg" rel="icon" type="image/svg+xml"/><link href="shirtbox.css?v=20261024-360" rel="stylesheet"/><link href="marke.css?v=20261024-fuss" rel="stylesheet"/>
-<link href="bestellung.css?v=20261024-newsletter" rel="stylesheet"/>
+<link href="bestellung.css?v=20261103-neu2" rel="stylesheet"/>
 </head>
 <body class="order-page">
 <main class="shell">
@@ -45,7 +45,7 @@ Vielen Dank für deine ShirtBOX-Bestellung! Bitte bezahle den Gesamtbetrag jetzt
 <div class="order-main">
 
 <section class="order-step" aria-labelledby="step-shirts">
-<h2 class="order-step-title" id="step-shirts"><span>1</span>Deine T-Shirts</h2>
+<h2 class="order-step-title" id="step-shirts"><span>1</span>Deine T-Shirts<em class="order-step-badge"></em></h2>
 <p class="order-step-intro">Wähle für jedes Design deine gewohnte Grösse und die Stückzahl.</p>
 <p aria-live="polite" class="form-status" id="design-transfer-status" role="status"></p><div id="design-list"></div>
 <div class="order-empty"><p>Dein Warenkorb ist noch leer.</p><a href="designhilfe.html">✨ T-Shirt designen</a></div>
@@ -54,7 +54,7 @@ Vielen Dank für deine ShirtBOX-Bestellung! Bitte bezahle den Gesamtbetrag jetzt
 </section>
 
 <section class="order-step" aria-labelledby="step-contact">
-<h2 class="order-step-title" id="step-contact"><span>2</span>Kontaktdaten</h2>
+<h2 class="order-step-title" id="step-contact"><span>2</span>Kontaktdaten<em class="order-step-badge"></em></h2>
 <div class="two-col">
 <div class="field"><label for="vorname">Vorname *</label><input autocomplete="given-name" id="vorname" maxlength="80" name="vorname" required=""/></div>
 <div class="field"><label for="nachname">Nachname *</label><input autocomplete="family-name" id="nachname" maxlength="80" name="nachname" required=""/></div>
@@ -66,7 +66,7 @@ Vielen Dank für deine ShirtBOX-Bestellung! Bitte bezahle den Gesamtbetrag jetzt
 </section>
 
 <section class="order-step" aria-labelledby="step-address">
-<h2 class="order-step-title" id="step-address"><span>3</span>Lieferadresse</h2>
+<h2 class="order-step-title" id="step-address"><span>3</span>Lieferadresse<em class="order-step-badge"></em></h2>
 <div class="field"><label for="strasse">Strasse und Hausnummer *</label><input autocomplete="street-address" id="strasse" maxlength="120" name="strasse" required=""/></div>
 <div class="two-col address-row">
 <div class="field"><label for="plz">Postleitzahl *</label><input autocomplete="postal-code" id="plz" maxlength="20" name="plz" required=""/></div>
@@ -78,13 +78,14 @@ Vielen Dank für deine ShirtBOX-Bestellung! Bitte bezahle den Gesamtbetrag jetzt
 </div>
 
 <aside class="order-side" aria-label="Zusammenfassung">
-<section aria-labelledby="summary-title" class="order-summary"><h3 id="summary-title">Zusammenfassung</h3><div class="summary-scroll"><table><thead><tr><th>Design</th><th>Grössen</th><th>Shirts</th><th>Betrag</th></tr></thead><tbody id="order-summary-body"></tbody></table></div><div class="summary-total"><span class="sr-only" hidden="" id="gesamt"></span><span id="summary-quantity">0 Shirts</span><strong id="summary-total">CHF 0.–</strong></div><p>Erstes Shirt CHF 89.–, jedes weitere Shirt derselben Bestellung CHF 80.10 (10 % Rabatt). Alle Beträge inklusive Mehrwertsteuer und Versand.</p></section>
+<section aria-labelledby="summary-title" class="order-summary"><h3 class="order-step-title" id="summary-title"><span>4</span>Zusammenfassung<em class="order-step-badge"></em></h3><div class="summary-scroll"><table><thead><tr><th>Design</th><th>Grössen</th><th>Shirts</th><th>Betrag</th></tr></thead><tbody id="order-summary-body"></tbody></table></div><div class="summary-total"><span class="sr-only" hidden="" id="gesamt"></span><span id="summary-quantity">0 Shirts</span><strong id="summary-total">CHF 0.–</strong></div><p>Erstes Shirt CHF 89.–, jedes weitere Shirt derselben Bestellung CHF 80.10 (10 % Rabatt). Alle Beträge inklusive Mehrwertsteuer und Versand.</p></section>
+<div class="agb-consent rights-consent"><input id="rechte-alle" name="Rechte_und_Inhalte_alle_Designs" required="" type="checkbox" value="Ja – gilt für alle Designs dieser Bestellung"/><label for="rechte-alle">Ich bestätige für alle T-Shirts dieser Bestellung die erforderlichen Nutzungs- und Bildrechte sowie zulässige Inhalte. *</label></div>
 <div class="agb-consent"><input id="agb-zustimmung" name="AGB_akzeptiert" required="" type="checkbox" value="Ja – Stand 03.10.2026"/><label for="agb-zustimmung">Ich habe die <a href="agb.html" rel="noopener" target="_blank">Allgemeinen Geschäftsbedingungen (AGB)</a> gelesen und akzeptiere sie. *</label></div>
 <div class="agb-consent newsletter-consent"><input id="newsletter-zustimmung" name="Newsletter" type="checkbox" value="Ja"/><label for="newsletter-zustimmung" id="newsletter-text">Ja, ich möchte den ShirtBOX-Newsletter mit Neuigkeiten, Aktionen und Angeboten per E-Mail erhalten. Ich kann mich jederzeit wieder abmelden.</label></div>
 <p aria-live="polite" class="form-status" hidden="" id="formular-status" role="status"></p>
 <p class="order-submit-progress" id="order-submit-progress" role="status" aria-live="polite" hidden>Deine Bestellung wird übermittelt. Bitte warten und die Seite nicht schliessen …</p>
 <div class="cf-turnstile" data-sitekey="0x4AAAAAAFkDAIIYBJZ9VFKw" data-theme="auto" style="margin:14px 0"></div>
-<button id="absenden" type="submit">Zahlungspflichtig bestellen <span aria-hidden="true">↗</span></button>
+<button id="absenden" type="submit"><span aria-hidden="true">🛒</span> Jetzt zahlungspflichtig bestellen <span aria-hidden="true">→</span></button>
 <ul class="order-trust">
 <li>Bezahlung per TWINT nach der Bestellung</li>
 <li>Lieferung in ca. 14 Tagen</li>
@@ -94,7 +95,6 @@ Vielen Dank für deine ShirtBOX-Bestellung! Bitte bezahle den Gesamtbetrag jetzt
 </div>
 </form>
 </section>
-<section aria-labelledby="questions-title" class="quick-questions"><h2 id="questions-title">Gut zu wissen</h2><details><summary>Welche Grösse soll ich wählen?</summary><p>Wähle die gewünschte Grösse im Dropdown. Direkt darüber kannst du den Grössenrechner mit den Shirtmassen aufklappen. Deine gewählte Grösse wird für die Bestellung automatisch um zwei Grössen erhöht (z. B. S → L).</p></details><details><summary>Wie kommt mein Entwurf in die Bestellung?</summary><p>Gestalte dein Shirt im <a href="designhilfe.html">Shirt-Designer</a> und klicke auf „T-Shirt zur Bestellung“. Dein Entwurf wird automatisch eingefügt.</p></details><details><summary>Wann kommt mein Shirt?</summary><p>Es kann ca. 14 Tage (± einige Tage) dauern, bis dein Shirt eintrifft. Die Produktion beginnt nach Zahlungseingang, sobald eine geeignete Druckdatei und alle Angaben vorliegen.</p></details><details><summary>Wie bezahle ich?</summary><p>Nach dem Absenden überweist du den Totalbetrag per TWINT an ShirtBOX: 079 915 48 24. Die Bestätigungs-Mail enthält die Zahlungsangaben.</p></details></section>
 </div>
 <footer class="site-footer">
 <div class="footer-inner">
@@ -105,9 +105,9 @@ Vielen Dank für deine ShirtBOX-Bestellung! Bitte bezahle den Gesamtbetrag jetzt
 </footer>
 </main>
 <script defer="" src="bestell-logik.js?v=20261103-du"></script>
-<script defer="" src="formular.js?v=20261103-du"></script>
-<script defer="" src="design-uebernahme.js?v=20261103-du"></script>
-<script defer src="navigation.js?v=20261103-du"></script>
-<script defer="" src="order-persistence.js"></script><dialog aria-label="Design gross ansehen" class="order-design-modal" id="order-design-modal"><form method="dialog"><button aria-label="Ansicht schliessen" class="modal-close">✕ Schliessen</button></form><img alt="Vergrösserte Ansicht deines Shirt-Designs"/><p>Hier siehst du deinen Entwurf in voller Grösse.</p><a class="order-design-edit" href="designhilfe.html">✎ Zur KI-Gestaltung zurückkehren</a><p class="modal-note">Dein bestehendes Design wird in der KI-Gestaltung geladen und kann weiterbearbeitet werden.</p></dialog><script defer src="language.js?v=20261103-idee"></script><template id="shirtbox-size-guide-template"><details class="size-guide inline-size-guide" id="groessentabelle"><summary>📏 Grössentabelle anzeigen</summary><div class="size-guide-body"><p>Vergleiche die Masse eines gut passenden Poloshirts mit der Tabelle. Die angegebenen Masse beziehen sich auf das Shirt, nicht direkt auf den Körperumfang. Die Tabelle zeigt Grössen von XS bis 3XL; für grössere Grössen liegen in dieser Vorlage keine bestätigten Zentimeterangaben vor.</p><img alt="Poloshirt-Grössentabelle: Länge und Brustumfang für XS bis 3XL" loading="lazy" src="groessenrechner-polo.jpg"/></div></details></template><script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script><script defer src="shirti.js?v=20261103-druck"></script>
+<script defer="" src="formular.js?v=20261103-neu"></script>
+<script defer="" src="design-uebernahme.js?v=20261103-neu"></script>
+<script defer src="navigation.js?v=20261103-tastatur"></script>
+<script defer="" src="order-persistence.js?v=20261103-neu"></script><dialog aria-label="Design gross ansehen" class="order-design-modal" id="order-design-modal"><form method="dialog"><button aria-label="Ansicht schliessen" class="modal-close">✕ Schliessen</button></form><img alt="Vergrösserte Ansicht deines Shirt-Designs"/><p>Hier siehst du deinen Entwurf in voller Grösse.</p><a class="order-design-edit" href="designhilfe.html">✎ Zur KI-Gestaltung zurückkehren</a><p class="modal-note">Dein bestehendes Design wird in der KI-Gestaltung geladen und kann weiterbearbeitet werden.</p></dialog><script defer src="language.js?v=20261103-eine-taste"></script><template id="shirtbox-size-guide-template"><details class="size-guide inline-size-guide" id="groessentabelle"><summary>📏 Grössentabelle anzeigen</summary><div class="size-guide-body"><p>Vergleiche die Masse eines gut passenden Poloshirts mit der Tabelle. Die angegebenen Masse beziehen sich auf das Shirt, nicht direkt auf den Körperumfang. Die Tabelle zeigt Grössen von XS bis 3XL; für grössere Grössen liegen in dieser Vorlage keine bestätigten Zentimeterangaben vor.</p><img alt="Poloshirt-Grössentabelle: Länge und Brustumfang für XS bis 3XL" loading="lazy" src="groessenrechner-polo.jpg"/></div></details></template><script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script><script defer src="shirti.js?v=20261103-neu"></script>
 </body>
 </html>

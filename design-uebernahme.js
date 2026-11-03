@@ -9,8 +9,10 @@
   // Grund: Safari (iPhone/iPad) macht Blobs, die aus IndexedDB gelesen wurden, ungültig, sobald derselbe Eintrag neu
   // gespeichert wird (zweites Öffnen der Bestellung, Design löschen, "mit KI weiterbearbeiten"). Dann zeigten Bestellung
   // und Designer nur noch Fragezeichen statt Bilder.
+  // Auch Bilddaten aus einem anderen Fenster (iframe) als Bild erkennen.
+  const isBlob=v=>v instanceof Blob||['[object Blob]','[object File]'].includes(Object.prototype.toString.call(v));
   async function pack(value){
-    if(value instanceof Blob)return {sbBlob:1,type:value.type,data:await value.arrayBuffer()};
+    if(isBlob(value))return {sbBlob:1,type:value.type,data:await value.arrayBuffer()};
     if(Array.isArray(value))return Promise.all(value.map(pack));
     if(value&&typeof value==='object'){const out={};for(const [k,v] of Object.entries(value))out[k]=await pack(v);return out;}
     return value;
@@ -19,7 +21,7 @@
   // Lässt sich ein Bild nicht mehr lesen, wird es zu null – die übrigen Designs bleiben trotzdem erhalten.
   async function unpack(value){
     try{
-      if(value instanceof Blob){const data=await value.arrayBuffer();return data.byteLength?new Blob([data],{type:value.type}):null;}
+      if(isBlob(value)){const data=await value.arrayBuffer();return data.byteLength?new Blob([data],{type:value.type}):null;}
       if(value&&value.sbBlob===1)return value.data&&value.data.byteLength?new Blob([value.data],{type:value.type}):null;
     }catch{return null;}
     if(Array.isArray(value))return Promise.all(value.map(unpack));
