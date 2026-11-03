@@ -17,15 +17,15 @@
     const confirm = params.has('bestaetigen');
     $('nl-anmelden').hidden = true; $('nl-link').hidden = false;
     $('nl-link-title').textContent = confirm ? 'Anmeldung bestätigen' : 'Newsletter abbestellen';
-    $('nl-link-text').textContent = confirm ? 'Bitte bestätigen Sie mit einem Klick, dass Sie den ShirtBOX-Newsletter erhalten möchten.' : 'Schade, dass Sie gehen. Mit einem Klick erhalten Sie keine Newsletter mehr von uns.';
+    $('nl-link-text').textContent = confirm ? 'Bitte bestätige mit einem Klick, dass du den ShirtBOX-Newsletter erhalten möchtest.' : 'Schade, dass du gehst. Mit einem Klick erhältst du keine Newsletter mehr von uns.';
     const button = $('nl-link-button');
     button.textContent = confirm ? 'Ja, Newsletter erhalten' : 'Jetzt abmelden';
     if (!confirm) button.classList.add('ghost');
     const texts = {
-      bestaetigt: ['Vielen Dank! Ihre Anmeldung ist bestätigt. Sie erhalten ab sofort unseren Newsletter.', true],
-      bereits: [confirm ? 'Ihre Anmeldung war bereits bestätigt.' : 'Sie waren bereits abgemeldet.', true],
-      abgemeldet: ['Sie wurden abgemeldet und erhalten keine Newsletter mehr. Sie können sich jederzeit wieder anmelden.', true],
-      abgelaufen: ['Dieser Bestätigungslink ist abgelaufen. Bitte melden Sie sich erneut an.', false],
+      bestaetigt: ['Vielen Dank! Deine Anmeldung ist bestätigt. Du erhältst ab sofort unseren Newsletter.', true],
+      bereits: [confirm ? 'Deine Anmeldung war bereits bestätigt.' : 'Du warst bereits abgemeldet.', true],
+      abgemeldet: ['Du wurdest abgemeldet und erhältst keine Newsletter mehr. Du kannst dich jederzeit wieder anmelden.', true],
+      abgelaufen: ['Dieser Bestätigungslink ist abgelaufen. Bitte melde dich erneut an.', false],
       unbekannt: ['Dieser Link ist ungültig oder wurde bereits verwendet.', false]
     };
     button.addEventListener('click', async () => {
@@ -45,14 +45,14 @@
     const msg = $('nl-msg'), button = $('nl-submit'), email = $('nl-email').value.trim(), vorname = $('nl-vorname').value.trim();
     // Fehlende Angabe: hinscrollen und orange pulsierend markieren (window.sbMissing aus navigation.js).
     const missing = (field, focus) => { if (window.sbMissing) window.sbMissing(field, focus); else focus?.focus(); };
-    if (!vorname) { show(msg, 'Bitte geben Sie Ihren Vornamen ein.', false); missing($('nl-vorname'), $('nl-vorname')); return; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { show(msg, 'Bitte geben Sie eine gültige E-Mail-Adresse ein.', false); missing($('nl-email'), $('nl-email')); return; }
+    if (!vorname) { show(msg, 'Bitte gib deinen Vornamen ein.', false); missing($('nl-vorname'), $('nl-vorname')); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { show(msg, 'Bitte gib eine gültige E-Mail-Adresse ein.', false); missing($('nl-email'), $('nl-email')); return; }
     const turnstile = window.turnstile?.getResponse() || '';
-    if (!turnstile) { show(msg, 'Bitte warten Sie kurz, bis die Sicherheitsprüfung abgeschlossen ist.', false); missing(document.querySelector('#nl-form .cf-turnstile') || msg); return; }
+    if (!turnstile) { show(msg, 'Bitte warte kurz, bis die Sicherheitsprüfung abgeschlossen ist.', false); missing(document.querySelector('#nl-form .cf-turnstile') || msg); return; }
     button.disabled = true;
     try {
       const {status} = await post('anmelden', {email, vorname, nachname: $('nl-nachname').value.trim(), website: $('nl-website').value, turnstile});
-      show(msg, status === 'bereits' ? 'Sie sind bereits angemeldet – vielen Dank!' : 'Fast geschafft! Wir haben Ihnen eine E-Mail geschickt. Bitte klicken Sie auf den Link darin, um die Anmeldung zu bestätigen.', true);
+      show(msg, status === 'bereits' ? 'Du bist bereits angemeldet – vielen Dank!' : 'Fast geschafft! Wir haben dir eine E-Mail geschickt. Bitte klicke auf den Link darin, um die Anmeldung zu bestätigen.', true);
       $('nl-form').querySelectorAll('input').forEach(i => i.disabled = true);
       button.hidden = true;
     } catch (err) { show(msg, err.message, false); button.disabled = false; window.turnstile?.reset(); }

@@ -8,7 +8,7 @@
   // Obergrenze des live laufenden Workers (black-snow-2fdf): Anfragen über 2000 Zeichen lehnt er ab
   // („3 bis 2000 Zeichen“). Darum bauen surprisePrompt() und die Änderungsanfrage ihre Anweisung so, dass sie hineinpasst.
   const MAX_PROMPT = 2000;
-  const TOO_LONG = 'Ihre Beschreibung ist zu lang. Bitte kürzer fassen (etwa 800 Zeichen).';
+  const TOO_LONG = 'Deine Beschreibung ist zu lang. Bitte kürzer fassen (etwa 800 Zeichen).';
   // Hängt Zusatzregeln nur an, wenn noch Platz ist – der Worker wiederholt die wichtigsten Regeln ohnehin selbst.
   const fit = (core, ...extras) => { let p = core; for (const x of extras) if ((p + ' ' + x).length <= MAX_PROMPT) p += ' ' + x; if (p.length > MAX_PROMPT) throw Error(TOO_LONG); return p; };
   // Shirt-Modelle: leere Vorlage (links vorne, rechts hinten) und Schnittbeschreibung für die KI.
@@ -81,6 +81,8 @@
     if (count) count.textContent = n ? `${n} Design${n === 1 ? '' : 's'}` : '';
     // Ohne Designs gibt es keinen leeren Platzhalter-Bereich mehr – der Bereich erscheint erst mit dem ersten Design.
     collection.hidden = !designs.length;
+    // Noch nichts neben dem Shirt (erstes Shirt wird gestaltet): Shirt in der Mitte statt allein in der rechten Spalte.
+    stage.classList.toggle('is-solo', editRow.hidden && collection.hidden);
     orderBar.hidden = !n;
     total.textContent = c ? `${c} T-Shirt${c === 1 ? '' : 's'} ausgewählt · ${window.ShirtboxOrder.money(window.ShirtboxOrder.totalForQuantity(c))}` : 'Kein T-Shirt ausgewählt';
     orderButton.textContent = editingOrder ? 'Zurück zur Bestellung →' : c > 1 ? `${c} T-Shirts zur Bestellung →` : 'T-Shirt zur Bestellung →';
@@ -131,28 +133,43 @@
   // Spracheingabe (Web Speech API, Deutsch) für die Beschreibung und das Änderungsfeld – immer nur ein Diktat gleichzeitig.
   // Gestartet wird über den Mund im Feld. Beenden ist nicht nötig: „T-Shirt designen“ bzw. „Änderungen übernehmen“
   // beenden das Diktat selbst, warten das letzte Wort ab und arbeiten dann mit dem vollständigen Text.
-  // Safari/iPad beendet die Erkennung nach kurzen Sprechpausen von sich aus – dann hört sie automatisch weiter zu
-  // (bis dreimal hintereinander nichts mehr erkannt wurde).
-  // Ohne Unterstützung verschwindet der Mund, und ein Hinweis nennt die Diktierfunktion der Handy-Tastatur.
+  // Zuverlässigkeit (Stand 03.11.2026):
+  //  - Ob der Browser Spracherkennung hat, wird erst beim Antippen geprüft (beste vorhandene: SpeechRecognition/webkit…).
+  //  - Start-Wächter: Startet das Mikrofon nicht innerhalb von 8 s (z. B. Erlaubnis-Abfrage hängt, Siri/Diktat aus),
+  //    wird sauber abgebrochen – nichts bleibt hängen.
+  //  - Erneutes Antippen während des Startens bricht ab; während des Zuhörens beendet es das Diktat (letzte Wörter bleiben).
+  //  - Ohne Spracherkennung oder bei gesperrtem Dienst: Ausweichweg über die Diktierfunktion der Tastatur – mit passender
+  //    Anleitung je Gerät (Handy: 🎤 auf der Tastatur, Windows: Win + H, Mac: zweimal Fn/🌐). Nur dann öffnet sich die Tastatur;
+  //    sonst bleibt sie zu (Feld während des Zuhörens schreibgeschützt). Betriebssystem-Sperren werden nicht umgangen.
   const speechStatus = $('studio-speech-status'), editStatus = $('studio-edit-status');
-  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const hear = text => { speechStatus.textContent = text; };
-  const SPEECH_ERRORS = {'not-allowed': 'Bitte erlauben Sie den Mikrofonzugriff im Browser.', 'service-not-allowed': 'Der Sprachdienst ist hier nicht verfügbar. Nutzen Sie das Mikrofon Ihrer Tastatur.',
-    'audio-capture': 'Kein Mikrofon gefunden. Bitte prüfen Sie Ihr Mikrofon.', 'no-speech': 'Keine Sprache erkannt. Bitte nochmals den Mund antippen und sprechen.',
-    'network': 'Die Spracherkennung ist nicht erreichbar. Bitte Internetverbindung prüfen.'};
-  const FATAL = ['not-allowed', 'service-not-allowed', 'audio-capture', 'network', 'language-not-supported'];
-  // Handy/Tablet: Android-Chrome und iOS-Safari liefern im Dauer-Modus (continuous) oft gar keinen Text.
-  // Dort wird darum Satz für Satz erkannt und nach jedem Satz automatisch weiter zugehört.
+  const getRecognition = () => (window.isSecureContext && (window.SpeechRecognition || window.webkitSpeechRecognition)) || null;
+  // Statuszeile: Text oder Liste von Sätzen (je Satz ein eigenes Element, damit language.js jeden Satz einzeln übersetzt).
+  const setStatus = (el, text) => {
+    if (!Array.isArray(text)) { el.textContent = text || ''; return; }
+    el.replaceChildren(...text.filter(Boolean).flatMap((part, i) => [i ? ' ' : '', Object.assign(document.createElement('span'), {textContent: part})]));
+  };
+  const hear = text => setStatus(speechStatus, text);
+  const SPEECH_ERRORS = {'not-allowed': 'Bitte erlaube den Mikrofonzugriff im Browser.', 'service-not-allowed': 'Der Sprachdienst ist hier nicht verfügbar.',
+    'audio-capture': 'Kein Mikrofon gefunden. Bitte prüfe dein Mikrofon.', 'no-speech': 'Keine Sprache erkannt. Bitte nochmals den Mund antippen und sprechen.',
+    'network': 'Die Spracherkennung ist nicht erreichbar.', 'language-not-supported': 'Diese Sprache wird vom Browser nicht unterstützt.'};
+  // Bei diesen Fehlern hilft nur die Diktierfunktion der Tastatur; bei den ersten beiden auch beim nächsten Antippen.
+  const KEYBOARD_ERRORS = ['service-not-allowed', 'language-not-supported', 'not-allowed', 'network'];
+  let speechUnavailable = false;
+  // Handy/Tablet: Android-Chrome und iOS-Safari liefern im Dauer-Modus (continuous) oft gar keinen Text – dort Satz für Satz.
   const MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) || matchMedia('(pointer: coarse)').matches;
+  const MAC = !MOBILE && /Macintosh|Mac OS X/.test(navigator.userAgent);
+  const keyboardHint = () => MOBILE ? 'Tippe in der Tastatur auf das 🎤 Mikrofon und sprich – der Text erscheint im Feld.'
+    : MAC ? 'Drücke zweimal die Fn-Taste (🌐) und sprich – der Text erscheint im Feld.'
+    : 'Drücke Windows-Taste + H und sprich – der Text erscheint im Feld.';
   // Testmodus: Adresse mit ?sprachtest öffnen – dann zeigt die Statuszeile, was der Browser meldet.
   const DEBUG = /[?&]sprachtest\b/.test(location.search);
   let debugLog = [];
   const trace = (d, text) => { if (!DEBUG) return; debugLog = [...debugLog.slice(-7), text]; d.report('Sprachtest (' + (MOBILE ? 'Handy' : 'Computer') + '): ' + debugLog.join(' → ')); };
-  // dict = laufendes Diktat {button, field, report, changed, show, session, base, want, quiet, error, done}
+  // dict = laufendes Diktat {button, field, report, changed, show, session, base, want, started, error, done}
   let dict = null;
   function endDictation(d, text) {
     if (dict !== d) return;
-    clearTimeout(d.watchdog);
+    clearTimeout(d.watchdog); clearTimeout(d.startTimer);
     dict = null; d.show(false);
     if (text) d.report(text);
     d.done?.();
@@ -172,31 +189,46 @@
         resolve();
       }, 1500);
       d.done = () => { clearTimeout(timer); resolve(); };
-      if (!d.session) { endDictation(d); return; }
+      if (!d.session || !d.started) { const s = d.session; d.session = null; try { s?.abort(); } catch {} endDictation(d); return; }
       try { d.session.stop(); } catch { d.session = null; endDictation(d); }
     });
   }
-  function listen(d) {
+  // Ausweichweg: Diktierfunktion der Geräte-Tastatur (bzw. Windows/Mac-Diktat). Feld freigeben und Cursor hineinsetzen.
+  function keyboardDictation(field, report, why) {
+    report([why, keyboardHint()]);
+    field.readOnly = false;
+    try { field.focus({preventScroll: true}); } catch { field.focus(); }
+  }
+  function listen(d, Recognition) {
     const session = new Recognition(), field = d.field;
     d.session = session;
     d.base = field.value.trim();
     d.lastFinal = ''; d.lastText = ''; d.heard = false; d.started = false;
     session.lang = 'de-DE';
-    // iOS Safari does not reliably support continuous speech recognition.
-    // Do not restart automatically on iOS: subsequent starts require a fresh user gesture.
+    // iOS Safari unterstützt den Dauer-Modus nicht zuverlässig; ein Neustart bräuchte dort ein neues Antippen.
     session.continuous = !MOBILE;
     session.interimResults = true; session.maxAlternatives = 1;
     const armWatchdog = () => {
       clearTimeout(d.watchdog);
       d.watchdog = setTimeout(() => {
         if (dict !== d || d.session !== session || !d.want) return;
-        d.want = false; d.error = 'Keine Antwort vom Sprachdienst. Bitte das Mikrofon Ihrer Tastatur verwenden oder erneut versuchen.';
+        d.want = false; d.session = null;
         try { session.abort(); } catch {}
-        endDictation(d, d.error);
+        endDictation(d);
+        keyboardDictation(field, d.report, 'Keine Antwort vom Sprachdienst.');
       }, 12000);
     };
+    // Start-Wächter: Ohne Start nach 8 s sauber abbrechen und den Ausweichweg anbieten.
+    d.startTimer = setTimeout(() => {
+      if (dict !== d || d.started) return;
+      d.want = false; d.session = null;
+      try { session.abort(); } catch {}
+      endDictation(d);
+      keyboardDictation(field, d.report, 'Das Mikrofon startet nicht.');
+    }, 8000);
     session.onstart = () => {
       if (d.session !== session) return;
+      clearTimeout(d.startTimer);
       d.started = true; d.show(true);
       trace(d, 'start');
       if (!DEBUG) d.report(d.hint);
@@ -216,18 +248,20 @@
       if (final.trim() || interim.trim()) d.heard = true;
       d.lastFinal = final.trim();
       d.lastText = [final.trim(), interim.trim()].filter(Boolean).join(' ');
+      // Der erkannte Text erscheint sofort im Feld (auch die noch unsicheren Wörter).
       field.value = [d.base, final.trim(), interim.trim()].filter(Boolean).join(' ');
       field.scrollTop = field.scrollHeight; d.changed();
     };
     session.onerror = event => {
       if (d.session !== session) return;
       trace(d, 'Fehler ' + event.error);
+      if (event.error === 'aborted') return;
       d.want = false;
-      d.error = SPEECH_ERRORS[event.error] || (event.error === 'language-not-supported'
-        ? 'Diese Sprache wird vom Browser nicht unterstützt. Bitte das Mikrofon Ihrer Tastatur verwenden.'
-        : 'Die Spracherkennung konnte nicht gestartet werden. Bitte das Mikrofon Ihrer Tastatur verwenden.');
-      // On some iOS versions onend is not delivered after an error.
-      setTimeout(() => { if (dict === d && d.session === session) endDictation(d, d.error); }, 400);
+      d.errorCode = event.error;
+      d.error = SPEECH_ERRORS[event.error] || 'Die Spracherkennung konnte nicht gestartet werden.';
+      if (['service-not-allowed', 'language-not-supported'].includes(event.error)) speechUnavailable = true;
+      // Manche iOS-Versionen liefern nach einem Fehler kein onend.
+      setTimeout(() => { if (dict === d && d.session === session) { d.session = null; finishWithError(d); } }, 400);
     };
     session.onend = () => {
       if (d.session !== session) return;
@@ -238,41 +272,55 @@
       d.changed();
       d.session = null;
       if (dict !== d) return;
-      endDictation(d, d.error || (d.heard
-        ? 'Diktat beendet. Prüfen Sie den Text – zum Weitersprechen den Mund antippen.'
-        : 'Keine Sprache erkannt. Bitte erneut antippen oder das Mikrofon Ihrer Tastatur verwenden.'));
+      if (d.error) { finishWithError(d); return; }
+      endDictation(d, d.heard
+        ? 'Diktat beendet. Prüfe den Text – zum Weitersprechen den Mund antippen.'
+        : 'Keine Sprache erkannt. Bitte nochmals den Mund antippen und sprechen.');
     };
     session.start();
   }
+  // Fehler: verständliche Meldung; bei gesperrtem/fehlendem Dienst zusätzlich der Weg über die Tastatur-Diktierfunktion.
+  function finishWithError(d) {
+    const code = d.errorCode, text = d.error;
+    endDictation(d);
+    if (KEYBOARD_ERRORS.includes(code) || !SPEECH_ERRORS[code]) keyboardDictation(d.field, d.report, text);
+    else d.report(text);
+  }
   function dictation(button, field, report, changed, hint) {
     const box = field.parentElement, label = button.querySelector('span'), idle = label.textContent;
+    // Animation „Ich höre dir zu …“: Schallwellen + Text unten im Feld, solange zugehört wird.
+    const badge = document.createElement('span'); badge.className = 'studio-listen-badge'; badge.setAttribute('aria-hidden', 'true');
+    badge.innerHTML = '<span class="studio-listen-waves"><i></i><i></i><i></i><i></i><i></i></span><b>Ich höre dir zu …</b>';
+    box.append(badge);
     const show = on => {
       box.classList.toggle('is-listening', on); button.classList.toggle('is-on', on);
       button.setAttribute('aria-pressed', String(on));
       label.textContent = on ? 'Stopp' : idle;
       field.readOnly = on; controls();
     };
+    let lastTap = 0;
     button.addEventListener('click', () => {
-      if (dict?.button === button) { finishDictation(); return; }
+      // Doppeltes Antippen (Zittern, Doppelklick) nicht als zweiten Befehl werten.
+      const now = Date.now(); if (now - lastTap < 400) return; lastTap = now;
+      if (dict?.button === button) { if (dict.started) finishDictation(); else { stopDictation(); report(''); } return; }
       stopDictation(); stopTour(); if (field === keyword) robotStop();
+      const Recognition = getRecognition();
+      if (!Recognition || speechUnavailable) { keyboardDictation(field, report, Recognition ? 'Der Sprachdienst ist hier nicht verfügbar.' : 'Dieser Browser hat keine eingebaute Spracherkennung.'); return; }
       if (document.activeElement === field) field.blur();
       const d = {button, field, report, changed, show, hint, want: true, error: '', start: field.value.trim()};
       debugLog = []; dict = d;
       report('Mikrofon wird gestartet …');
-      // Must be invoked synchronously inside the user tap on Safari.
-      try { listen(d); }
-      catch { endDictation(d, 'Die Spracheingabe konnte nicht gestartet werden. Bitte das Mikrofon Ihrer Tastatur verwenden.'); }
+      // Muss in Safari direkt im Antippen gestartet werden.
+      try { listen(d, Recognition); }
+      catch { clearTimeout(d.startTimer); d.session = null; endDictation(d); keyboardDictation(field, report, 'Die Spracheingabe konnte nicht gestartet werden.'); }
     });
   }
   const speakButton = field => field.parentElement.querySelector('.studio-icon-btn[data-act=speak]');
-  if (!Recognition || !window.isSecureContext) {
-    speakButton(keyword).hidden = speakButton(editInput).hidden = true;
-    hear('Tipp: Sie können Ihre Idee auch mit dem Mikrofon Ihrer Handy-Tastatur einsprechen.');
-  } else {
-    dictation(speakButton(keyword), keyword, hear, () => { fail(''); steps(); }, 'Ich höre zu … Wenn Sie fertig sind, einfach auf „T-Shirt designen“ tippen.');
-    dictation(speakButton(editInput), editInput, text => { editStatus.textContent = text; }, () => controls(), 'Ich höre zu … Wenn Sie fertig sind, einfach auf „Änderungen übernehmen“ tippen.');
-  }
+  dictation(speakButton(keyword), keyword, hear, () => { fail(''); steps(); }, 'Ich höre dir zu … Wenn du fertig bist, einfach auf „T-Shirt designen“ tippen.');
+  dictation(speakButton(editInput), editInput, text => setStatus(editStatus, text), () => controls(), 'Ich höre dir zu … Wenn du fertig bist, einfach auf „Änderungen übernehmen“ tippen.');
   window.addEventListener('pagehide', stopDictation);
+  // App gewechselt / Bildschirm aus: Diktat sauber beenden (der bisher erkannte Text bleibt).
+  document.addEventListener('visibilitychange', () => { if (document.hidden && dict) finishDictation(); });
   // Tastatur im leeren Feld: Klick setzt den Cursor ins Feld (auf dem Handy öffnet sich die Tastatur).
   for (const field of [keyword, editInput]) field.parentElement.querySelector('.studio-icon-btn[data-act=type]').addEventListener('click', () => field.focus());
 
@@ -299,7 +347,7 @@
     const file = photo.files[0];
     if (file && file.size > MAX_PHOTO) {
       photo.value = '';
-      photoProblem(`Die maximale Grösse von 5 MB ist überschritten (Ihr Foto: ${(file.size / 1024 / 1024).toFixed(1).replace('.', ',')} MB). Bitte ein kleineres Foto wählen.`);
+      photoProblem(`Die maximale Grösse von 5 MB ist überschritten (Dein Foto: ${(file.size / 1024 / 1024).toFixed(1).replace('.', ',')} MB). Bitte ein kleineres Foto wählen.`);
     } else if (file && !/^image\/(jpeg|png|webp)$/.test(file.type)) {
       photo.value = '';
       photoProblem('Dieses Dateiformat geht leider nicht. Bitte ein JPG-, PNG- oder WebP-Foto wählen.');
@@ -522,9 +570,8 @@
   // Darunter (Handy) eine Spalte – nur dort wird das Shirt beim Gestalten senkrecht mittig gestellt.
   const twoCol = matchMedia('(min-width: 760px)');
   function centerWhileGenerating() {
-    if (twoCol.matches || !document.body.classList.contains('is-generating')) { stage.style.removeProperty('min-height'); return; }
-    const top = stage.getBoundingClientRect().top + window.scrollY;
-    stage.style.minHeight = `${Math.max(0, Math.round((probe.offsetHeight || window.innerHeight) - top - 12))}px`;
+    // Die senkrechte Mitte übernimmt jetzt das CSS für alle Geräte (Gestaltungsbereich mittig zwischen Kopf- und Fusszeile).
+    stage.style.removeProperty('min-height'); return;
   }
   window.addEventListener('resize', centerWhileGenerating); twoCol.addEventListener('change', centerWhileGenerating);
 
@@ -573,15 +620,15 @@
     if (busy || !(await afterDictation())) return;
     if (!speakButton(keyword).hidden) hear('');
     const word = keyword.value.trim(), file = photo.files[0];
-    if (!model) { fail('Bitte wählen Sie zuerst ein Shirt-Modell (Polo-Shirt oder Zip-Shirt).'); modelField.classList.add('attention'); needModel = true; missing(modelField, modelButtons[0], en() ? '👇 Please pick a shirt' : '👇 Bitte ein Shirt anklicken', afterModel); return; }
-    if (!word && !file && !styleChoice) { fail('Bitte beschreiben Sie Ihr Design oder laden Sie ein Foto hoch.'); missing(keyword.parentElement, null,en() ? '👇 Describe your shirt here' : '👇 Hier Ihr Shirt beschreiben'); return; }
-    if (!rights.checked) { fail('Bitte bestätigen Sie Ihre Inhalts- und Bildrechte.'); rights.closest('label').classList.add('attention'); missing(rights.closest('label'), rights, en() ? '👇 Please tick this box' : '👇 Bitte Häkchen setzen'); return; }
+    if (!model) { fail('Bitte wähle zuerst ein Shirt-Modell (Polo-Shirt oder Zip-Shirt).'); modelField.classList.add('attention'); needModel = true; missing(modelField, modelButtons[0], en() ? '👇 Please pick a shirt' : '👇 Bitte ein Shirt anklicken', afterModel); return; }
+    if (!word && !file && !styleChoice) { fail('Bitte beschreibe dein Design oder lade ein Foto hoch.'); missing(keyword.parentElement, null,en() ? '👇 Describe your shirt here' : '👇 Hier dein Shirt beschreiben'); return; }
+    if (!rights.checked) { fail('Bitte bestätige deine Inhalts- und Bildrechte.'); rights.closest('label').classList.add('attention'); missing(rights.closest('label'), rights, en() ? '👇 Please tick this box' : '👇 Bitte Häkchen setzen'); return; }
     // Ab dem Klick nur noch das Shirt zeigen (auch Computer/iPad quer): Die linke Seite mit Modell, Idee und Knopf
     // verschwindet, damit niemand aus Versehen dort ein neues Shirt startet. Klappt es nicht, kommt das Formular samt Fehler zurück.
     let made = false;
     showResult(true);
     // Nur beim Erstellen über „T-Shirt designen“ (nicht bei Änderungen): Fusszeile (WhatsApp, Newsletter …) weg,
-    // unter dem Shirt „Deine Idee wird jetzt verwirklicht“. Ist das Shirt fertig, ist alles wieder wie vorher.
+    // (Der frühere Kasten „Deine Idee wird jetzt verwirklicht“ wurde am 03.11.2026 auf Wunsch entfernt.) Ist das Shirt fertig, ist alles wieder wie vorher.
     document.body.classList.add('is-generating'); centerWhileGenerating();
     await run(async () => {
       // Das Polo-Shirt holt der Worker selbst; alle anderen Modelle schicken ihre leere Vorlage mit.
@@ -592,14 +639,14 @@
       const summary = [`Modell: ${MODELS[model].label}`, styleChoice && `Stil: ${STYLES[styleChoice].label}`, word && `Design: ${word}`, file && 'mit eigenem Foto'].filter(Boolean).join(' · ');
       designs.push({blob, layouts, url: URL.createObjectURL(blob), prompt: `KI-Design – ${summary}`, model, selected: true, number: editingOrder ? Math.max(0, ...designs.map(d => d.number || 0)) + 1 : null});
       active = designs.length - 1; startOver = false; made = true;
-      say(`Design ${active + 1} ist fertig. Sie können es im Änderungsfeld noch ändern oder direkt bestellen.`);
+      say(`Design ${active + 1} ist fertig. Du kannst es im Änderungsfeld noch ändern oder direkt bestellen.`);
     });
     document.body.classList.remove('is-generating'); centerWhileGenerating();
     if (!made) { showResult(false); error.scrollIntoView({behavior: 'smooth', block: 'center'}); }
   });
 
   // Weiteres T-Shirt: alle Eingaben (Modell, Stil, Beschreibung, Foto) zurücksetzen und oben bei Schritt 1 neu beginnen.
-  // Die fertigen Designs bleiben unten in „Ihre T-Shirts“ erhalten.
+  // Die fertigen Designs bleiben unten in „Deine T-Shirts“ erhalten.
   another.addEventListener('click', () => { if (!busy) startNew(); });
   function startNew() {
     model = ''; needModel = false; modelButtons.forEach(b => b.setAttribute('aria-pressed', 'false'));
@@ -619,7 +666,7 @@
     if (busy || !designs[i]) return;
     stopDictation(); stopTour();
     active = i; startOver = false; showResult(true); editStatus.textContent = ''; fail('');
-    say(`Design ${i + 1}: Beschreiben Sie im Änderungsfeld, was geändert werden soll.`);
+    say(`Design ${i + 1}: Beschreibe im Änderungsfeld, was geändert werden soll.`);
     render();
     requestAnimationFrame(() => {
       // Handy (eine Spalte): ganz nach oben – dann ist das Shirt vollständig zu sehen und direkt darunter das
@@ -691,7 +738,7 @@
       }
       await window.ShirtboxDesignTransfer.save(saved);
       location.href = 'bestellen.html#bestellen';
-    } catch { fail('Ihre Designs konnten nicht gespeichert werden. Bitte die Speicherung im Browser erlauben und erneut versuchen.'); busy = false; controls(); }
+    } catch { fail('Deine Designs konnten nicht gespeichert werden. Bitte die Speicherung im Browser erlauben und erneut versuchen.'); busy = false; controls(); }
   });
 
   // Aus der Bestellung zurück: gespeicherte Designs zum Weiterbearbeiten laden.
@@ -704,7 +751,7 @@
       if (index < 0) throw Error();
       items.forEach((e, i) => { const blob = e.blob || e; if (blob instanceof Blob) designs.push({blob, url: URL.createObjectURL(blob), prompt: e.prompt || '', model: /Modell: Zip-Shirt/.test(e.prompt || '') ? 'zip' : 'polo', selected: true, number: e.number || i + 1, entry: e.blob ? e : {blob: e, number: i + 1}}); });
       editingOrder = true; showResult(true); active = designs.findIndex(d => String(d.number) === number);
-      say('Ihr Design wurde geladen. Beschreiben Sie im Änderungsfeld die gewünschte Änderung.');
+      say('Dein Design wurde geladen. Beschreibe im Änderungsfeld die gewünschte Änderung.');
       // Bewusst kein automatischer Cursor im Änderungsfeld: Sonst sind „Antippen & schreiben / sprechen“ versteckt,
       // bis man woanders hintippt. Die beiden Zeichen sollen sofort sichtbar sein.
       render();

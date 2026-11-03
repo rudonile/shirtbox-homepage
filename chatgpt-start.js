@@ -35,6 +35,6 @@
     status.hidden = copied;
     status.textContent = copied
       ? ''
-      : 'Automatisches Kopieren ist blockiert. Bitte kopieren Sie den markierten Prompt.';
+      : 'Automatisches Kopieren ist blockiert. Bitte kopiere den markierten Prompt.';
   });
 })();

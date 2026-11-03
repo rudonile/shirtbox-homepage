@@ -24,7 +24,7 @@
     + 'html.is-landscape .sb-rotate{display:flex}html.is-landscape body{overflow:hidden}';
   document.head.append(style);
   const overlay = document.createElement('div'); overlay.className = 'sb-rotate'; overlay.setAttribute('role', 'alert');
-  overlay.innerHTML = '<span aria-hidden="true">📱</span><strong>Bitte drehen Sie Ihr Gerät hochkant.</strong><small>ShirtBOX ist für das Hochformat gemacht.</small>';
+  overlay.innerHTML = '<span aria-hidden="true">📱</span><strong>Bitte drehe dein Gerät hochkant.</strong><small>ShirtBOX ist für das Hochformat gemacht.</small>';
   const mount = () => { if (!overlay.isConnected) document.body.append(overlay); };
   if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount);
   const update = () => root.classList.toggle('is-landscape', landscape());

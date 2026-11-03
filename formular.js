@@ -23,7 +23,7 @@
     const body = document.getElementById('order-summary-body'); body.replaceChildren();
     [...designs.values()].forEach((state, index) => {
       const item = order.designs[index];
-      const title=state.card.querySelector('.design-title');title.textContent=`Design ${state.designNumber || index + 1} – Ihr Shirt `;if(state.previewUrl){const mini=document.createElement('img');mini.src=state.previewUrl;mini.alt='Design vergrössern';mini.title='Zum Vergrössern anklicken';mini.style.cssText='width:76px;height:76px;object-fit:contain;vertical-align:middle;margin-left:14px;border-radius:8px;cursor:zoom-in;background:#fff';mini.addEventListener('click',()=>showDesign(state));title.append(mini);}
+      const title=state.card.querySelector('.design-title');title.textContent=`Design ${state.designNumber || index + 1} – dein Shirt `;if(state.previewUrl){const mini=document.createElement('img');mini.src=state.previewUrl;mini.alt='Design vergrössern';mini.title='Zum Vergrössern anklicken';mini.style.cssText='width:76px;height:76px;object-fit:contain;vertical-align:middle;margin-left:14px;border-radius:8px;cursor:zoom-in;background:#fff';mini.addEventListener('click',()=>showDesign(state));title.append(mini);}
       state.card.querySelector('.design-subtotal').textContent = `${item.quantity} Shirt${item.quantity === 1 ? '' : 's'} · ${money(item.subtotal)}`;
       const rows = [...state.card.querySelectorAll('.design-size-row')];
       state.card.querySelector('.add-size').disabled = rows.length >= api.SIZES.length;
@@ -47,7 +47,7 @@
     document.getElementById('gesamt-feld').value = order.valid ? String(order.total) : '';
     document.getElementById('gesamt-anzahl').value = order.valid ? String(order.quantity) : '';
     document.getElementById('bestell-details').value = api.description(order);
-    document.getElementById('antwort-mail').value = order.valid ? api.email(order) : 'Vielen Dank für Ihre ShirtBOX-Bestellung!';
+    document.getElementById('antwort-mail').value = order.valid ? api.email(order) : 'Vielen Dank für deine ShirtBOX-Bestellung!';
     if (online) {
       const next = new URL('danke.html', location.href);
       if (order.valid) next.searchParams.set('anzahl', String(order.quantity));
@@ -90,7 +90,7 @@
     state.card.querySelector('.order-inline-view').hidden = !file;
     state.card.querySelector('.order-inline-edit').hidden = !file;
     state.card.querySelector('.design-heading-actions').hidden = !file;
-    state.filename.textContent = file ? `Design ${state.designNumber}` : 'Bitte zuerst Ihren Entwurf im Shirt-Designer übernehmen.';
+    state.filename.textContent = file ? `Design ${state.designNumber}` : 'Bitte zuerst deinen Entwurf im Shirt-Designer übernehmen.';
     if (file && (file.type.startsWith('image/') || /\.(jpe?g|png|webp|gif|bmp|svg|avif|heic|heif|tiff?)$/i.test(file.name))) {
       state.previewUrl = URL.createObjectURL(file); state.preview.src = state.previewUrl; state.preview.hidden = false; state.preview.style.display='block'; state.preview.style.width='100%'; state.preview.style.maxHeight='520px'; state.preview.style.objectFit='contain'; state.preview.onerror=()=>{state.filename.textContent='Bildvorschau konnte nicht geladen werden.';};
       state.card.querySelector('.order-inline-edit').href=`designhilfe.html?weiterbearbeiten=${encodeURIComponent(state.designNumber)}`;
@@ -108,7 +108,7 @@
   function addDesign() {
     const slot = ++nextSlot;
     const card = document.createElement('section'); card.className = 'order-design'; card.setAttribute('aria-labelledby', `design-${slot}-title`);
-    card.innerHTML = `<div class="design-heading-row"><h3 class="design-title" id="design-${slot}-title">Ihr Shirt</h3><div class="design-heading-actions" hidden><button type="button" class="design-heading-zoom">🔍 Vergrössern</button><a class="design-heading-edit" href="designhilfe.html">✏️ Hier T-Shirt ändern</a></div></div><input id="design-${slot}-file" name="attachment_design_${slot}" type="file" accept="image/jpeg" hidden tabindex="-1" aria-hidden="true"><div class="design-file-preview"><img hidden alt="Ihr übernommener Shirt-Entwurf"><p class="design-filename">Bitte zuerst Ihren Entwurf im Shirt-Designer übernehmen.</p><button type="button" class="order-inline-view" hidden aria-hidden="true" tabindex="-1">🔍 Vergrössern</button><a class="order-inline-edit" href="designhilfe.html" hidden aria-hidden="true" tabindex="-1">✎ Mit KI weiterbearbeiten</a></div><div class="design-size-list"></div><button class="add-size" type="button">+ Weitere Grösse</button><div class="design-subtotal"></div><div class="agb-consent"><input id="design-${slot}-rights" name="Design_${slot}_Rechte_und_Inhalte" type="checkbox" value="Ja – erforderliche Rechte vorhanden und Inhaltsvorgaben eingehalten" required><label for="design-${slot}-rights">Ich bestätige die erforderlichen Nutzungs- und Bildrechte sowie zulässige Inhalte für meinen Entwurf. *</label></div><textarea class="design-data" name="Design_${slot}_Datei_und_Stückzahlen" hidden></textarea>`;
+    card.innerHTML = `<div class="design-heading-row"><h3 class="design-title" id="design-${slot}-title">Dein Shirt</h3><div class="design-heading-actions" hidden><button type="button" class="design-heading-zoom">🔍 Vergrössern</button><a class="design-heading-edit" href="designhilfe.html">✏️ Hier T-Shirt ändern</a></div></div><input id="design-${slot}-file" name="attachment_design_${slot}" type="file" accept="image/jpeg" hidden tabindex="-1" aria-hidden="true"><div class="design-file-preview"><img hidden alt="Dein übernommener Shirt-Entwurf"><p class="design-filename">Bitte zuerst deinen Entwurf im Shirt-Designer übernehmen.</p><button type="button" class="order-inline-view" hidden aria-hidden="true" tabindex="-1">🔍 Vergrössern</button><a class="order-inline-edit" href="designhilfe.html" hidden aria-hidden="true" tabindex="-1">✎ Mit KI weiterbearbeiten</a></div><div class="design-size-list"></div><button class="add-size" type="button">+ Weitere Grösse</button><div class="design-subtotal"></div><div class="agb-consent"><input id="design-${slot}-rights" name="Design_${slot}_Rechte_und_Inhalte" type="checkbox" value="Ja – erforderliche Rechte vorhanden und Inhaltsvorgaben eingehalten" required><label for="design-${slot}-rights">Ich bestätige die erforderlichen Nutzungs- und Bildrechte sowie zulässige Inhalte für meinen Entwurf. *</label></div><textarea class="design-data" name="Design_${slot}_Datei_und_Stückzahlen" hidden></textarea>`;
     const state = {slot, card, previewUrl: '', file: card.querySelector('input[type=file]'), rights: card.querySelector('input[type=checkbox]'), preview: card.querySelector('img'), filename: card.querySelector('.design-filename')};
     designs.set(slot, state); list.append(card); addSize(state, {quantity:1});
     state.preview.style.cursor='zoom-in'; state.preview.tabIndex=0; state.preview.setAttribute('role','button'); state.preview.setAttribute('aria-label','Design gross ansehen'); state.preview.addEventListener('click',()=>showDesign(state)); state.preview.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();showDesign(state);}});
@@ -123,7 +123,7 @@
     const sizeHelp=document.createElement('div');sizeHelp.className='order-size-help';card.querySelector('.design-size-list').before(sizeHelp);
     const asianNote=document.createElement('span');asianNote.className='asian-size-notice';asianNote.textContent='Asiatische Grössen – wir bestellen automatisch zwei Grössen grösser.';sizeHelp.append(asianNote);
     const guideTemplate=document.getElementById('shirtbox-size-guide-template');if(guideTemplate){const guide=guideTemplate.content.firstElementChild.cloneNode(true);guide.removeAttribute('id');sizeHelp.append(guide);}
-    const remove=document.createElement('button');remove.type='button';remove.className='remove-design';remove.textContent='✕ Entfernen';remove.title='Dieses Design aus der Bestellung löschen';actions.append(remove);remove.addEventListener('click',async()=>{if(!confirm('Sind Sie sicher, dass Sie dieses Design aus der Bestellung löschen wollen?'))return;const number=state.designNumber;releasePreview(state);designs.delete(slot);card.remove();try{const saved=await window.ShirtboxDesignTransfer.load();if(saved){const blobs=(saved.blobs||[saved.blob]).filter((item,i)=>(item.number||i+1)!==number);if(blobs.length)await window.ShirtboxDesignTransfer.save(blobs);else await window.ShirtboxDesignTransfer.clear();}}catch{}try{const details=JSON.parse(sessionStorage.getItem(detailKey)||'{}');delete details[number];sessionStorage.setItem(detailKey,JSON.stringify(details));}catch{}refresh();window.ShirtboxRefreshOrderLink?.();});
+    const remove=document.createElement('button');remove.type='button';remove.className='remove-design';remove.textContent='✕ Entfernen';remove.title='Dieses Design aus der Bestellung löschen';actions.append(remove);remove.addEventListener('click',async()=>{if(!confirm('Bist du sicher, dass du dieses Design aus der Bestellung löschen willst?'))return;const number=state.designNumber;releasePreview(state);designs.delete(slot);card.remove();try{const saved=await window.ShirtboxDesignTransfer.load();if(saved){const blobs=(saved.blobs||[saved.blob]).filter((item,i)=>(item.number||i+1)!==number);if(blobs.length)await window.ShirtboxDesignTransfer.save(blobs);else await window.ShirtboxDesignTransfer.clear();}}catch{}try{const details=JSON.parse(sessionStorage.getItem(detailKey)||'{}');delete details[number];sessionStorage.setItem(detailKey,JSON.stringify(details));}catch{}refresh();window.ShirtboxRefreshOrderLink?.();});
     refresh();
     return state;
   }
@@ -242,7 +242,7 @@
     if(progress){progress.hidden=false;progress.scrollIntoView({behavior:'smooth',block:'center'});}
     submit.setAttribute('aria-busy','true');
     submit.textContent='⏳ Bestellung wird übermittelt …';
-    message('Ihre Bestellung wird übermittelt. Bitte warten und die Seite nicht schliessen.');
+    message('Deine Bestellung wird übermittelt. Bitte warten und die Seite nicht schliessen.');
     (async () => {
       const next = document.getElementById('weiter');
       try {
@@ -257,7 +257,7 @@
         thanks.searchParams.set('bestellung',sent.bestellnummer);
         location.href=thanks.href;
       } catch(e) {
-        message(`Bestellung nicht bestätigt: ${e.message}. Bitte NICHT erneut bestellen, wenn bereits eine Bestellmail angekommen ist. Kontaktieren Sie ShirtBOX.`);
+        message(`Bestellung nicht bestätigt: ${e.message}. Bitte NICHT erneut bestellen, wenn bereits eine Bestellmail angekommen ist. Kontaktiere ShirtBOX.`);
         if(progress)progress.hidden=true;
         submit.removeAttribute('aria-busy');
         submit.textContent='Erneut versuchen';

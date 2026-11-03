@@ -37,10 +37,10 @@
   (async()=>{
     try{
       const saved=await window.ShirtboxDesignTransfer.load();
-      if(!saved||!saved.blobs?.length){note('Noch kein Shirt in der Bestellung. Bitte im Shirt-Gestalter Ihr Shirt auswählen und auf „T-Shirt zur Bestellung“ klicken.',true);return;}
+      if(!saved||!saved.blobs?.length){note('Noch kein Shirt in der Bestellung. Bitte im Shirt-Gestalter dein Shirt auswählen und auf „T-Shirt zur Bestellung“ klicken.',true);return;}
       const blobs=saved.blobs;
       if(blobs.length>100)throw Error('Ungültige Anzahl Designs');
-      if(typeof DataTransfer!=='function')throw Error('Dieser Browser unterstützt die automatische Dateiübernahme nicht. Bitte aktualisieren Sie Safari');
+      if(typeof DataTransfer!=='function')throw Error('Dieser Browser unterstützt die automatische Dateiübernahme nicht. Bitte aktualisiere Safari');
       // Jedes Design einzeln übernehmen: Ein defektes Bild blockiert die anderen nicht mehr (früher fehlten dann alle folgenden).
       const broken=[];
       for(let i=0;i<blobs.length;i++){
