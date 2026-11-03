@@ -354,7 +354,7 @@
     } else if (file) photoProblem('');
     const current = photo.files[0];
     photoBox.classList.toggle('has-photo', !!current);
-    photoName.textContent = current ? current.name : 'Eigenes Foto oder Logo hochladen';
+    photoName.textContent = current ? current.name : 'Optional: eigenes Foto oder Logo hinzufügen';
     if (photoThumb.src) URL.revokeObjectURL(photoThumb.src);
     photoThumb.src = current ? URL.createObjectURL(current) : '';
     photoRemove.hidden = !current;

@@ -9,7 +9,7 @@
 /* iPad früh erkennen (vor dem ersten Anzeigen): eigenes einspaltiges Layout nur für iPad. Neuere iPads melden sich als Mac mit Touchscreen. */
 (function(){var u=navigator.userAgent;if(/iPad/.test(u)||(/Macintosh/.test(u)&&navigator.maxTouchPoints>1))document.documentElement.classList.add("is-ipad");})();</script>
 <link href="shirtbox-icon.svg" rel="icon" type="image/svg+xml"/><link href="shirtbox.css?v=20261025-raster" rel="stylesheet"/><link href="marke.css?v=20261025-raster" rel="stylesheet"/>
-<link href="gestalter.css?v=20261103-sprache2" rel="stylesheet"/>
+<link href="gestalter.css?v=20261103-idee2" rel="stylesheet"/>
 </head>
 <body class="design-page studio-page">
 <main class="shell">
@@ -43,13 +43,12 @@
 <p class="studio-step-title"><b>2</b><span>Deine Shirt-Idee beschreiben</span></p>
 <div class="studio-field studio-sub sub-idea">
 <label class="studio-keyword-label" for="studio-keyword"><span>✍️ Beschreibe hier dein Wunsch-Shirt</span><span class="studio-keyword-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3v16M5.5 12.5 12 19l6.5-6.5"/></svg></span></label>
-<div class="studio-keyword-box studio-keyword-main"><textarea id="studio-keyword" rows="2" placeholder="Beschreibe hier, wie dein T-Shirt aussehen soll …" autocomplete="off" aria-describedby="studio-text-tip"></textarea><span class="studio-keyword-icons"><button class="studio-icon-btn" type="button" data-act="type"><svg class="icon-keys" viewBox="0 0 24 24"><rect x="1.5" y="6" width="21" height="12.5" rx="2.2"/><path d="M5 9.5h1.2M8.6 9.5h1.2M12.2 9.5h1.2M15.8 9.5h1.2M19 9.5h.4M6.8 12.3h1.2M10.4 12.3h1.2M14 12.3h1.2M17.4 12.3h1.2M7.5 15.2h9"/></svg><span>Antippen &amp; schreiben</span></button><button class="studio-icon-btn" type="button" data-act="speak"><svg class="icon-mouth" viewBox="0 0 24 24"><path d="M1.8 12.2c2.2-1.7 4.2-4.6 6.8-4.6 1.4 0 2.3.9 3.4 1.6 1.1-.7 2-1.6 3.4-1.6 2.6 0 4.6 2.9 6.8 4.6-2.6 3.3-5.8 5.4-10.2 5.4S4.4 15.5 1.8 12.2z"/><path d="M1.8 12.2c3.2.9 6.6 1.3 10.2 1.3s7-.4 10.2-1.3"/><path d="M23 6.5c.6 1 .6 2.2 0 3.2M21.2 7.3c.3.5.3 1.1 0 1.6M1 6.5c-.6 1-.6 2.2 0 3.2M2.8 7.3c-.3.5-.3 1.1 0 1.6"/></svg><span>Antippen &amp; sprechen</span></button></span></div>
-<p class="studio-text-tip" id="studio-text-tip">Tipp: Exakten Text in Anführungszeichen schreiben – z. B. hinten „Team Rudi“.</p>
+<div class="studio-keyword-box studio-keyword-main"><textarea id="studio-keyword" rows="2" placeholder="Beschreibe hier, wie dein T-Shirt aussehen soll …" autocomplete="off" aria-label="Deine Shirt-Idee"></textarea><span class="studio-keyword-icons"><button class="studio-icon-btn" type="button" data-act="type"><svg class="icon-keys" viewBox="0 0 24 24"><rect x="1.5" y="6" width="21" height="12.5" rx="2.2"/><path d="M5 9.5h1.2M8.6 9.5h1.2M12.2 9.5h1.2M15.8 9.5h1.2M19 9.5h.4M6.8 12.3h1.2M10.4 12.3h1.2M14 12.3h1.2M17.4 12.3h1.2M7.5 15.2h9"/></svg><span>Antippen &amp; schreiben</span></button><button class="studio-icon-btn" type="button" data-act="speak"><svg class="icon-mouth" viewBox="0 0 24 24"><path d="M1.8 12.2c2.2-1.7 4.2-4.6 6.8-4.6 1.4 0 2.3.9 3.4 1.6 1.1-.7 2-1.6 3.4-1.6 2.6 0 4.6 2.9 6.8 4.6-2.6 3.3-5.8 5.4-10.2 5.4S4.4 15.5 1.8 12.2z"/><path d="M1.8 12.2c3.2.9 6.6 1.3 10.2 1.3s7-.4 10.2-1.3"/><path d="M23 6.5c.6 1 .6 2.2 0 3.2M21.2 7.3c.3.5.3 1.1 0 1.6M1 6.5c-.6 1-.6 2.2 0 3.2M2.8 7.3c-.3.5-.3 1.1 0 1.6"/></svg><span>Antippen &amp; sprechen</span></button></span></div>
 <p class="studio-speech-status" id="studio-speech-status" role="status" aria-live="polite"></p>
 <div class="studio-photo studio-photo-small" id="studio-photo-box">
 <input id="studio-photo" type="file" accept="image/png,image/jpeg,image/webp" aria-label="Foto hochladen (optional)"/>
 <span class="studio-photo-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h2l1.6-2.2h5.8L16.5 6h2A2.5 2.5 0 0 1 21 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/><circle cx="12" cy="12.8" r="3.8"/></svg></span><img id="studio-photo-thumb" alt=""/>
-<span class="studio-photo-label"><span id="studio-photo-name">Eigenes Foto oder Logo hochladen</span><small class="studio-photo-hint">Optional – ich integriere es in dein Design.</small></span>
+<span class="studio-photo-label"><span id="studio-photo-name">Optional: eigenes Foto oder Logo hinzufügen</span><small class="studio-photo-hint">Optional – ich integriere es in dein Design.</small></span>
 <button class="studio-photo-remove" id="studio-photo-remove" type="button" hidden>Entfernen</button>
 </div>
 <p class="studio-photo-error" id="studio-photo-error" role="alert" hidden></p>
@@ -66,7 +65,7 @@
 <div class="studio-stage">
 <figure class="studio-preview">
 <img id="studio-image" src="anleitung/polo-api-vorlage.jpg" width="1536" height="1228" alt="Weisse Polo-Vorlage, Vorderseite und Rückseite"/>
-<div class="studio-loader" id="studio-loader" role="status" aria-live="polite" hidden><span aria-hidden="true">⏳</span><strong>Dein Shirt wird gestaltet …</strong><small>Das dauert bis zu 3 Minuten.</small></div>
+<div class="studio-loader" id="studio-loader" role="status" aria-live="polite" hidden><span class="studio-loader-art" aria-hidden="true"><svg class="studio-print" viewBox="0 0 120 112"><defs><linearGradient id="sbPrintFire" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#ff3d2e"/><stop offset=".55" stop-color="#ff7a2b"/><stop offset="1" stop-color="#ffb43a"/></linearGradient><pattern id="sbPrintStripes" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><rect width="6" height="14" fill="#ffffff2e"/></pattern><clipPath id="sbPrintShirt"><path d="M38 10 49 6c3 7 19 7 22 0l11 4 26 17-11 18-10-6v61H33V39l-10 6-11-18z"/></clipPath></defs><g clip-path="url(#sbPrintShirt)"><rect x="0" y="0" width="120" height="112" fill="#ffffff14"/><g class="studio-print-fill"><rect x="0" y="0" width="120" height="112" fill="url(#sbPrintFire)"/><rect class="studio-print-stripes" x="-40" y="0" width="200" height="112" fill="url(#sbPrintStripes)"/></g><rect class="studio-print-head" x="0" y="0" width="120" height="3" fill="#fff"/></g><path class="studio-print-outline" d="M38 10 49 6c3 7 19 7 22 0l11 4 26 17-11 18-10-6v61H33V39l-10 6-11-18z"/><path class="studio-print-collar" d="M49 6c3 7 19 7 22 0"/><g class="studio-print-sparks"><path d="M104 6l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path d="M12 54l1.5 3.5L17 59l-3.5 1.5L12 64l-1.5-3.5L7 59l3.5-1.5z"/><path d="M102 74l1.5 3.5 3.5 1.5-3.5 1.5-1.5 3.5-1.5-3.5-3.5-1.5 3.5-1.5z"/></g></svg><img class="studio-loader-logo" src="shirtbox-icon.svg" alt="" width="34" height="34"/></span><strong>Dein Shirt wird gestaltet …</strong><small>Das dauert bis zu 3 Minuten.</small></div>
 <figcaption><span>Vorne</span><span>Hinten</span></figcaption>
 </figure>
 <p class="studio-status" id="studio-status" role="status" aria-live="polite"></p>
@@ -104,9 +103,9 @@
 <script defer src="design-uebernahme.js?v=20261103-du"></script>
 <script defer src="bestell-logik.js?v=20261103-du"></script>
 <script defer src="shirt-form.js?v=20261102-form"></script>
-<script defer src="gestalter.js?v=20261103-sprache"></script>
+<script defer src="gestalter.js?v=20261103-druck"></script>
 <script defer src="navigation.js?v=20261103-du"></script>
-<script defer src="language.js?v=20261103-sprache"></script>
-<script defer src="shirti.js?v=20261103-du"></script>
+<script defer src="language.js?v=20261103-idee"></script>
+<script defer src="shirti.js?v=20261103-druck"></script>
 </body>
 </html>
