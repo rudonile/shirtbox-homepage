@@ -7,7 +7,7 @@
 <title>Designen Sie Ihr T-Shirt · ShirtBOX.ch</title>
 <script>if ("scrollRestoration" in history) history.scrollRestoration = "manual";</script>
 <link href="shirtbox-icon.svg" rel="icon" type="image/svg+xml"/><link href="shirtbox.css?v=20261025-raster" rel="stylesheet"/><link href="marke.css?v=20261025-raster" rel="stylesheet"/>
-<link href="gestalter.css?v=20261114b" rel="stylesheet"/>
+<link href="gestalter.css?v=20261114-hover-mobile-20261114-repair2" rel="stylesheet"/>
 </head>
 <body class="design-page">
 <main class="shell">
@@ -41,7 +41,8 @@
 </div></div>
 <div class="studio-step" id="studio-idea">
 <p class="studio-step-title"><b>2</b><span>Ihre Idee<small>Beschreiben Sie Ihr Wunsch-Shirt – ein eigenes Foto ist optional.</small></span></p>
-<div class="studio-field studio-sub sub-idea"><div class="studio-photo studio-photo-small" id="studio-photo-box">
+<div class="studio-field studio-sub sub-idea"><div class="studio-robot" id="studio-guide"><span class="studio-robot-who"><svg class="studio-robot-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2v2.3"/><circle cx="12" cy="2.3" r=".9"/><rect x="5" y="5.5" width="14" height="10" rx="3"/><circle class="robot-eye" cx="9.2" cy="10" r="1.3"/><circle class="robot-eye" cx="14.8" cy="10" r="1.3"/><path class="robot-mouth" d="M9.6 13.1c1.5.8 3.3.8 4.8 0"/><path d="M3 9v3.5M21 9v3.5"/><path d="M8.5 15.5v2h7v-2"/><path d="M6.5 22c0-2.2 2.5-4 5.5-4s5.5 1.8 5.5 4"/></svg><b>Shirti</b></span><p class="studio-robot-bubble"><span class="studio-robot-source"><strong>Schreib oder sag mir unten, wie dein Shirt aussehen soll.</strong> <span>Lass deiner Fantasie freien Lauf!</span></span><span class="studio-robot-typed" aria-hidden="true"><strong></strong><span></span><i class="studio-robot-caret"></i></span></p></div>
+<div class="studio-photo studio-photo-small" id="studio-photo-box">
 <input id="studio-photo" type="file" accept="image/png,image/jpeg,image/webp" aria-label="Foto hochladen (optional)"/>
 <span class="studio-photo-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h2l1.6-2.2h5.8L16.5 6h2A2.5 2.5 0 0 1 21 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/><circle cx="12" cy="12.8" r="3.8"/></svg></span><img id="studio-photo-thumb" alt=""/>
 <span class="studio-photo-label"><span id="studio-photo-name">Eigenes Foto oder Logo hochladen</span><small class="studio-photo-hint">optional – ich integriere es in dein Design</small></span>
@@ -67,6 +68,7 @@
 <figcaption><span>Vorne</span><span>Hinten</span></figcaption>
 </figure>
 
+<p class="studio-wait" id="studio-wait" aria-hidden="true" hidden></p>
 <p class="studio-status" id="studio-status" role="status" aria-live="polite"></p>
 <div class="studio-edit" id="studio-edit" hidden>
 <label class="studio-edit-label" for="studio-edit-input"><strong>Sie wollen noch Änderungen anbringen?</strong><span>Bitte beschreiben Sie die Änderungen hier. Die KI passt Ihr T-Shirt anschliessend an.</span></label>
@@ -102,7 +104,7 @@
 </main>
 <script defer src="design-uebernahme.js?v=20261031-png"></script>
 <script defer src="bestell-logik.js?v=20261023-unbegrenzt"></script>
-<script defer src="gestalter.js?v=20261114b"></script>
+<script defer src="gestalter.js?v=20261114-hover-mobile"></script>
 <script defer src="navigation.js?v=20261101-hinher"></script>
 <script defer src="language.js?v=20261114-vier-modelle"></script>
 <script defer src="shirti.js?v=20261031-5mb"></script>

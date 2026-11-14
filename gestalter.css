@@ -416,3 +416,32 @@ html[lang=en] .studio-designs:empty::before{content:"Your T-shirt designs will a
   line-height:1.3;
   text-align:center;
 }
+
+/* Repair: keep required generator DOM hooks, but hide decorative robot/wait text. */
+#studio-guide,#studio-wait{display:none!important}
+#studio-models>button{min-height:76px!important}
+#studio-models>button img{object-fit:contain!important;background:#686868!important}
+
+/* ShirtBOX 14.11: Einheitliche Auswahlkarten und sichtbare Vorder-/Rueckseiten */
+.studio-models button{min-width:0;overflow:hidden}
+.studio-models img{width:100%;aspect-ratio:1/1;object-fit:contain;background:#666}
+.studio-models button span,.studio-models button small{overflow-wrap:anywhere}
+@media (hover:hover) and (pointer:fine){
+ .studio-models button:hover{border-color:#ff923b;box-shadow:0 0 0 1px #ff923b,0 0 16px #ff923b55}
+}
+/* Ein gemeinsames, sanft animiertes Signet auf Mobilgeraeten.
+   Die beiden vorhandenen echten Bedienknopfe bleiben separat bedienbar. */
+@media(max-width:700px){
+ .studio-keyword-box:not(.is-listening) .studio-keyword-icons{gap:4px;flex-wrap:nowrap}
+ .studio-keyword-box:not(.is-listening) .studio-keyword-icons::after{
+  content:"Antippen, schreiben oder sprechen";position:absolute;left:50%;top:calc(50% + 34px);
+  transform:translateX(-50%);font-size:12px;font-weight:800;line-height:1.25;
+  color:#ffb48f;text-align:center;white-space:normal;width:min(90%,260px);
+  pointer-events:none;animation:shirtboxHintPulse 3s ease-in-out infinite;
+ }
+ .studio-keyword-box:not(.is-listening) .studio-keyword-icons .studio-icon-btn span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+ .studio-keyword-box:not(.is-listening) .studio-keyword-icons .studio-icon-btn{min-width:64px;min-height:72px;padding-bottom:20px}
+ .studio-keyword-box:not(.is-listening) .studio-keyword-icons svg{width:42px;height:42px}
+}
+@keyframes shirtboxHintPulse{0%,100%{opacity:.7}50%{opacity:1}}
+@media(prefers-reduced-motion:reduce){.studio-keyword-box .studio-keyword-icons::after{animation:none!important}}

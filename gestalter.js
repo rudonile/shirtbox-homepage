@@ -366,12 +366,42 @@
   modelButtons.forEach(button => button.addEventListener('click', () => {
     if (busy) return;
     model = button.dataset.model;
+    hoveredModel = null;
     modelButtons.forEach(b => b.setAttribute('aria-pressed', String(b === button)));
     if (modelField.classList.contains('attention')) fail('');
     modelField.classList.remove('attention');
     if (active < 0) render(); else steps();
     tour();
   }));
+
+  // Maus-Vorschau ohne Auswahl: Klick fixiert das Modell dauerhaft.
+  // Bereits generierte Designs bleiben bei Hover unverändert.
+  let hoveredModel = null;
+  function updateModelPreview() {
+    if (busy || active >= 0) return;
+    const key = hoveredModel || model || 'polo';
+    picture.src = MODELS[key].template;
+    picture.alt = `${MODELS[key].label}: Vorderseite und Rückseite`;
+  }
+  modelButtons.forEach(button => {
+    button.addEventListener('pointerenter', event => {
+      if (event.pointerType !== 'mouse' && event.pointerType !== 'pen') return;
+      hoveredModel = button.dataset.model;
+      updateModelPreview();
+    });
+    button.addEventListener('pointerleave', () => {
+      hoveredModel = null;
+      updateModelPreview();
+    });
+    button.addEventListener('focus', () => {
+      hoveredModel = button.dataset.model;
+      updateModelPreview();
+    });
+    button.addEventListener('blur', () => {
+      hoveredModel = null;
+      updateModelPreview();
+    });
+  });
 
   // Führung nach der ersten Modellwahl: Roboter mit Sprechblase, Foto-Feld und Eingabefeld
   // leuchten nacheinander je 2 Sekunden auf – immer wieder von vorne, bis man ins Eingabefeld klickt (oder dort etwas steht).
