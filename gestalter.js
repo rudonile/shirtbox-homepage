@@ -492,6 +492,11 @@
     dlg.addEventListener('cancel', e => { e.preventDefault(); closeSheet(false); }); // Escape
     dlg.addEventListener('click', e => { if (e.target === dlg && !guard()) closeSheet(false); }); // Tipp auf abgedunkelten Rand
     dlg.addEventListener('close', () => document.documentElement.classList.remove('studio-sheet-open'));
+    // Gerät quer gedreht: Vorschau schliessen (ohne Auswahl), damit der Hinweis „Bitte drehen“ aus navigation.js sichtbar ist –
+    // ein offenes Dialogfenster läge sonst darüber.
+    const rotated = () => setTimeout(() => { if (dlg.open && document.documentElement.classList.contains('sb-landscape')) closeSheet(false); }, 150);
+    window.addEventListener('resize', rotated);
+    window.addEventListener('orientationchange', rotated);
   })();
 
   // Führung nach der ersten Modellwahl: Roboter mit Sprechblase, Foto-Feld und Eingabefeld

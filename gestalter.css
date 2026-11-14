@@ -469,16 +469,16 @@ html.studio-sheet-open,html.studio-sheet-open body{overflow:hidden}
 .studio-model-sheet-title{margin:0;text-align:center;font-weight:700;font-size:1.05rem;color:#fff}
 .studio-model-sheet-pic{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;background:#666;border-radius:12px}
 .studio-model-sheet-pic img{display:block;width:100%;height:auto;max-height:calc(100dvh - 150px);object-fit:contain;aspect-ratio:1536/1228}
-.studio-model-sheet-actions{position:sticky;bottom:0;flex:none;display:flex;justify-content:space-between;gap:16px;padding-top:4px;background:#666}
-.studio-model-sheet-actions button{flex:1 1 0;min-width:44px;min-height:56px;border:0;border-radius:14px;color:#fff;font-size:30px;font-weight:700;line-height:1;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
-.studio-model-sheet-ok{background:#1fa34a}
-.studio-model-sheet-no{background:#d93636}
-.studio-model-sheet-actions button:active{filter:brightness(.88)}
-.studio-model-sheet-actions button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.studio-model-sheet-actions{position:sticky;bottom:0;flex:none;display:flex;justify-content:center;gap:40px;padding:6px 0 2px;background:#666}
+.studio-model-sheet-actions button{display:grid;place-items:center;flex:none;width:52px;height:52px;min-width:44px;min-height:44px;padding:0;border:1px solid #0000001a;border-radius:50%;background:#ffffffeb;font-size:22px;font-weight:600;line-height:1;cursor:pointer;box-shadow:0 2px 8px #0003;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .12s,background .12s}
+.studio-model-sheet-ok{color:#1f9d4c}
+.studio-model-sheet-no{color:#cf3b3b}
+.studio-model-sheet-actions button:active{transform:scale(.94);background:#fff}
+.studio-model-sheet-actions button:focus-visible{outline:2px solid #fff;outline-offset:3px}
 @media (orientation:landscape) and (max-height:500px){
 .studio-model-sheet{width:auto;max-width:96vw}
 .studio-model-sheet-body{padding:8px;gap:6px}
 .studio-model-sheet-title{font-size:.95rem}
 .studio-model-sheet-pic img{width:auto;max-width:calc(96vw - 16px);max-height:calc(100dvh - 120px)}
-.studio-model-sheet-actions button{min-height:48px}
+.studio-model-sheet-actions button{width:46px;height:46px}
 }

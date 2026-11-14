@@ -1,4 +1,52 @@
 (() => {
+  // Nur Hochformat auf Smartphones und Tablets: Im Querformat deckt ein Hinweis „Bitte drehen“ die Seite ab.
+  // Eine Website kann das Drehen nicht verbieten (iOS gar nicht, Android nur im Vollbild) – daher dieser Hinweis.
+  // Massgebend ist die Lage des Geräts (screen.orientation / window.orientation), NICHT die Fenstergrösse:
+  // Sonst würde die eingeblendete Handy-Tastatur im Hochformat fälschlich als Querformat erkannt.
+  // Computer mit Maus (auch mit Touchscreen) sind nicht betroffen.
+  (() => {
+    const touchOnly = matchMedia('(hover: none) and (pointer: coarse)').matches
+      || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (!touchOnly) return;
+    const css = document.createElement('style');
+    css.textContent = '#sb-rotate{position:fixed;inset:0;z-index:2147483647;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;background:#05070d;color:#fff;text-align:center;font:700 18px/1.35 system-ui,sans-serif;touch-action:none}'
+      + 'html.sb-landscape #sb-rotate{display:flex}html.sb-landscape,html.sb-landscape body{overflow:hidden!important}'
+      + '#sb-rotate svg{width:64px;height:64px;fill:none;stroke:#fff;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;animation:sbRotate 2s ease-in-out infinite}'
+      + '#sb-rotate small{font-weight:500;font-size:14px;opacity:.75}'
+      + '@keyframes sbRotate{0%,25%{transform:rotate(-90deg)}60%,100%{transform:rotate(0)}}';
+    document.head.appendChild(css);
+    const box = document.createElement('div');
+    box.id = 'sb-rotate';
+    box.setAttribute('role', 'alertdialog');
+    box.setAttribute('aria-modal', 'true');
+    const isLandscape = () => {
+      const t = screen.orientation && screen.orientation.type;
+      if (t) return t.startsWith('landscape');
+      if (typeof window.orientation === 'number') return Math.abs(window.orientation) === 90;
+      return matchMedia('(orientation: landscape)').matches;
+    };
+    const text = () => {
+      const en = document.documentElement.lang === 'en';
+      box.setAttribute('aria-label', en ? 'Please rotate your device' : 'Bitte Gerät drehen');
+      box.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.5h2"/></svg>'
+        + (en ? '<span>Please turn your device to portrait mode.</span><small>ShirtBOX works in portrait mode only.</small>'
+              : '<span>Bitte drehen Sie Ihr Gerät ins Hochformat.</span><small>ShirtBOX ist nur im Hochformat nutzbar.</small>');
+    };
+    const update = () => {
+      const on = isLandscape();
+      if (on && !box.isConnected && document.body) { text(); document.body.appendChild(box); }
+      else if (on) text();
+      document.documentElement.classList.toggle('sb-landscape', on);
+    };
+    if (screen.orientation && screen.orientation.addEventListener) screen.orientation.addEventListener('change', update);
+    window.addEventListener('orientationchange', () => setTimeout(update, 50));
+    window.addEventListener('resize', update);
+    if (document.body) update(); else document.addEventListener('DOMContentLoaded', update);
+    // Android im Vollbild/als App: echte Sperre versuchen (wird sonst still abgelehnt).
+    try { screen.orientation?.lock?.('portrait').catch(() => {}); } catch (e) {}
+  })();
+
   // Fehlende Angabe deutlich zeigen (auf allen Seiten gleich): Fehlt etwas, damit es weitergeht (z. B. kein T-Shirt
   // angeklickt, Häkchen nicht gesetzt, Feld leer), scrollt die Seite genau dorthin und die Stelle leuchtet orange und
   // pulsiert mit dem Hinweis „Bitte hier …“. Die Markierung verschwindet, sobald man dort etwas anklickt oder eingibt.
