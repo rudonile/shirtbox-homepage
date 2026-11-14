@@ -482,3 +482,50 @@ html.studio-sheet-open,html.studio-sheet-open body{overflow:hidden}
 .studio-model-sheet-pic img{width:auto;max-width:calc(96vw - 16px);max-height:calc(100dvh - 120px)}
 .studio-model-sheet-actions button{width:46px;height:46px}
 }
+
+/* ===== Generierung: magisches ShirtBOX-T-Shirt statt Sanduhr (14.11.2026) =====
+   Zyklus 8 s: Umriss zeichnet sich → kleine Sujets fliegen ins Shirt → Muster wechseln fliessend
+   → Shirt leuchtet auf, Glanz läuft darüber → von vorne. Kein Fortschritt wird vorgetäuscht (Endlosschleife).
+   Nur transform/opacity/stroke-dashoffset – sehr leicht für Smartphones. */
+.studio-loader .sb-magic{display:block;width:clamp(84px,24vw,118px);height:auto;aspect-ratio:1;font-size:0;margin-bottom:4px;animation:sbmTilt 8s ease-in-out infinite;transform-style:preserve-3d;filter:drop-shadow(0 6px 14px #000a)}
+.sb-magic svg{display:block;width:100%;height:100%;overflow:visible}
+.sb-magic svg *{transform-box:view-box}
+.sb-magic .sbm-glow{transform-origin:60px 62px;opacity:.25;animation:sbmGlow 8s ease-in-out infinite}
+.sb-magic .sbm-body{opacity:.95}
+.sb-magic .sbm-line{stroke-dasharray:1;stroke-dashoffset:1;animation:sbmDraw 8s cubic-bezier(.45,.05,.3,1) infinite}
+.sb-magic .sbm-p{opacity:0;transform-origin:60px 66px;animation:sbmPattern 8s ease-in-out infinite}
+.sb-magic .sbm-p1{animation-delay:1.6s}
+.sb-magic .sbm-p2{animation-delay:3.1s}
+.sb-magic .sbm-p3{animation-delay:4.6s}
+.sb-magic .sbm-p4{animation-name:sbmFinale;animation-delay:0s}
+.sb-magic .sbm-sheen{animation:sbmSheen 8s ease-in-out infinite}
+.sb-magic .sbm-orbit{transform-origin:60px 62px;animation:sbmOrbit 3.6s linear infinite}
+.sb-magic .sbm-s{opacity:0;transform-origin:60px 62px;animation:sbmIn 8s cubic-bezier(.5,0,.3,1) infinite}
+.sb-magic .sbm-s1{--x:-58px;--y:-46px;animation-delay:.9s}
+.sb-magic .sbm-s2{--x:60px;--y:-40px;animation-delay:1.3s}
+.sb-magic .sbm-s3{--x:-54px;--y:44px;animation-delay:2.4s}
+.sb-magic .sbm-s4{--x:58px;--y:48px;animation-delay:2.9s}
+@keyframes sbmTilt{0%,100%{transform:perspective(420px) rotateY(-14deg) translateY(0)}50%{transform:perspective(420px) rotateY(14deg) translateY(-4px)}}
+@keyframes sbmDraw{0%{stroke-dashoffset:1;opacity:1}20%{stroke-dashoffset:0;opacity:1}92%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:0;opacity:0}}
+@keyframes sbmPattern{0%{opacity:0;transform:scale(.86) rotate(-4deg)}5%{opacity:.9;transform:scale(1) rotate(0)}19%{opacity:.9;transform:scale(1.03) rotate(1deg)}25%,100%{opacity:0;transform:scale(1.08) rotate(3deg)}}
+@keyframes sbmFinale{0%,74%{opacity:0;transform:scale(.6) rotate(-30deg)}80%{opacity:1;transform:scale(1.06) rotate(0)}84%{transform:scale(1)}94%{opacity:1}100%{opacity:0;transform:scale(1)}}
+@keyframes sbmGlow{0%,70%{opacity:.22;transform:scale(.92)}82%{opacity:.95;transform:scale(1.08)}100%{opacity:.22;transform:scale(.92)}}
+@keyframes sbmSheen{0%,76%{transform:translateX(0)}90%,100%{transform:translateX(180px)}}
+@keyframes sbmOrbit{to{transform:rotate(360deg)}}
+@keyframes sbmIn{0%{opacity:0;transform:translate(var(--x),var(--y)) scale(1.5) rotate(-40deg)}3%{opacity:1}13%{opacity:1;transform:translate(0,0) scale(.8) rotate(0)}17%,100%{opacity:0;transform:translate(0,0) scale(.1) rotate(20deg)}}
+@media(prefers-reduced-motion:reduce){
+  .studio-loader .sb-magic,.sb-magic *{animation:none!important}
+  .sb-magic .sbm-line{stroke-dashoffset:0}
+  .sb-magic .sbm-p4{opacity:1}
+  .sb-magic .sbm-glow{opacity:.5}
+}
+
+/* ===== Generierung: viele kleine Ideen-Sujets in den freien Flächen (studio-ideen-flug.js) =====
+   Liegt hinter allen Inhalten (wie .sb-tools): nie über Buttons/Eingabefeldern, keine Klick-Blockade, kein Scrollbalken. */
+.sb-gen-fly{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;opacity:0;transition:opacity .6s ease}
+.sb-gen-fly.is-on{opacity:1}
+.sb-gen-fly i{position:absolute;display:block;will-change:transform,opacity;contain:layout style}
+.sb-gen-fly svg{display:block;width:100%;height:100%;overflow:visible;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.sb-gen-fly .is-closed svg{fill:currentColor;fill-opacity:.16}
+.sb-gen-fly .is-blob svg{fill:currentColor;fill-opacity:.55;stroke:none}
+@media(prefers-reduced-motion:reduce){.sb-gen-fly{display:none}}
