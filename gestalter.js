@@ -432,15 +432,23 @@
     document.body.appendChild(dlg);
     const sheetImg = dlg.querySelector('img'), sheetTitle = dlg.querySelector('.studio-model-sheet-title');
     const okBtn = dlg.querySelector('[data-sheet="ok"]'), noBtn = dlg.querySelector('[data-sheet="no"]');
-    let pending = null, opener = null, passThrough = false, lastPointer = '', openedAt = 0;
+    let pending = null, opener = null, passThrough = false, lastPointer = '', lastPointerAt = 0, openedAt = 0;
 
-    modelsBox.addEventListener('pointerdown', e => { lastPointer = e.pointerType || ''; }, true);
+    // Reine Touch-Geräte (Handy/Tablet ohne Maus): immer mit Bestätigung.
+    const touchOnly = () => matchMedia('(hover: none) and (pointer: coarse)').matches;
+    // Art der letzten Berührung merken. touchstart zusätzlich, weil manche Browser (v. a. iPhone-Safari)
+    // beim Klick selbst pointerType „mouse“ oder gar nichts melden.
+    const note = type => { lastPointer = type; lastPointerAt = Date.now(); };
+    modelsBox.addEventListener('touchstart', () => note('touch'), {capture: true, passive: true});
+    modelsBox.addEventListener('pointerdown', e => { if (e.pointerType) note(e.pointerType); }, true);
+    modelsBox.addEventListener('mousedown', () => { if (Date.now() - lastPointerAt > 800) note('mouse'); }, true);
     // Capture-Phase: läuft vor dem Auswahl-Listener am Knopf und hält ihn bei Touch an.
     modelsBox.addEventListener('click', e => {
       const button = e.target.closest('[data-model]');
       if (!button || passThrough) return;
-      const type = typeof e.pointerType === 'string' && e.pointerType ? e.pointerType : (e.detail ? lastPointer : '');
-      if (type !== 'touch') return; // Maus/Stift/Tastatur: unverändert sofort auswählen
+      const recent = Date.now() - lastPointerAt < 1500 ? lastPointer : '';
+      const isTouch = recent === 'touch' || e.pointerType === 'touch' || (recent !== 'mouse' && recent !== 'pen' && touchOnly());
+      if (!isTouch) return; // Maus/Stift/Tastatur am Computer: unverändert sofort auswählen
       e.preventDefault();
       e.stopImmediatePropagation();
       if (busy || dlg.open) return;
