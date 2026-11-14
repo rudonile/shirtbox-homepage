@@ -15,8 +15,10 @@
   const MODELS = {
     polo: {label: 'Polo-Shirt', template: 'anleitung/polo-api-vorlage.jpg', cut: 'Sportpolo mit Polo-Kragen und Knopfleiste'},
     zip: {label: 'Zip-Shirt', template: 'anleitung/zip-api-vorlage.jpg', cut: 'Sport-Jersey mit niedrigem Stehkragen und kurzem Reissverschluss vorne (kein Polo-Kragen, keine Knöpfe)'},
-    tshirt: {label: 'T-Shirt', template: 'anleitung/tshirt-api-vorlage.jpg?v=20261114-clean-1', cut: 'Klassisches T-Shirt mit Rundhalsausschnitt und regulärer Passform'},
-    oversize: {label: 'Oversize T-Shirt', template: 'anleitung/oversize-api-vorlage.jpg?v=20261114-clean-1', cut: 'Weites Oversize-T-Shirt mit überschnittenen Schultern, weitem geradem Schnitt und Rundhalsausschnitt'}
+    // T-Shirt und Oversize: eigenständige, saubere Vorlagen (einheitlicher grauer Hintergrund, Vorder- und Rückseite gleich gross,
+    // Ärmelspitzen berühren sich in der Bildmitte). ?v=… erzwingt das Neuladen statt der alten, fehlerhaften Vorlagen aus dem Cache.
+    tshirt: {label: 'T-Shirt', template: 'anleitung/tshirt-api-vorlage.jpg?v=20261114-clean-2', cut: 'Klassisches Rundhals-T-Shirt mit regulärer Passform (kein Polo-Kragen, keine Knopfleiste, kein Reissverschluss)'},
+    oversize: {label: 'Oversize T-Shirt', template: 'anleitung/oversize-api-vorlage.jpg?v=20261114-clean-2', cut: 'Weites Oversize-Rundhals-T-Shirt mit überschnittenen Schultern und weitem geradem Schnitt (kein Polo-Kragen, keine Knopfleiste)'}
   };
   let model = '';
   const TEMPLATE = () => MODELS[model]?.template || MODELS.polo.template;
@@ -77,6 +79,8 @@
     // „Weiteres T-Shirt designen“ als gleich grosse Karte direkt neben den Designs – bewusst getrennt von den Änderungen.
     if (designs.length) list.append(another);
     another.hidden = !designs.length;
+    // Ohne Designs keine leere Sammel-Box unter der Vorschau (Element bleibt erhalten, nur unsichtbar).
+    collection.hidden = !designs.length;
     const n = ready().length, c = chosen().length;
     count.textContent = n ? `${n} Design${n === 1 ? '' : 's'}` : '';
     orderBar.hidden = !n;
@@ -344,6 +348,9 @@
 
   const CENTER_LAYOUT = 'STANDARDPOSITION: Alle Hauptmotive, Tabellen, Listen, Zahlen und Schriftzüge horizontal MITTIG auf der jeweils gewünschten Shirt-Seite ausrichten, ausser der Kunde verlangt ausdrücklich links, rechts oder eine andere Position. Tabellen und Zahlenkolonnen vollständig und mit grosszügigem Sicherheitsabstand zu Seitennähten und Achseln setzen. Nie Buchstaben oder Zahlen um die Seitenkante wickeln oder am Rand abschneiden; bei Platzmangel das gesamte Motiv proportional verkleinern. Shirt-Schnitt und Achselkonturen exakt nach Vorlage, keine zusätzlichen Spitzen, Dreiecke oder Ausstülpungen unter den Ärmeln. Bei Rundhals-T-Shirts und Oversize-T-Shirts niemals einen Polo-Kragen, eine Knopfleiste oder ein weiteres Shirt hinter den beiden Ansichten darstellen. Zwischen Vorder- und Rückseite dürfen keine Stoffreste, zusätzlichen Ärmel oder Bildfragmente erscheinen.';
 
+  // Kompakte Fassung von CENTER_LAYOUT, die immer mitgeht (Schnitt-Treue ist für alle vier Modelle Pflicht).
+  const SHAPE_RULE = 'Motive mittig, nichts am Rand abschneiden. Schnitt, Grösse und Abstand beider Shirts exakt wie in der Vorlage: keine Stoffdreiecke, keine zusätzlichen Ärmel oder Säume, kein weiteres Shirt dazwischen oder dahinter.';
+
   // Hilft der Kundeneingabe nach: ergänzt Aufbau, Farben, Schrift und Druckqualität zu einem vollständigen Briefing.
   // Ein eigenes Textfeld gibt es nicht mehr: Schriftzüge nennt die Kundschaft direkt in der Beschreibung.
   // Bewusst kompakt: Der live Worker nimmt höchstens 2000 Zeichen an (siehe MAX_PROMPT). Die ausführliche Randregel (INSIDE)
@@ -358,10 +365,12 @@
     p += `Stil: ${(STYLES[styleChoice]?.brief || RANDOM_STYLES[Math.floor(Math.random() * RANDOM_STYLES.length)]).replace(/\.$/, '')}. `;
     if (!hasPhoto) p += 'Vorderseite mit Blickfang auf Brusthöhe, Rückseite mit dem grössten Hauptmotiv, Ärmel und Kragen mit passenden Akzenten. ';
     p += 'Höchstens 3–4 harmonische Farben. ';
-    p += CENTER_LAYOUT + ' ';
+    // Kurze Pflichtregel; die ausführliche CENTER_LAYOUT-Regel kommt unten per fit() dazu, wenn noch Platz ist.
+    // (Fest eingebaut sprengte sie mit Foto + Beschreibung immer die 2000-Zeichen-Grenze des Workers.)
+    p += SHAPE_RULE + ' ';
     p += word ? 'Schrift nur, wenn der Kundenwunsch ausdrücklich einen Schriftzug nennt – dann Buchstabe für Buchstabe korrekt, gut lesbar, an der genannten Stelle (sonst hinten). Die Beschreibung selbst nicht als Text drucken. ' : 'Keine Schriftzüge ausser im Foto. ';
     p += `Alles bleibt innerhalb der Shirt-Umrisse, grauer Hintergrund leer. Keine rechteckige Foto-Auflage, keine Marken-Logos, keine Wasserzeichen. Schnitt und Perspektive der Vorlage beibehalten, druckfertige Qualität. Variante ${Date.now()}`;
-    return fit(p, INSIDE);
+    return fit(p, CENTER_LAYOUT, INSIDE);
   }
 
   // Modell-Knöpfe: genau eines muss vor dem Generieren gewählt sein.
@@ -554,9 +563,10 @@
   }
   const templateMasks = {};
   async function keepInside(blob, modelKey) {
-    // Bei Rundhals-Shirts keine nachtraegliche Silhouettenmaske anwenden:
-    // sie kann Aermel und Achseln verzerren oder fremde Bildreste erzeugen.
-    if (modelKey === 'tshirt' || modelKey === 'oversize') return blob;
+    // Gilt für alle vier Modelle. Früher für T-Shirt/Oversize abgeschaltet, weil deren Vorlagen eingefügte, andersgraue
+    // Rechtecke enthielten (die Maske hielt diese für „Shirt“). Mit den sauberen Vorlagen entfernt die Maske nun auch dort
+    // Stoffdreiecke zwischen den Ansichten oder einen Polo-Kragen hinter einem Rundhals-Shirt. Passt der Umriss nicht sicher,
+    // bleibt das KI-Bild unverändert (siehe Prüfung unten).
     try {
       const src = MODELS[modelKey]?.template || MODELS.polo.template;
       const [shirt, tpl] = await Promise.all([createImageBitmap(blob), fetch(src).then(r => r.blob()).then(b => createImageBitmap(b))]);

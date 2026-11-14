@@ -402,7 +402,14 @@ html[lang=en] .studio-designs:empty::before{content:"Your T-shirt designs will a
 .studio-wait,.studio-robot{display:none!important}
 .studio-stage,.studio-preview,.studio-collection{text-align:center}
 .studio-grid{align-items:start}
-.studio-preview img{object-fit:contain!important;background:#fff}
+/* Keine weissen Seitenstreifen: Das Bild füllt den 3:2-Rahmen ganz aus (cover). Die leeren Vorlagen (1536×1228) verlieren dabei
+   nur leeren grauen Hintergrund oben/unten (je ~100 px) – alle vier Shirt-Modelle liegen vollständig innerhalb.
+   KI-Ergebnisse sind 1536×1024 = genau 3:2 und werden gar nicht beschnitten. Grau statt Weiss, falls das Bild noch lädt. */
+.studio-preview img{object-fit:cover!important;object-position:center!important;background:#6b6b6b!important}
+/* Leere Sammlung („Ihre T-Shirts“) ohne Designs nicht als leeren dunkelblauen Balken unter der Vorschau zeigen
+   (bisher nur auf dem Handy ausgeblendet). gestalter.js setzt zusätzlich [hidden] für Browser ohne :has(). */
+.studio-collection:has(.studio-designs:empty){display:none}
+.studio-collection[hidden]{display:none!important}
 
 /* Vollstaendige Beschriftung auf Designkarten, auch bei schmalen Ansichten. */
 .studio-card-edit{
