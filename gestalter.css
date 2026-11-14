@@ -445,3 +445,10 @@ html[lang=en] .studio-designs:empty::before{content:"Your T-shirt designs will a
 }
 @keyframes shirtboxHintPulse{0%,100%{opacity:.7}50%{opacity:1}}
 @media(prefers-reduced-motion:reduce){.studio-keyword-box .studio-keyword-icons::after{animation:none!important}}
+
+/* 14.11: Beide Mobil-Symbole enger beisammen, beide oeffnen die Tastatur. */
+@media(max-width:700px){
+ .studio-keyword-box:not(.is-listening) .studio-keyword-icons{gap:0!important}
+ .studio-keyword-box:not(.is-listening) .studio-keyword-icons .studio-icon-btn{min-width:52px;padding-left:4px;padding-right:4px}
+ .studio-keyword-box:not(.is-listening) .studio-keyword-icons svg{width:38px;height:38px}
+}

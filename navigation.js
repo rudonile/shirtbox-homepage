@@ -1,40 +1,4 @@
 (() => {
-  // Geräteerkennung + Hochformat-Sperre (nur iPad und Handy; Computer und Android-Tablets bleiben unverändert).
-  // iPad: "iPad" im User-Agent – neuere iPads melden sich in Safari als Mac, darum zusätzlich "Mac mit Touchscreen".
-  // Handy: iPhone/iPod oder Android mit "Mobile" (Android-Tablets haben kein "Mobile" im User-Agent).
-  // Eine Webseite kann die Drehung nicht wirklich verhindern (Safari erlaubt das nicht). Darum: Im Querformat legt sich
-  // eine Vollbild-Meldung "Bitte hochkant drehen" über die Seite; zurückgedreht ist alles unverändert wieder da.
-  // Querformat wird an der Gerätelage erkannt (screen.orientation / window.orientation), NICHT am Fensterverhältnis –
-  // sonst erschiene die Meldung auf Android, sobald die Tastatur das Fenster niedriger macht.
-  const ua = navigator.userAgent, root = document.documentElement;
-  const iPad = /iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
-  const phone = !iPad && (/iPhone|iPod/.test(ua) || (/Android/.test(ua) && /Mobile/.test(ua)));
-  if (iPad) root.classList.add('is-ipad');
-  if (phone) root.classList.add('is-phone');
-  if (!iPad && !phone) return;
-  const landscape = () => {
-    if (screen.orientation && typeof screen.orientation.type === 'string') return screen.orientation.type.startsWith('landscape');
-    if (typeof window.orientation === 'number') return Math.abs(window.orientation) === 90;
-    return window.innerWidth > window.innerHeight && !document.activeElement?.matches?.('input,textarea');
-  };
-  const style = document.createElement('style');
-  style.textContent = '.sb-rotate{display:none;position:fixed;inset:0;z-index:2147483000;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;background:#090c13;color:#f4f1ea;text-align:center;font:800 20px/1.35 system-ui,-apple-system,sans-serif}'
-    + '.sb-rotate span{font-size:64px;line-height:1;animation:sbRotate 2.4s ease-in-out infinite}.sb-rotate small{font:600 15px/1.4 system-ui,-apple-system,sans-serif;color:#c5ccd6}'
-    + '@keyframes sbRotate{0%,30%{transform:rotate(-90deg)}60%,100%{transform:rotate(0)}}@media(prefers-reduced-motion:reduce){.sb-rotate span{animation:none}}'
-    + 'html.is-landscape .sb-rotate{display:flex}html.is-landscape body{overflow:hidden}';
-  document.head.append(style);
-  const overlay = document.createElement('div'); overlay.className = 'sb-rotate'; overlay.setAttribute('role', 'alert');
-  overlay.innerHTML = '<span aria-hidden="true">📱</span><strong>Bitte drehe dein Gerät hochkant.</strong><small>ShirtBOX ist für das Hochformat gemacht.</small>';
-  const mount = () => { if (!overlay.isConnected) document.body.append(overlay); };
-  if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount);
-  const update = () => root.classList.toggle('is-landscape', landscape());
-  update();
-  screen.orientation?.addEventListener?.('change', update);
-  window.addEventListener('orientationchange', () => setTimeout(update, 50));
-  window.addEventListener('resize', update);
-})();
-
-(() => {
   // Fehlende Angabe deutlich zeigen (auf allen Seiten gleich): Fehlt etwas, damit es weitergeht (z. B. kein T-Shirt
   // angeklickt, Häkchen nicht gesetzt, Feld leer), scrollt die Seite genau dorthin und die Stelle leuchtet orange und
   // pulsiert mit dem Hinweis „Bitte hier …“. Die Markierung verschwindet, sobald man dort etwas anklickt oder eingibt.
@@ -96,11 +60,7 @@
     document.addEventListener('click', off, true);
     target.scrollIntoView({behavior: 'smooth', block: 'center'});
   }
-  // Von aussen nutzbar: direkt zu einem Knopf springen und „Jetzt hier weiter“ zeigen.
-  window.sbNext = target => goBack(target);
-  // Optional 4. Angabe „then“: ein Element = fester Rückweg (statt des zuletzt angeklickten Knopfs),
-  // eine Funktion = wird nach dem Ergänzen aufgerufen und entscheidet selbst, wohin es weitergeht.
-  window.sbMissing = (el, focus, text, then) => {
+  window.sbMissing = (el, focus, text) => {
     if (!el) return;
     clear(); clearNext();
     // Ein einzelnes Feld oder Häkchen hat keinen Platz für ein Schild: dann das umgebende Feld markieren.
@@ -111,19 +71,16 @@
     if (getComputedStyle(box).position === 'static') box.style.position = 'relative';
     box.append(tag);
     // Rückweg: der Knopf, der eben angeklickt wurde (höchstens 6 Sekunden her, nicht im fehlenden Bereich selbst).
-    const after = typeof then === 'function' ? then : null;
-    const target = then instanceof Element ? then
-      : lastAction && Date.now() - lastAction.at < 6000 && !box.contains(lastAction.el) && lastAction.el !== box ? lastAction.el : null;
+    const target = lastAction && Date.now() - lastAction.at < 6000 && !box.contains(lastAction.el) && lastAction.el !== box ? lastAction.el : null;
     const touched = () => unmark();
     // Fertig angeklickt? Kurz warten, damit man die Auswahl sieht – dann zurück. Nicht bei Textfeldern,
     // Mund/Tastatur und solange im Bereich noch etwas fehlt (z. B. Grösse gewählt, Stückzahl noch leer).
     const completed = e => {
-      if ((!target && !after) || isText(e.target) || e.target.closest?.('[data-act],input[type=file]')) return;
+      if (!target || isText(e.target) || e.target.closest?.('[data-act],input[type=file]')) return;
       setTimeout(() => {
         if (!marked || marked.el !== box) return;
         const open = [...box.querySelectorAll('input,select,textarea')].some(f => !f.disabled && f.type !== 'hidden' && !f.hidden && f.validity && !f.validity.valid);
-        if (open) return;
-        if (after) { clear(); clearNext(); after(); } else goBack(target);
+        if (!open) goBack(target);
       }, 450);
     };
     const off = [['pointerdown', touched], ['input', touched], ['keydown', touched], ['change', touched], ['click', completed], ['change', completed]];

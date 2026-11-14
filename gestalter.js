@@ -15,8 +15,8 @@
   const MODELS = {
     polo: {label: 'Polo-Shirt', template: 'anleitung/polo-api-vorlage.jpg', cut: 'Sportpolo mit Polo-Kragen und Knopfleiste'},
     zip: {label: 'Zip-Shirt', template: 'anleitung/zip-api-vorlage.jpg', cut: 'Sport-Jersey mit niedrigem Stehkragen und kurzem Reissverschluss vorne (kein Polo-Kragen, keine Knöpfe)'},
-    tshirt: {label: 'T-Shirt', template: 'anleitung/tshirt-api-vorlage.jpg', cut: 'Klassisches T-Shirt mit Rundhalsausschnitt und regulärer Passform'},
-    oversize: {label: 'Oversize T-Shirt', template: 'anleitung/oversize-api-vorlage.jpg', cut: 'Weites Oversize-T-Shirt mit überschnittenen Schultern, weitem geradem Schnitt und Rundhalsausschnitt'}
+    tshirt: {label: 'T-Shirt', template: 'anleitung/tshirt-api-vorlage.jpg?v=20261114c', cut: 'Klassisches T-Shirt mit Rundhalsausschnitt und regulärer Passform'},
+    oversize: {label: 'Oversize T-Shirt', template: 'anleitung/oversize-api-vorlage.jpg?v=20261114c', cut: 'Weites Oversize-T-Shirt mit überschnittenen Schultern, weitem geradem Schnitt und Rundhalsausschnitt'}
   };
   let model = '';
   const TEMPLATE = () => MODELS[model]?.template || MODELS.polo.template;
@@ -246,6 +246,9 @@
       field.readOnly = on; controls();
     };
     button.addEventListener('click', () => {
+      // Auf Mobilgeraeten oeffnen beide Symbole nur die Systemtastatur.
+      // Diktieren wird ausschliesslich ueber das Mikrofon der Tastatur gestartet.
+      if (MOBILE) { stopDictation(); field.focus(); return; }
       if (dict?.button === button) { finishDictation(); return; }
       stopDictation(); stopTour(); if (field === keyword) robotStop();
       if (document.activeElement === field) field.blur();
@@ -259,7 +262,7 @@
   }
   const speakButton = field => field.parentElement.querySelector('.studio-icon-btn[data-act=speak]');
   if (!Recognition || !window.isSecureContext) {
-    speakButton(keyword).hidden = speakButton(editInput).hidden = true;
+    if (!MOBILE) speakButton(keyword).hidden = speakButton(editInput).hidden = true;
     hear('Tipp: Sie können Ihre Idee auch mit dem Mikrofon Ihrer Handy-Tastatur einsprechen.');
   } else {
     dictation(speakButton(keyword), keyword, hear, () => { fail(''); steps(); }, 'Ich höre zu … Wenn Sie fertig sind, einfach auf „T-Shirt designen“ tippen.');
