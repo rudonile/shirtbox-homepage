@@ -342,7 +342,7 @@
   // Gilt für jeden Entwurf und jede Änderung: Das Design ist aufgedruckt und endet an der Shirt-Kante.
   const INSIDE = 'WICHTIG: Das gesamte Design liegt vollständig INNERHALB der Shirt-Umrisse, wie aufgedruckt. Motive, Figuren und Körperteile (z. B. Füsse, Hände, Köpfe, Flügel, Schwänze), Schriften, Flammen, Spritzer und Effekte dürfen nie über Kragen, Schultern, Ärmel, Seiten oder Saum hinausragen und nie in den Hintergrund reichen. Was nicht ganz hineinpasst, wird an der Shirt-Kante abgeschnitten oder kleiner dargestellt. Form, Grösse und Position beider Shirts exakt wie in der Vorlage; der graue Hintergrund bleibt leer und unverändert.';
 
-  const CENTER_LAYOUT = 'STANDARDPOSITION: Alle Hauptmotive, Tabellen, Listen, Zahlen und Schriftzüge horizontal MITTIG auf der jeweils gewünschten Shirt-Seite ausrichten, ausser der Kunde verlangt ausdrücklich links, rechts oder eine andere Position. Tabellen und Zahlenkolonnen vollständig und mit grosszügigem Sicherheitsabstand zu Seitennähten und Achseln setzen. Nie Buchstaben oder Zahlen um die Seitenkante wickeln oder am Rand abschneiden; bei Platzmangel das gesamte Motiv proportional verkleinern. Shirt-Schnitt und Achselkonturen exakt nach Vorlage, keine zusätzlichen Spitzen, Dreiecke oder Ausstülpungen unter den Ärmeln.';
+  const CENTER_LAYOUT = 'STANDARDPOSITION: Alle Hauptmotive, Tabellen, Listen, Zahlen und Schriftzüge horizontal MITTIG auf der jeweils gewünschten Shirt-Seite ausrichten, ausser der Kunde verlangt ausdrücklich links, rechts oder eine andere Position. Tabellen und Zahlenkolonnen vollständig und mit grosszügigem Sicherheitsabstand zu Seitennähten und Achseln setzen. Nie Buchstaben oder Zahlen um die Seitenkante wickeln oder am Rand abschneiden; bei Platzmangel das gesamte Motiv proportional verkleinern. Shirt-Schnitt und Achselkonturen exakt nach Vorlage, keine zusätzlichen Spitzen, Dreiecke oder Ausstülpungen unter den Ärmeln. Bei Rundhals-T-Shirts und Oversize-T-Shirts niemals einen Polo-Kragen, eine Knopfleiste oder ein weiteres Shirt hinter den beiden Ansichten darstellen. Zwischen Vorder- und Rückseite dürfen keine Stoffreste, zusätzlichen Ärmel oder Bildfragmente erscheinen.';
 
   // Hilft der Kundeneingabe nach: ergänzt Aufbau, Farben, Schrift und Druckqualität zu einem vollständigen Briefing.
   // Ein eigenes Textfeld gibt es nicht mehr: Schriftzüge nennt die Kundschaft direkt in der Beschreibung.
@@ -554,6 +554,9 @@
   }
   const templateMasks = {};
   async function keepInside(blob, modelKey) {
+    // Bei Rundhals-Shirts keine nachtraegliche Silhouettenmaske anwenden:
+    // sie kann Aermel und Achseln verzerren oder fremde Bildreste erzeugen.
+    if (modelKey === 'tshirt' || modelKey === 'oversize') return blob;
     try {
       const src = MODELS[modelKey]?.template || MODELS.polo.template;
       const [shirt, tpl] = await Promise.all([createImageBitmap(blob), fetch(src).then(r => r.blob()).then(b => createImageBitmap(b))]);
