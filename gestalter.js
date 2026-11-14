@@ -15,8 +15,8 @@
   const MODELS = {
     polo: {label: 'Polo-Shirt', template: 'anleitung/polo-api-vorlage.jpg', cut: 'Sportpolo mit Polo-Kragen und Knopfleiste'},
     zip: {label: 'Zip-Shirt', template: 'anleitung/zip-api-vorlage.jpg', cut: 'Sport-Jersey mit niedrigem Stehkragen und kurzem Reissverschluss vorne (kein Polo-Kragen, keine Knöpfe)'},
-    tshirt: {label: 'T-Shirt', template: 'anleitung/tshirt-api-vorlage.jpg?v=20261114c', cut: 'Klassisches T-Shirt mit Rundhalsausschnitt und regulärer Passform'},
-    oversize: {label: 'Oversize T-Shirt', template: 'anleitung/oversize-api-vorlage.jpg?v=20261114c', cut: 'Weites Oversize-T-Shirt mit überschnittenen Schultern, weitem geradem Schnitt und Rundhalsausschnitt'}
+    tshirt: {label: 'T-Shirt', template: 'anleitung/tshirt-api-vorlage.jpg?v=20261114-clean-1', cut: 'Klassisches T-Shirt mit Rundhalsausschnitt und regulärer Passform'},
+    oversize: {label: 'Oversize T-Shirt', template: 'anleitung/oversize-api-vorlage.jpg?v=20261114-clean-1', cut: 'Weites Oversize-T-Shirt mit überschnittenen Schultern, weitem geradem Schnitt und Rundhalsausschnitt'}
   };
   let model = '';
   const TEMPLATE = () => MODELS[model]?.template || MODELS.polo.template;
