@@ -91,12 +91,10 @@ html[lang=en] .studio-steps .is-current button::after{content:"Now"}
 .studio-robot-who b{font-size:12px;font-weight:900;letter-spacing:.04em;color:#a9bdff;text-shadow:0 0 8px #a9bdff66}
 .studio-robot-icon .robot-eye{fill:#ffb48f;stroke:#ffb48f;transform-box:fill-box;transform-origin:center;animation:robotBlink 4.5s infinite}
 @keyframes robotBlink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
-/* Sprechblase: bewusst KEIN Eingabefeld-Look (kein dunkler Grund, kein Rahmen, kein Textcursor) –
-   hellblau getönte Comic-Blase, damit niemand hineinklicken will. Geschrieben wird im Feld darunter. */
-.studio-robot-bubble{position:relative;flex:1;margin:0;padding:9px 14px;border-radius:18px 18px 18px 6px;background:linear-gradient(135deg,#a9bdff33,#a9bdff1a);border:0;box-shadow:0 4px 14px #0004;color:#c9d4ff;font-size:13px;font-weight:600;font-style:italic;line-height:1.4;cursor:default;user-select:none;-webkit-user-select:none}
-.studio-robot-bubble strong{display:block;margin-bottom:2px;color:var(--ink);font-size:15.5px;font-weight:850;font-style:normal}
+.studio-robot-bubble{position:relative;flex:1;margin:0;padding:10px 13px;border-radius:14px;background:var(--bg);border:1px solid #a9bdff55;color:var(--ink-2);font-size:14px;font-weight:600;line-height:1.4}
+.studio-robot-bubble strong{display:block;margin-bottom:2px;color:var(--ink);font-size:15px;font-weight:850}
 /* Schreibmaschinen-Effekt: der unsichtbare Originaltext hält die Grösse der Blase fest (und wird vorgelesen), darüber wird getippt. */
-.studio-robot-source,.studio-robot-source strong{color:transparent;opacity:0}
+.studio-robot-source,.studio-robot-source strong{color:transparent}
 .studio-robot-typed{position:absolute;inset:10px 13px}
 /* Kleine Tastatur + Mund + Pfeil nach „unten“ in der Sprechblase; die unsichtbare Vorlage reserviert dafür denselben Platz. */
 .studio-robot-tools{display:inline-flex;align-items:center;gap:3px;margin:0 1px 0 1px;padding:1px 6px;border-radius:999px;background:#ffffff10;vertical-align:-5px}
@@ -107,28 +105,14 @@ html[lang=en] .studio-steps .is-current button::after{content:"Now"}
 .studio-robot-tools i{display:inline-block;font-style:normal;font-size:14px;font-weight:900;color:#ffb48f;animation:robotPoint 1.2s ease-in-out infinite}
 @keyframes robotPoint{0%,100%{transform:translateY(-1px)}50%{transform:translateY(3px)}}
 @media(prefers-reduced-motion:reduce){.studio-robot-tools i{animation:none}}
+.studio-robot-source strong::after{content:"";display:inline-block;width:60px}
 .studio-robot-caret{display:inline-block;width:2px;height:1em;margin-left:2px;vertical-align:-2px;background:#ffb48f;animation:robotCaret .9s steps(1) infinite}
 .studio-robot-typed strong+span:empty+.studio-robot-caret{display:none}
 @keyframes robotCaret{50%{opacity:0}}
 .studio-robot:not(.is-typing) .studio-robot-caret{animation:robotCaret .9s steps(1) 3}
 .studio-robot.is-typing .robot-mouth{transform-box:fill-box;transform-origin:center;animation:robotTalk .22s ease-in-out infinite alternate}
 @keyframes robotTalk{to{transform:scaleY(3.2)}}
-.studio-robot-caret{display:none!important}
-.studio-robot-bubble::before{content:"";position:absolute;left:-8px;top:50%;border:8px solid transparent;border-right-color:#a9bdff2e;border-left:0;transform:translateY(-50%)}
-
-/* Klare Beschriftung direkt über dem echten Eingabefeld, darunter ein sanft wippender orange Pfeil.
-   Der Pfeil verschwindet, sobald man ins Feld tippt, schreibt oder diktiert (Klasse is-started aus gestalter.js). */
-.studio-keyword-label{display:block;margin:6px 0 2px;color:#ffb46a;font-size:clamp(14px,3.8vw,16px);font-weight:900;letter-spacing:.03em;line-height:1.3;text-align:center;text-shadow:0 0 12px #ff7a2b55;cursor:pointer}
-.studio-keyword-arrow{display:flex;justify-content:center;height:30px;margin:0 0 2px;pointer-events:none;transition:opacity .25s}
-.studio-keyword-arrow svg{width:30px;height:30px;fill:none;stroke:#ff9a3d;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 6px #ff7a2bcc);animation:studioArrow 1.6s ease-in-out infinite}
-@keyframes studioArrow{0%,100%{transform:translateY(-3px)}50%{transform:translateY(4px)}}
-@media(prefers-reduced-motion:reduce){.studio-keyword-arrow svg{animation:none}}
-.sub-idea.is-started .studio-keyword-arrow{opacity:0}
-/* Platzhalter oben links; die Zeichen „Antippen & schreiben / sprechen“ rücken dafür etwas nach unten. */
-#studio-keyword::placeholder{color:#8a93a6;opacity:1}
-.studio-keyword-main .studio-keyword-icons{padding-top:52px}
-.studio-field textarea#studio-keyword{min-height:184px}
-.studio-keyword-main.is-listening .studio-keyword-icons{padding-top:0}
+.studio-robot-bubble::before{content:"";position:absolute;left:-7px;top:50%;width:12px;height:12px;background:var(--bg);border-left:1px solid #a9bdff55;border-bottom:1px solid #a9bdff55;transform:translateY(-50%) rotate(45deg)}
 @media(prefers-reduced-motion:reduce){.studio-robot-icon,.studio-robot-icon .robot-eye{animation:none}}
 
 /* Führung nach der Modellwahl: der jeweils erklärte Bereich wird heller und leuchtet orange (gestalter.js setzt is-lit). */
@@ -140,7 +124,7 @@ html[lang=en] .studio-steps .is-current button::after{content:"Now"}
 .studio-sub .studio-photo{background:var(--bg)}
 
 /* Leere Vorschau: Hinweis direkt auf dem Shirt */
-.studio-stage.is-blank .studio-preview::after{content:"Hier erscheint dein Shirt";position:absolute;left:50%;top:46%;translate:-50% -50%;padding:10px 18px;border-radius:999px;background:#090c13cc;border:1px solid #ffffff26;color:#fff;font-size:15px;font-weight:800;white-space:nowrap;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.studio-stage.is-blank .studio-preview::after{content:"Hier erscheint Ihr Shirt";position:absolute;left:50%;top:46%;translate:-50% -50%;padding:10px 18px;border-radius:999px;background:#090c13cc;border:1px solid #ffffff26;color:#fff;font-size:15px;font-weight:800;white-space:nowrap;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 html[lang=en] .studio-stage.is-blank .studio-preview::after{content:"Your shirt appears here"}
 
 /* Eingabe */
@@ -232,7 +216,14 @@ html[lang=en] .studio-stage.is-blank .studio-preview::after{content:"Your shirt 
 @keyframes studioTurn{0%,20%{transform:rotate(0)}45%,65%{transform:rotate(180deg)}90%,100%{transform:rotate(360deg)}}
 .studio-empty-hint{display:none;margin:0;padding:14px 18px;border-radius:16px;background:var(--blue-soft);color:#a9bdff;font-weight:600;text-align:center}
 .studio-stage.is-empty .studio-empty-hint{display:block}
+/* Während die KI gestaltet: freundlicher Satz unter dem Shirt, Fusszeile ausgeblendet (nur das Shirt zählt). */
+.studio-wait{display:none;margin:0;padding:16px 18px;border-radius:18px;background:linear-gradient(135deg,#ff5b2e26,#a9bdff1f),var(--surface);border:1px solid #ff9a3d66;box-shadow:var(--shadow);text-align:center;line-height:1.35}
+.studio-wait span:first-child{display:block;font-size:30px;animation:studioFloat 3s ease-in-out infinite}
+.studio-wait strong{display:block;font-size:clamp(18px,4.5vw,22px);font-weight:850;color:var(--ink)}
+.studio-wait span:last-child{display:block;margin-top:2px;font-size:clamp(16px,4vw,18px);font-weight:700;color:#ffb48f}
+body.is-generating .studio-wait{display:block}
 body.is-generating .site-footer{display:none}
+@media(prefers-reduced-motion:reduce){.studio-wait span:first-child{animation:none}}
 .studio-status{margin:0;padding:14px 18px;border-radius:16px;background:var(--mint-soft);color:#7ff0a8;font-weight:700;text-align:center}
 .studio-status:empty{display:none}
 .studio-edit{padding:20px;border-radius:24px;background:var(--surface);border:2px solid var(--accent);box-shadow:var(--shadow)}
@@ -261,7 +252,6 @@ body.is-generating .site-footer{display:none}
 @keyframes studioListen{0%,100%{box-shadow:0 0 0 0 #ff3d2e66}50%{box-shadow:0 0 0 10px #ff3d2e00}}
 .studio-speech.is-on{border-color:#ff3d2e;background:#ff3d2e26}
 .studio-speech.is-on .studio-speech-icon{background:#ff3d2e;animation:studioListen 1.2s ease-out infinite}
-.studio-text-tip{margin:8px 2px 0;font-size:13px;line-height:1.4;color:var(--ink-2)}
 .studio-speech-status{margin:6px 0 0;font-size:13px;line-height:1.4;color:var(--ink-2)}
 .studio-speech-status:empty{display:none}
 
@@ -300,42 +290,7 @@ body.is-generating .site-footer{display:none}
 .studio.is-result .studio-head,.studio.is-result .studio-panel,.studio.is-result .studio-status{display:none}
 .studio.is-result .studio-grid{grid-template-columns:minmax(0,1fr);gap:0}
 @media(min-width:901px){
-  .studio.is-result .studio-stage{position:static;max-height:none;overflow:visible;width:100%;margin:0;padding:0}
-}
-/* Ab 760 px (iPad hoch, Tablets, Computer): LINKS bedienen – RECHTS das Shirt.
-   Gilt für jedes Ergebnis: erstes Design, Änderungen, „Bild weiter bearbeiten“ und Rückkehr aus der Bestellung.
-   Die Vorschau läuft beim Scrollen mit (sticky) und ist so gross, wie Breite UND Bildschirmhöhe es erlauben –
-   immer im Seitenverhältnis 3:2 samt Beschriftung, nie abgeschnitten oder verzerrt. */
-@media(min-width:760px){
-  .studio.is-result{max-width:1640px;padding-bottom:14px}
-  .studio.is-result .studio-stage{display:grid;grid-template-columns:minmax(260px,min(370px,36%)) minmax(0,1fr);column-gap:clamp(16px,2vw,26px);row-gap:12px;align-items:start;align-content:start}
-  .studio.is-result .studio-stage>*{grid-column:1;min-width:0;margin:0}
-  .studio.is-result .studio-preview{grid-column:2;grid-row:1/span 8;justify-self:center;position:sticky;top:calc(var(--sb-head,72px) + 10px);width:100%;max-width:calc((100svh - var(--sb-head,72px) - var(--sb-foot,0px) - 22px - 38px) * 1.5)}
-  /* Preis und Bestellknopf direkt unter dem Änderungsfeld, die Design-Kärtchen darunter – so ist „Bestellen“ ohne Scrollen sichtbar. */
-  .studio.is-result .studio-collection{display:flex;flex-direction:column}
-  .studio.is-result .studio-collection .studio-order{order:-1;margin:0 0 12px;padding:0 0 12px;border-top:0;border-bottom:1px solid var(--line)}
-  .studio.is-result .studio-collection .studio-order[hidden]{display:none}
-  /* Kompakter, damit links alles neben dem Shirt Platz hat. */
-  .studio.is-result .studio-status{padding:10px 14px;font-size:14px}
-  .studio.is-result .studio-edit{padding:14px;border-radius:20px}
-  .studio.is-result .studio-edit-label{margin-bottom:8px}
-  .studio.is-result .studio-edit-label strong{font-size:16px}
-  .studio.is-result .studio-edit-label span{font-size:13px}
-  .studio.is-result .studio-edit-row{flex-direction:column;gap:8px}
-  .studio.is-result .studio-edit .studio-edit-field textarea{min-height:96px}
-  .studio.is-result .studio-edit-field .studio-keyword-icons svg{width:42px;height:42px}
-  .studio.is-result .studio-edit-field .studio-icon-btn span{font-size:13px}
-  .studio.is-result .studio-edit #studio-edit-button{width:100%;min-height:46px}
-  .studio.is-result .studio-collection{padding:14px;border-radius:20px}
-  .studio.is-result .studio-designs{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-  .studio.is-result .studio-card-edit{font-size:12.5px}
-
-  .studio.is-result .studio-card-pick{min-height:32px;font-size:11.5px}
-  .studio.is-result .studio-card-another{min-height:96px}
-  .studio.is-result .studio-order{flex-direction:column;align-items:stretch;gap:10px;text-align:center}
-  .studio.is-result .studio-order strong{font-size:17px}
-  .studio.is-result .studio-order-actions{flex-direction:row}
-  .studio.is-result .studio-order button{width:100%;min-height:48px}
+  .studio.is-result .studio-stage{position:static;max-height:none;overflow:visible;width:100%;max-width:1100px;margin:0 auto;padding:0}
 }
 
 /* Designs + Bestellung */
@@ -343,7 +298,8 @@ body.is-generating .site-footer{display:none}
 .studio-collection h2{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 14px;font-size:20px;letter-spacing:-.02em}
 .studio-collection h2 span{color:var(--ink-3);font-family:var(--font);font-size:14px;font-weight:600;letter-spacing:0}
 .studio-designs{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
-.studio-collection[hidden]{display:none}
+.studio-designs:empty::before{content:"Ihre T-Shirt-Designs erscheinen hier.";grid-column:1/-1;padding:18px;border:2px dashed var(--line);border-radius:14px;color:var(--ink-3);font-size:14.5px;text-align:center}
+html[lang=en] .studio-designs:empty::before{content:"Your T-shirt designs will appear here."}
 .studio-card{padding:6px;border:2px solid var(--line);border-radius:16px;background:var(--surface-2);transition:border-color .2s}
 .studio-card.is-selected{border-color:#2f7a55}
 .studio-card.is-active{border-color:var(--ink)}
@@ -361,10 +317,10 @@ body.is-generating .site-footer{display:none}
 .studio-card-delete{position:absolute;top:2px;right:2px;z-index:2;display:grid;place-items:center;width:40px;height:40px;padding:0;border:0;background:none;color:#fff;font:inherit;font-size:0;cursor:pointer}
 .studio-card-delete::before{content:"×";display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#e5281b;border:2px solid #fff;box-shadow:0 3px 10px #0008;font-size:20px;font-weight:800;line-height:1;transition:transform .15s,background .15s}
 /* „Bild weiter bearbeiten“ über dem Bild; der rote Löschknopf rückt darum nach unten auf das Bild. */
-.studio-card-edit{display:block;width:100%;min-height:34px;margin:0 0 6px;padding:6px 6px;border:1.5px solid #ff9a3d;border-radius:10px;background:#ff9a3d1f;color:#ffb48f;font:inherit;font-size:12.5px;font-weight:800;line-height:1.1;white-space:normal;overflow-wrap:anywhere;cursor:pointer;transition:background .15s}
+.studio-card-edit{display:block;width:100%;height:34px;margin:0 0 6px;padding:0 6px;border:1.5px solid #ff9a3d;border-radius:10px;background:#ff9a3d1f;color:#ffb48f;font:inherit;font-size:12.5px;font-weight:800;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;transition:background .15s}
 .studio-card-edit:hover:not(:disabled){background:#ff9a3d40;color:var(--ink)}
 .studio-card-edit:disabled{opacity:.6;cursor:default}
-.studio-card-media{position:relative}
+.studio-card:has(.studio-card-edit) .studio-card-delete{top:42px}
 @keyframes studioCalled{0%,100%{box-shadow:var(--shadow)}35%{box-shadow:0 0 0 6px #ff9a3d80,0 0 34px #ff7a2b99}}
 .studio-edit.is-called{animation:studioCalled 1.1s ease-in-out 2}
 .studio-card-delete:hover:not(:disabled)::before{background:#ff3d2e;transform:scale(1.12)}
@@ -385,12 +341,6 @@ body.is-generating .site-footer{display:none}
 @media(max-width:900px){
   .studio-grid{grid-template-columns:minmax(0,1fr)}
   .studio-stage.is-empty .studio-empty-hint{display:none}
-  /* Während der Gestaltung: Shirt mit Sanduhr senkrecht mittig (Höhe setzt gestalter.js); Änderungen und Designliste
-     sind in dieser Zeit ohnehin gesperrt und kommen danach zurück. */
-}
-@media(max-width:759px){
-  body.is-generating .studio.is-result .studio-stage{justify-content:center}
-  body.is-generating .studio.is-result .studio-edit,body.is-generating .studio.is-result .studio-collection{display:none}
 }
 /* Handy: eine Spalte, grosse Tippflächen, vor dem ersten Design nur das Formular. */
 @media(max-width:600px){
@@ -413,457 +363,21 @@ body.is-generating .site-footer{display:none}
   .studio-edit-label strong{font-size:16px}
   .studio-edit-label span{display:none}
   .studio-edit textarea{min-height:52px}
-  /* Handy: Änderungsfeld über die ganze Breite (grössere Zeichen zum Antippen), der Knopf darunter nur halb so hoch wie vorher. */
-  .studio-edit-row{flex-direction:column;gap:8px}
-  .studio-edit #studio-edit-button{width:100%;min-height:40px;padding:0 12px;font-size:14px;line-height:1.2}
+  .studio-edit #studio-edit-button{width:118px;min-height:52px;padding:0 10px;font-size:13.5px;line-height:1.2}
   .studio-collection{padding:16px;border-radius:20px}
   .studio-designs{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -16px;padding:0 16px 4px;scrollbar-width:none}
   .studio-designs::-webkit-scrollbar{display:none}
-  .studio-card{flex:0 0 62%;scroll-snap-align:start}
+  .studio-card{flex:0 0 44%;scroll-snap-align:start}
   .studio-order{flex-direction:column;align-items:stretch;text-align:center;gap:12px}
-  .studio-order-actions{flex-direction:column;gap:8px}
+  .studio-order-actions{flex-direction:column-reverse;gap:8px}
   .studio-order button{width:100%}
 }
 
-
-/* ===== Kompakte Gestaltungs-Ansicht „Designen Sie Ihr T-Shirt“ =====
-   Ziel: Auf Laptop/PC alles auf einen Blick – LINKS gestalten, RECHTS das Shirt –, ohne die Seite einfach zu verkleinern.
-   Statt untereinander stehen die Schritte nebeneinander; Schriftgrössen und Tippflächen bleiben gleich gross. */
-
-/* Alle Bildschirme: Modellwahl als kompakte Zeile (kleines Bild + Name) statt grosser quadratischer Bilder. */
-.studio-models button{flex-direction:row;align-items:center;gap:10px;padding:6px 10px 6px 6px}
-.studio-models img{width:56px;height:56px;flex:none;border-radius:10px}
-.studio-models span{padding:0;font-size:14.5px;line-height:1.25;min-width:0}
-/* Schmale Handys: zwei Zeilen untereinander, damit nichts über den Rand ragt. */
-@media(max-width:519px){.studio-models{grid-template-columns:minmax(0,1fr);gap:8px}}
-.studio-step-title,.studio-field>.studio-step-title{margin-bottom:10px}
-.studio-model-field,.studio-step{padding-top:10px;margin-bottom:6px}
-/* Roboter niedriger: kleineres Symbol, Blase mit weniger Innenabstand. */
-.studio-robot{margin:0 0 8px;padding:4px 6px;gap:10px}
-.studio-robot-icon{width:44px;height:44px}
-.studio-robot-bubble{padding:7px 12px}
-.studio-photo.studio-photo-small{margin-bottom:6px}
-.studio-keyword-label{margin:4px 0 0}
-.studio-keyword-arrow{height:24px;margin:0 0 5px}
-.studio-keyword-arrow svg{width:24px;height:24px}
-/* Eingabefeld: kompakte Anfangshöhe, wächst bei Bedarf (Ziehen am Rand) bzw. scrollt intern. */
-.studio-field textarea#studio-keyword{min-height:132px;max-height:50vh;overflow-y:auto}
-.studio-keyword-main .studio-keyword-icons{padding-top:40px;gap:22px}
-.studio-keyword-main .studio-keyword-icons svg{width:48px;height:48px}
-.studio-keyword-main.is-listening .studio-keyword-icons{padding-top:0}
-.studio-text-tip{margin-top:6px;font-size:12.5px}
-.studio-sub{margin-bottom:8px;padding:10px 10px 10px 12px}
-.studio-rights{margin:0 0 10px;padding:9px 11px}
-.studio-surprise{min-height:54px;padding:10px 18px}
-
-/* Seitenaufbau der Gestalter-Seite: Kopfzeile – Inhalt – Fusszeile. Der Inhalt füllt die Höhe dazwischen (Mindesthöhe 100dvh),
-   die Fusszeile steht so immer am unteren Bildschirmrand – nicht in der Mitte, nicht schwebend. Bei langem Inhalt scrollt die Seite normal. */
-body.studio-page main.shell{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
-body.studio-page main.shell>.studio{flex:1 0 auto;width:100%;box-sizing:border-box}
-body.studio-page main.shell>.site-footer{flex:none}
-
-/* Eingabe-Reihenfolge links von oben nach unten: ① Modell → ② Idee (Beschriftung mit Pfeil, Feld, Tipp) → Foto → ③ Rechte + Knopf. */
-.studio-keyword-label{display:flex;align-items:center;justify-content:center;gap:8px;margin:2px 0 6px}
-.studio-keyword-label .studio-keyword-arrow{display:inline-flex;height:auto;margin:0}
-.studio-sub.sub-idea .studio-photo.studio-photo-small{margin:8px 0 0}
-
-/* Ab 1000 px Breite (Tablet quer, Laptop, PC): links ca. 40 % Eingaben in einer Spalte, rechts ca. 60 % das Shirt –
-   so gross, wie der Platz zwischen Überschrift und Fusszeile erlaubt (--sb-* misst gestalter.js), senkrecht mittig. */
-@media(min-width:1000px){
-  .studio:not(.is-result){max-width:1640px;display:flex;flex-direction:column;padding-bottom:14px}
-  .studio:not(.is-result) .studio-head{display:flex;align-items:center;gap:clamp(16px,2vw,32px);margin-bottom:12px;padding-top:6px;text-align:left}
-  .studio:not(.is-result) .studio-head h1{flex:none;font-size:clamp(26px,2.3vw,34px)}
-  .studio:not(.is-result) .studio-head>p{display:none}
-  .studio:not(.is-result) .studio-steps{flex:1;margin:0;max-width:none}
-  .studio:not(.is-result) .studio-steps button{padding:7px 10px}
-  .studio:not(.is-result) .studio-grid{flex:1 0 auto;grid-template-columns:minmax(460px,40%) minmax(0,1fr);gap:clamp(16px,1.8vw,26px);align-items:stretch}
-  .studio:not(.is-result) .studio-panel{padding:12px 18px 14px}
-  .studio:not(.is-result) .studio-stage{align-self:center;position:static;max-height:none;overflow:visible;margin:0;padding:0}
-  .studio:not(.is-result) .studio-preview{width:100%;max-width:calc((100svh - var(--sb-head,72px) - var(--sb-foot,0px) - var(--sb-studio-head,70px) - 30px - 38px) * 1.5)}
-}
-/* Niedrige Bildschirme (z. B. Laptop 1366×768): etwas weniger Höhe pro Element, damit Knopf und Fusszeile ohne Scrollen passen. */
-@media(min-width:1000px) and (max-height:900px){
-  .studio:not(.is-result) .studio-step-title{margin-bottom:6px}
-  .studio:not(.is-result) .studio-model-field,.studio:not(.is-result) .studio-step{padding-top:6px;margin-bottom:4px}
-  .studio:not(.is-result) .studio-models img{width:46px;height:46px}
-  .studio:not(.is-result) .studio-field textarea#studio-keyword{min-height:100px}
-  .studio:not(.is-result) .studio-keyword-main .studio-keyword-icons{padding-top:32px}
-  .studio:not(.is-result) .studio-keyword-main .studio-keyword-icons svg{width:38px;height:38px}
-  .studio:not(.is-result) .studio-surprise{min-height:50px}
-  .studio:not(.is-result) .studio-step-title{margin-bottom:4px}
-  .studio:not(.is-result) .studio-step-title small{margin-top:1px;font-size:12px;line-height:1.3}
-  .studio:not(.is-result) .studio-keyword-label{margin:0 0 4px}
-  .studio:not(.is-result) .studio-sub{padding:8px 10px 8px 12px;margin-bottom:4px}
-  .studio:not(.is-result) .studio-text-tip{margin-top:4px}
-  .studio:not(.is-result) .studio-rights{margin-bottom:8px;padding:7px 10px}
-  .studio:not(.is-result) .studio-head{margin-bottom:8px;padding-top:2px}
-  .studio:not(.is-result) .studio-steps button{padding:5px 10px}
-  .studio:not(.is-result) .studio-panel{padding-top:8px}
-  .studio:not(.is-result) .studio-models img{width:40px;height:40px}
-  .studio:not(.is-result) .studio-models button{padding:5px 10px 5px 5px}
-  /* Kurzbeschreibung (Kragen …) zeigt das Bild schon – auf niedrigen Bildschirmen ausgeblendet, sonst bricht sie um. */
-  .studio:not(.is-result) .studio-models small{display:none}
-  .studio:not(.is-result) .studio-field textarea#studio-keyword{min-height:88px}
-  .studio:not(.is-result) .studio-keyword-main .studio-keyword-icons{padding-top:28px}
-}
-/* Tablet quer (1000–1199 px): linke Spalte etwas breiter, damit der Rechte-Text in eine Zeile passt. */
-@media(min-width:1000px) and (max-width:1199px){
-  .studio:not(.is-result) .studio-grid{grid-template-columns:minmax(500px,51%) minmax(0,1fr);gap:16px}
-  .studio:not(.is-result) .studio-panel{padding-left:14px;padding-right:14px}
-}
-/* Sehr niedrige Bildschirme (bis 820 px Höhe, z. B. 1366×768): untere Innenabstände knapper, damit die Seite gar nicht scrollt. */
-@media(min-width:1000px) and (max-height:820px){
-  .studio:not(.is-result){padding-top:6px;padding-bottom:4px}
-  .studio:not(.is-result) .studio-panel{padding-bottom:6px}
-  .studio:not(.is-result) .studio-model-field,.studio:not(.is-result) .studio-step{margin-bottom:0}
-  .studio:not(.is-result) .studio-step:last-child{padding-bottom:4px}
-  .studio:not(.is-result) .studio-sub{margin-bottom:0}
-}
-
-
-/* ===== Nach der Generierung: alles auf einen Blick, auch bei mehreren Shirts =====
-   „Weiteres T-Shirt designen“ ist ein Knopf neben dem Bestellknopf (fester Platz), die Designs stehen in einer
-   waagrechten Leiste, die seitlich scrollt statt die Seite nach unten zu verlängern. */
-.studio-order .studio-order-actions .studio-card-another{flex:1 1 0;flex-direction:row;justify-content:center;gap:8px;min-height:50px;padding:6px 14px;border:2px dashed #ff9a3d99;border-radius:999px;background:#ff9a3d14;color:var(--ink);font-size:14.5px;font-weight:800;line-height:1.2;box-shadow:none}
-.studio-order .studio-order-actions .studio-card-another:hover:not(:disabled){border-style:solid;border-color:#ff7a2b;background:#ff5b2e1f}
-.studio-order .studio-order-actions .studio-card-another span{width:28px;height:28px;flex:none;font-size:20px}
-.studio-order .studio-order-actions .studio-card-another strong{font-size:14px}
-.studio-order .studio-order-actions .studio-card-another[hidden]{display:none}
-.studio-order .studio-order-actions #studio-order-button{flex:1 1 0}
-@media(min-width:601px){
-  .studio-designs{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity;scrollbar-width:thin}
-  .studio-designs .studio-card{flex:0 0 160px;scroll-snap-align:start}
-}
-@media(min-width:760px){
-  /* Ergebnis-Ansicht: Preis kompakt, beide Knöpfe nebeneinander. */
-  .studio.is-result .studio-order p{font-size:12px;line-height:1.35}
-  .studio.is-result .studio-order .studio-order-actions .studio-card-another,.studio.is-result .studio-order button{min-height:50px;padding:6px 10px;font-size:14.5px}
-}
-@media(min-width:1000px){
-  /* Gestaltungs-Formular mit fertigen Designs: Vorschau um die Höhe der Design-Leiste kleiner (--sb-coll aus gestalter.js). */
-  .studio:not(.is-result) .studio-preview{max-width:calc((100svh - var(--sb-head,72px) - var(--sb-foot,0px) - var(--sb-studio-head,70px) - 30px - 38px - var(--sb-coll,0px)) * 1.5)}
-  .studio:not(.is-result) .studio-collection{padding:12px}
-  .studio:not(.is-result) .studio-order{margin:0 0 10px;padding:0 0 10px;border-top:0;border-bottom:1px solid var(--line);flex-wrap:nowrap}
-  .studio:not(.is-result) .studio-collection{display:flex;flex-direction:column}
-  .studio:not(.is-result) .studio-collection .studio-order{order:-1}
-  .studio:not(.is-result) .studio-order p{font-size:12px}
-  .studio:not(.is-result) .studio-order button{min-height:46px;font-size:14.5px;padding:6px 16px}
-  .studio:not(.is-result) .studio-designs .studio-card{flex-basis:140px}
-}
-/* Niedrige PC-Bildschirme (z. B. 1366×768, 1600×900): Ergebnis-Ansicht etwas knapper, ohne Funktionen auszublenden. */
-@media(min-width:760px) and (max-height:920px){
-  .studio.is-result .studio-edit{padding:12px 14px}
-  .studio.is-result .studio-edit-label{margin-bottom:6px}
-  .studio.is-result .studio-edit-label span{font-size:12px;line-height:1.3;margin-top:1px}
-  .studio.is-result .studio-edit .studio-edit-field textarea{min-height:78px}
-  .studio.is-result .studio-edit-field .studio-keyword-icons svg{width:34px;height:34px}
-  .studio.is-result .studio-edit-field .studio-icon-btn{padding:4px 6px;gap:3px}
-  .studio.is-result .studio-edit #studio-edit-button{min-height:42px}
-  .studio.is-result .studio-collection{padding:12px}
-  .studio.is-result .studio-collection .studio-order{margin-bottom:10px;padding-bottom:10px;gap:8px}
-  .studio.is-result .studio-order strong{font-size:16px}
-  .studio.is-result .studio-designs .studio-card{flex-basis:150px}
-  .studio.is-result .studio-card-edit{min-height:30px;padding:4px 6px;font-size:11.5px}
-  .studio.is-result .studio-card-pick{min-height:30px}
-  .studio.is-result .studio-card-head{margin:4px 0 4px 4px}
-}
-@media(min-width:760px) and (max-height:920px){
-  .studio.is-result{padding-bottom:6px}
-}
-/* Sehr niedrige PC-Bildschirme (bis 820 px Höhe, z. B. 1366×768): Änderungsknopf neben das Feld, Erklärsatz und
-   Abstände knapper – so passen Änderungen, beide Aktionsknöpfe UND die Design-Leiste neben das Shirt. */
-@media(min-width:760px) and (max-height:820px){
-  .studio.is-result .studio-edit-label span{display:none}
-  .studio.is-result .studio-edit-row{flex-direction:row;gap:8px}
-  .studio.is-result .studio-edit .studio-edit-field textarea{min-height:72px}
-  .studio.is-result .studio-edit-field .studio-icon-btn span{font-size:12px}
-  .studio.is-result .studio-edit #studio-edit-button{width:104px;flex:none;min-height:0;padding:4px 8px;font-size:13px;line-height:1.2;white-space:normal}
-  .studio.is-result .studio-stage{row-gap:8px}
-  .studio.is-result{padding-top:2px}
-  .studio.is-result .studio-order p{font-size:11.5px}
-  .studio.is-result .studio-order .studio-order-actions .studio-card-another,.studio.is-result .studio-order button{min-height:44px}
-  .studio.is-result .studio-designs .studio-card{flex-basis:140px}
-}
-
-/* ===== PC-Ansicht: feste Höhenaufteilung, damit alles auf einen Bildschirm passt =====
-   Kopfzeile + Fusszeile kompakt, Textfeld mit fester Höhe (längerer Text scrollt im Feld), Design-Kärtchen quer und
-   niedrig in einer seitlich scrollbaren Leiste; die Shirt-Vorschau bekommt genau die Resthöhe (--sb-* aus gestalter.js). */
-.studio .studio-collection[hidden]{display:none!important}
-@media(min-width:1000px){
-  /* Kopf- und Fusszeile der Gestalter-Seite in je einer Zeile. */
-  body.studio-page .masthead{padding-top:6px;padding-bottom:6px}
-  body.studio-page .site-footer{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 24px;padding:6px clamp(16px,2vw,32px)}
-  body.studio-page .site-footer .footer-inner{flex:0 1 auto;max-width:none;margin:0;padding:0;gap:8px 18px;flex-wrap:nowrap}
-  body.studio-page .site-footer .logo-icon{width:30px;height:30px}
-  body.studio-page .site-footer .logo-word{font-size:20px}
-  body.studio-page .site-footer .footer-links a{padding:5px 11px;font-size:13px}
-  body.studio-page .site-footer .footer-legal{max-width:none;margin:0;padding:0;font-size:11.5px}
-
-  /* Texteingabe: feste Höhe statt mitwachsen. */
-  .studio:not(.is-result) .studio-field textarea#studio-keyword{height:140px;min-height:0;max-height:140px;resize:none;overflow-y:auto}
-  .studio:not(.is-result) .studio-keyword-main .studio-keyword-icons{padding-top:30px;gap:26px}
-  .studio:not(.is-result) .studio-keyword-main .studio-keyword-icons svg{width:38px;height:38px}
-  .studio:not(.is-result) .studio-keyword-main .studio-icon-btn span{font-size:12.5px}
-
-  /* Design-Kärtchen quer: Bild links, rechts Name, „Bild weiter bearbeiten“ und Warenkorb – knapp 100 px hoch. */
-  .studio-designs .studio-card{flex:0 0 290px;display:grid;grid-template-columns:132px minmax(0,1fr);grid-template-areas:"media head" "media edit" "media pick";column-gap:8px;row-gap:4px;align-items:center;padding:6px}
-  .studio-designs .studio-card-media{grid-area:media}
-  .studio-designs .studio-card-head{grid-area:head;margin:0}
-  .studio-designs .studio-card-edit{grid-area:edit;margin:0;min-height:30px;padding:4px 6px;font-size:12px;line-height:1.15}
-  .studio-designs .studio-card-pick{grid-area:pick;min-height:30px;padding:3px 6px;font-size:12px}
-  .studio.is-result .studio-designs .studio-card{flex-basis:290px}
-
-  /* Gestaltungs-Formular mit fertigen Designs: unter der Vorschau EINE Zeile – links die Design-Leiste,
-     rechts Preis, „Weiteres T-Shirt designen“ und Bestellen. */
-  .studio:not(.is-result) .studio-collection{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:12px;align-items:center;padding:10px 12px}
-  .studio:not(.is-result) .studio-collection .studio-designs{grid-column:1;grid-row:1;padding-bottom:4px}
-  .studio:not(.is-result) .studio-collection .studio-order{grid-column:2;grid-row:1;flex-direction:column;align-items:stretch;gap:6px;margin:0;padding:0 0 0 12px;border:0;border-left:1px solid var(--line);text-align:center}
-  .studio:not(.is-result) .studio-order p{display:none}
-  .studio:not(.is-result) .studio-order strong{font-size:14px}
-  .studio:not(.is-result) .studio-order-actions{flex-direction:column;gap:6px}
-  .studio:not(.is-result) .studio-order .studio-order-actions .studio-card-another,.studio:not(.is-result) .studio-order button{min-height:40px;padding:4px 10px;font-size:13.5px}
-}
-/* Niedrige PC-Fenster (bis 820 px Höhe): Textfeld 110 px. */
-@media(min-width:1000px) and (max-height:820px){
-  .studio:not(.is-result) .studio-field textarea#studio-keyword{height:110px;max-height:110px}
-  .studio:not(.is-result) .studio-keyword-main .studio-keyword-icons{padding-top:26px}
-  .studio:not(.is-result) .studio-keyword-main .studio-keyword-icons svg{width:32px;height:32px}
-}
-@media(min-width:1000px){
-  /* Querkärtchen überall gleich breit (überschreibt ältere, schmalere Kärtchen-Breiten in beiden Ansichten). */
-  .studio:not(.is-result) .studio-designs .studio-card,.studio.is-result .studio-designs .studio-card{flex:0 0 290px}
-}
-/* Sehr niedrige PC-Fenster (bis 680 px Innenhöhe, z. B. Laptop 1366×768 mit Browserleisten): noch knapper, nichts ausgeblendet ausser
-   dem doppelten Zeithinweis bei ③ (steht beim Gestalten ohnehin in der Sanduhr-Anzeige). */
-@media(min-width:1000px) and (max-height:680px){
-  .studio:not(.is-result) .studio-field textarea#studio-keyword{height:88px;max-height:88px}
-  .studio:not(.is-result) .studio-keyword-main .studio-keyword-icons{padding-top:22px;gap:20px}
-  .studio:not(.is-result) .studio-keyword-main .studio-keyword-icons svg{width:26px;height:26px}
-  .studio:not(.is-result) #studio-go .studio-step-title small{display:none}
-  .studio:not(.is-result) .studio-head{margin-bottom:4px}
-  .studio:not(.is-result) .studio-head h1{font-size:24px}
-  .studio:not(.is-result) .studio-steps button{padding:3px 8px}
-  .studio:not(.is-result) .studio-text-tip{font-size:11.5px;margin-top:2px}
-  .studio:not(.is-result) .studio-photo.studio-photo-small{padding-top:2px;padding-bottom:2px}
-  .studio:not(.is-result) .studio-surprise{min-height:44px}
-  .studio:not(.is-result) .studio-model-field,.studio:not(.is-result) .studio-step{padding-top:2px}
-  .studio:not(.is-result) .studio-step-title{margin-bottom:2px}
-  .studio:not(.is-result) .studio-models img{width:34px;height:34px}
-  .studio:not(.is-result) .studio-sub{padding-top:5px;padding-bottom:5px}
-  .studio:not(.is-result) .studio-keyword-label{margin-bottom:2px}
-  .studio:not(.is-result) .studio-rights{margin-bottom:6px;padding:5px 10px}
-  .studio:not(.is-result) .studio-panel{padding-top:4px;padding-bottom:4px}
-}
-
-/* ===== NUR iPad (Klasse is-ipad, gesetzt in designhilfe.html/navigation.js; Querformat ist gesperrt) =====
-   Alles EINSPALTIG und zentriert: Status → Shirt → Änderungen → Bestellen/Weiteres T-Shirt → Designs.
-   Das Shirt wird so gross, dass alles darunter ohne Scrollen passt (--sb-ipad-below misst gestalter.js).
-   Computer, Mac, Android und iPhone haben diese Klasse nicht und bleiben unverändert. */
-html.is-ipad .studio:not(.is-result) .studio-grid,html.is-ipad .studio.is-result .studio-grid{grid-template-columns:minmax(0,1fr);gap:14px}
-html.is-ipad .studio:not(.is-result) .studio-panel{width:100%;max-width:720px;margin:0 auto}
-html.is-ipad .studio:not(.is-result) .studio-stage,html.is-ipad .studio.is-result .studio-stage{position:static;max-height:none;overflow:visible;align-self:auto;width:100%;max-width:760px;margin:0 auto;padding:0}
-html.is-ipad .studio:not(.is-result) .studio-preview{width:100%;max-width:640px;margin:0 auto}
-/* Ergebnis-Ansicht (erstes Shirt, Änderungen, weitere Shirts, zurück aus der Bestellung): eine Spalte statt links/rechts. */
-html.is-ipad .studio.is-result{max-width:none;padding-top:8px;padding-bottom:8px}
-html.is-ipad .studio.is-result .studio-stage{display:flex;flex-direction:column;align-items:center;gap:10px}
-html.is-ipad .studio.is-result .studio-stage>*{width:100%;margin:0}
-html.is-ipad .studio.is-result .studio-preview{position:static;grid-column:auto;grid-row:auto;justify-self:auto;align-self:center;width:100%;min-width:min(100%,360px);max-width:min(100%,calc((100svh - var(--sb-head,60px) - var(--sb-foot,0px) - var(--sb-ipad-below,0px) - 24px - 38px) * 1.5))}
-html.is-ipad .studio.is-result .studio-edit{padding:12px 14px}
-html.is-ipad .studio.is-result .studio-edit-label{margin-bottom:6px}
-html.is-ipad .studio.is-result .studio-edit-label span{display:none}
-html.is-ipad .studio.is-result .studio-edit-row{flex-direction:row;gap:10px}
-html.is-ipad .studio.is-result .studio-edit .studio-edit-field textarea{min-height:92px}
-html.is-ipad .studio.is-result .studio-edit-field .studio-keyword-icons svg{width:44px;height:44px}
-html.is-ipad .studio.is-result .studio-edit #studio-edit-button{width:170px;flex:none;min-height:0;padding:6px 12px;font-size:15px;white-space:normal}
-html.is-ipad .studio.is-result .studio-collection{display:flex;flex-direction:column;padding:12px}
-html.is-ipad .studio.is-result .studio-collection .studio-order{order:-1;flex-direction:row;align-items:center;gap:12px;margin:0 0 10px;padding:0 0 10px;border-top:0;border-bottom:1px solid var(--line);text-align:left}
-html.is-ipad .studio.is-result .studio-order>div:first-child{flex:1;min-width:0}
-html.is-ipad .studio.is-result .studio-order p{font-size:12px}
-html.is-ipad .studio.is-result .studio-order-actions{flex:0 0 auto;flex-direction:row;gap:8px}
-html.is-ipad .studio.is-result .studio-order .studio-order-actions .studio-card-another,html.is-ipad .studio.is-result .studio-order button{flex:0 0 auto;min-height:46px;padding:6px 14px;font-size:14.5px;width:auto}
-/* Designs als niedrige Querkärtchen in einer seitlich scrollbaren Reihe (wie am PC). */
-html.is-ipad .studio-designs{display:flex;gap:10px;overflow-x:auto;margin:0;padding:0 0 6px}
-html.is-ipad .studio .studio-designs .studio-card{flex:0 0 290px;display:grid;grid-template-columns:132px minmax(0,1fr);grid-template-areas:"media head" "media edit" "media pick";column-gap:8px;row-gap:4px;align-items:center;padding:6px}
-html.is-ipad .studio-designs .studio-card-media{grid-area:media}
-html.is-ipad .studio-designs .studio-card-head{grid-area:head;margin:0}
-html.is-ipad .studio-designs .studio-card-edit{grid-area:edit;margin:0;min-height:30px;padding:4px 6px;font-size:12px;line-height:1.15}
-html.is-ipad .studio-designs .studio-card-pick{grid-area:pick;min-height:30px;padding:3px 6px;font-size:12px}
-/* Formular mit fertigen Designs (nach "Weiteres T-Shirt designen"): Bestellteil über der Design-Reihe. */
-html.is-ipad .studio:not(.is-result) .studio-collection{display:flex;flex-direction:column;padding:12px}
-html.is-ipad .studio:not(.is-result) .studio-collection .studio-order{order:-1;flex-direction:row;align-items:center;margin:0 0 10px;padding:0 0 10px;border:0;border-bottom:1px solid var(--line);text-align:left}
-html.is-ipad .studio:not(.is-result) .studio-order-actions{flex-direction:row}
-
-/* ===== NUR Handy (bis 600 px): im leeren Ideen-Feld kein Platzhaltertext, nur "Antippen & schreiben / sprechen" =====
-   Der Platzhalter bleibt technisch erhalten (daran erkennt die Seite ein leeres Feld), ist aber unsichtbar;
-   die beiden Zeichen stehen wieder mittig im Feld. iPad und Computer sind davon nicht betroffen. */
-@media(max-width:600px){
-  #studio-keyword::placeholder{color:transparent}
-  #studio-keyword::-webkit-input-placeholder{color:transparent}
-  .studio-keyword-main .studio-keyword-icons{padding-top:0}
-}
-/* iPad: Gestaltungs-Formular ohne leere Vorlage-Vorschau (wie am Handy – das echte Shirt erscheint beim Gestalten),
-   Überschrift und Fusszeile kompakt, damit Formular, Knopf und Designs ohne Scrollen passen. */
-html.is-ipad .studio:not(.is-result) .studio-preview{display:none}
-html.is-ipad .studio:not(.is-result) .studio-stage{gap:10px}
-html.is-ipad .studio:not(.is-result){padding-top:6px;padding-bottom:10px}
-html.is-ipad .studio:not(.is-result) .studio-head{margin-bottom:10px}
-html.is-ipad .studio:not(.is-result) .studio-head h1{font-size:30px}
-html.is-ipad .studio:not(.is-result) .studio-head>p{display:none}
-html.is-ipad .studio:not(.is-result) .studio-steps{margin-top:10px}
-html.is-ipad body.studio-page .masthead{padding-top:6px;padding-bottom:6px}
-html.is-ipad body.studio-page .site-footer{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 18px;padding:6px 16px}
-html.is-ipad body.studio-page .site-footer .footer-inner{flex:0 1 auto;flex-direction:row;align-items:center;max-width:none;margin:0;padding:0;gap:8px 14px;flex-wrap:nowrap}
-html.is-ipad body.studio-page .site-footer .brand{display:inline-flex}
-html.is-ipad body.studio-page .site-footer .logo-icon{width:28px;height:28px}
-html.is-ipad body.studio-page .site-footer .logo-word{font-size:18px}
-html.is-ipad body.studio-page .site-footer .footer-links{flex-wrap:nowrap;width:auto;overflow:visible}
-html.is-ipad body.studio-page .site-footer .footer-links a{padding:5px 10px;font-size:12.5px}
-html.is-ipad body.studio-page .site-footer .footer-legal{display:block;max-width:none;margin:0;padding:0;font-size:11px}
-html.is-ipad .studio:not(.is-result) .studio-field textarea#studio-keyword{height:110px;min-height:0;max-height:110px;resize:none;overflow-y:auto}
-html.is-ipad .studio:not(.is-result) .studio-keyword-main .studio-keyword-icons{padding-top:0;gap:30px}
-html.is-ipad .studio:not(.is-result) .studio-keyword-main .studio-keyword-icons svg{width:40px;height:40px}
-html.is-ipad .studio:not(.is-result) .studio-models small,html.is-ipad .studio:not(.is-result) #studio-go .studio-step-title small{display:none}
-html.is-ipad .studio:not(.is-result) .studio-models img{width:44px;height:44px}
-html.is-ipad .studio:not(.is-result) .studio-panel{padding:10px 16px 12px}
-html.is-ipad .studio:not(.is-result) .studio-model-field,html.is-ipad .studio:not(.is-result) .studio-step{padding-top:6px;margin-bottom:2px}
-html.is-ipad .studio:not(.is-result) .studio-step-title{margin-bottom:6px}
-html.is-ipad .studio:not(.is-result) .studio-sub{padding:8px 10px 8px 12px;margin-bottom:2px}
-html.is-ipad .studio:not(.is-result) .studio-rights{margin-bottom:8px;padding:7px 10px}
-html.is-ipad .studio:not(.is-result) .studio-surprise{min-height:50px}
-html.is-ipad .studio:not(.is-result) .studio-steps button{padding:6px 8px}
-html.is-ipad .studio:not(.is-result) .studio-collection{padding:10px 12px}
-html.is-ipad .studio:not(.is-result) .studio-order p{display:none}
-html.is-ipad .studio:not(.is-result) .studio-order button,html.is-ipad .studio:not(.is-result) .studio-order .studio-order-actions .studio-card-another{min-height:44px;padding:5px 14px;font-size:14px;width:auto;flex:0 0 auto}
-/* iPad-Formular mit fertigen Designs: Design-Reihe und Aktionen in EINER Zeile (Kärtchen links, Preis + Knöpfe rechts). */
-html.is-ipad .studio:not(.is-result) .studio-collection{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:12px;align-items:center}
-html.is-ipad .studio:not(.is-result) .studio-collection .studio-designs{grid-column:1;grid-row:1}
-html.is-ipad .studio:not(.is-result) .studio-collection .studio-order{grid-column:2;grid-row:1;flex-direction:column;align-items:stretch;gap:6px;margin:0;padding:0 0 0 12px;border:0;border-left:1px solid var(--line);text-align:center}
-html.is-ipad .studio:not(.is-result) .studio-order strong{font-size:14px}
-html.is-ipad .studio:not(.is-result) .studio-order-actions{flex-direction:column;gap:6px}
-html.is-ipad .studio:not(.is-result) .studio-order button,html.is-ipad .studio:not(.is-result) .studio-order .studio-order-actions .studio-card-another{width:100%;min-height:40px}
-html.is-ipad .studio:not(.is-result){padding-bottom:4px}
-/* Niedrigere iPads (Fensterhöhe unter 1050 px, z. B. iPad 10,2"): Textfeld und Kopf etwas knapper. */
-@media(max-height:1050px){
-  html.is-ipad .studio:not(.is-result) .studio-field textarea#studio-keyword{height:88px;max-height:88px}
-  html.is-ipad .studio:not(.is-result) .studio-keyword-main .studio-keyword-icons svg{width:32px;height:32px}
-  html.is-ipad .studio:not(.is-result) .studio-head h1{font-size:26px}
-  html.is-ipad .studio:not(.is-result) .studio-head{margin-bottom:6px}
-  html.is-ipad .studio:not(.is-result) .studio-steps{margin-top:6px}
-  html.is-ipad .studio:not(.is-result) .studio-text-tip{margin-top:3px;font-size:12px}
-}
-
-/* PC (nicht iPad): linke Spalte „Designen Sie Ihr T-Shirt“ senkrecht mittig wie das Shirt rechts – statt oben zu kleben
-   und nach unten leer gezogen zu werden. */
-@media(min-width:1000px){
-  html:not(.is-ipad) .studio:not(.is-result) .studio-grid{align-items:center}
-  html:not(.is-ipad) .studio:not(.is-result) .studio-panel{align-self:center}
-}
-
-/* ===== Einheitliche Zentrierung auf allen Geräten =====
-   Der Gestaltungsbereich steht zwischen Kopf- und Fusszeile immer senkrecht in der Mitte – egal ob Formular, Gestaltung,
-   fertiges Shirt oder weiteres Shirt. Ist der Inhalt höher als der Bildschirm (z. B. Handy), beginnt er normal oben. */
-body.studio-page .studio{display:flex;flex-direction:column}
-body.studio-page .studio>.studio-grid{flex:1 0 auto}
-/* PC, Ergebnis-Ansicht: Bedienung links senkrecht mittig NEBEN dem Shirt (nicht oben), der ganze Block mittig im Fenster. */
-@media(min-width:760px){
-  html:not(.is-ipad) .studio.is-result .studio-grid{align-items:center}
-  html:not(.is-ipad) .studio.is-result .studio-stage{align-self:center;grid-template-rows:minmax(0,1fr) auto auto auto minmax(0,1fr)}
-  html:not(.is-ipad) .studio.is-result .studio-preview{grid-row:1/-1;align-self:center}
-  html:not(.is-ipad) .studio.is-result .studio-status{grid-row:2}
-  html:not(.is-ipad) .studio.is-result .studio-edit{grid-row:3}
-  html:not(.is-ipad) .studio.is-result .studio-collection{grid-row:4}
-}
-/* iPad und Handy (eine Spalte): ganzer Inhalt senkrecht mittig, solange er in den Bildschirm passt. */
-html.is-ipad body.studio-page .studio,html.is-ipad body.studio-page .studio:not(.is-result){justify-content:center}
-html.is-ipad body.studio-page .studio>.studio-grid{flex:0 0 auto}
-@media(max-width:759px){
-  body.studio-page .studio{justify-content:center}
-  body.studio-page .studio>.studio-grid{flex:0 0 auto}
-}
-/* PC: Solange links noch nichts steht (erstes Shirt wird gestaltet), steht das Shirt in der Mitte über die ganze Breite. */
-@media(min-width:760px){
-  html:not(.is-ipad) .studio.is-result .studio-stage.is-solo .studio-preview{grid-column:1/-1;justify-self:center}
-}
-/* Handy während der Gestaltung: oben und unten gleicher Abstand, damit das Shirt wirklich mittig steht. */
-@media(max-width:759px){
-  body.is-generating.studio-page .studio{padding-top:10px;padding-bottom:10px}
-}
-
-/* ===== Spracheingabe: Animation „Ich höre dir zu …“ (alle Geräte gleich, passt sich der Feldbreite an) ===== */
-.studio-listen-badge{position:absolute;left:8px;bottom:8px;z-index:2;display:none;align-items:center;gap:8px;max-width:calc(100% - 130px);padding:6px 12px 6px 10px;border-radius:999px;background:linear-gradient(135deg,#ff5b2e33,#ff9a3d26);border:1px solid #ff9a3d99;box-shadow:0 0 18px #ff7a2b40;color:#ffd2b8;pointer-events:none}
-.studio-listen-badge b{font-size:13.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:studioListenText 1.8s ease-in-out infinite}
-.studio-listen-waves{display:inline-flex;align-items:center;gap:3px;height:18px;flex:none}
-.studio-listen-waves i{display:block;width:3px;height:6px;border-radius:2px;background:#ff9a3d;animation:studioWave 1s ease-in-out infinite}
-.studio-listen-waves i:nth-child(2){animation-delay:-.8s}.studio-listen-waves i:nth-child(3){animation-delay:-.6s}.studio-listen-waves i:nth-child(4){animation-delay:-.4s}.studio-listen-waves i:nth-child(5){animation-delay:-.2s}
-@keyframes studioWave{0%,100%{height:5px;opacity:.6}50%{height:18px;opacity:1}}
-@keyframes studioListenText{0%,100%{opacity:1}50%{opacity:.65}}
-.studio-keyword-box.is-listening .studio-listen-badge{display:inline-flex}
-.studio-keyword-box.is-listening textarea{border-color:#ff7a2b;box-shadow:0 0 0 3px #ff7a2b40,inset 0 0 24px #ff5b2e1a}
-@media(prefers-reduced-motion:reduce){.studio-listen-waves i,.studio-listen-badge b{animation:none}.studio-listen-waves i{height:12px}}
-/* Schmale Felder (Handy): Animation eine Zeile über dem Stopp-Knopf, damit der Text ganz lesbar ist. */
-@media(max-width:600px){.studio-listen-badge{bottom:62px;max-width:calc(100% - 16px)}.studio-keyword-box.is-listening textarea{padding-bottom:104px}}
-
-/* ===== Foto-Upload dezent: schlichte, kleine Zeile unter dem Beschreibungsfeld (ein Foto ist freiwillig) ===== */
-.studio .studio-sub .studio-photo.studio-photo-small{min-height:32px;margin:6px 0 0;padding:3px 10px;gap:6px;justify-content:center;border:1px dashed #ffffff26;border-radius:10px;background:transparent;box-shadow:none}
-.studio .studio-sub .studio-photo.studio-photo-small:hover{border-color:#3ddc8a80;background:#3ddc8a0d}
-.studio .studio-sub .studio-photo-small .studio-photo-icon{width:20px;height:20px;border-radius:0;background:transparent;box-shadow:none}
-.studio .studio-sub .studio-photo-small .studio-photo-icon svg{width:15px;height:15px;stroke:#9aa3b2}
-.studio .studio-sub .studio-photo-small .studio-photo-label{flex:0 1 auto;font-size:12.5px;font-weight:650;line-height:1.3;color:var(--ink-3)}
-.studio .studio-sub .studio-photo-small .studio-photo-label .studio-photo-hint{display:none}
-.studio .studio-sub .studio-photo.studio-photo-small.has-photo{border-style:solid;border-color:#3ddc8a99;background:#3ddc8a12}
-.studio .studio-sub .studio-photo.studio-photo-small.has-photo .studio-photo-label{color:var(--ink)}
-.studio .studio-sub .studio-photo.studio-photo-small.is-error{border:1.5px solid #ff3d2e;background:#ff3d2e1f}
-.studio .studio-sub .studio-photo.studio-photo-small.is-lit{border-color:#ffb46a;background:#ff9a3d22;box-shadow:0 0 0 2px #ffb46a66}
-
-/* ===== Lade-Animation beim Gestalten: ShirtBOX-Shirt wird in den Markenfarben „bedruckt“ ===== */
-.studio-loader .studio-loader-art{position:relative;display:grid;justify-items:center;gap:2px;font-size:0;animation:none}
-.studio-print{width:clamp(84px,9vw,140px);height:auto;overflow:visible;filter:drop-shadow(0 8px 18px #ff5b2e55);animation:sbPrintBob 3.2s ease-in-out infinite}
-.studio-print-outline{fill:none;stroke:#fff;stroke-width:2.4;stroke-linejoin:round}
-.studio-print-collar{fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round}
-.studio-print-fill{animation:sbPrintFill 3.2s ease-in-out infinite}
-.studio-print-head{animation:sbPrintHead 3.2s ease-in-out infinite;filter:drop-shadow(0 0 3px #fff)}
-.studio-print-stripes{animation:sbPrintStripes 1.1s linear infinite}
-.studio-print-sparks path{fill:#ffd28a;transform-box:fill-box;transform-origin:center;animation:sbPrintSpark 1.6s ease-in-out infinite}
-.studio-print-sparks path:nth-child(2){animation-delay:-.55s}.studio-print-sparks path:nth-child(3){animation-delay:-1.1s}
-.studio-preview .studio-loader .studio-loader-logo{display:block;width:30px;height:30px;aspect-ratio:auto;object-fit:contain;margin-top:-2px;opacity:.95;cursor:default;animation:sbPrintLogo 3.2s ease-in-out infinite}
-@keyframes sbPrintFill{0%{transform:translateY(106px);opacity:1}70%{transform:translateY(6px)}86%{transform:translateY(0);opacity:1}100%{transform:translateY(0);opacity:0}}
-@keyframes sbPrintHead{0%{transform:translateY(104px);opacity:1}70%{transform:translateY(4px);opacity:1}76%,100%{transform:translateY(0);opacity:0}}
-@keyframes sbPrintStripes{to{transform:translateX(17px)}}
-@keyframes sbPrintSpark{0%,100%{transform:scale(.4);opacity:0}50%{transform:scale(1.15);opacity:1}}
-@keyframes sbPrintBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-@keyframes sbPrintLogo{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
-@media(prefers-reduced-motion:reduce){.studio-print,.studio-print-fill,.studio-print-head,.studio-print-stripes,.studio-print-sparks path,.studio-preview .studio-loader .studio-loader-logo{animation:none}.studio-print-head{opacity:0}}
-@media(max-width:600px){.studio-print{width:76px}.studio-preview .studio-loader .studio-loader-logo{width:24px;height:24px}.studio-loader strong{font-size:17px}}
-
-/* ===== Bereich „2 – Deine Shirt-Idee beschreiben“ kompakt (alle Geräte) =====
-   Kein sichtbarer Platzhaltertext und keine Tipp-Zeile mehr: im leeren Feld stehen nur mittig „Antippen & schreiben“
-   und „Antippen & sprechen“. Der Platzhalter bleibt technisch erhalten (daran erkennt die Seite ein leeres Feld). */
-#studio-keyword::placeholder{color:transparent}
-#studio-keyword::-webkit-input-placeholder{color:transparent}
-html body.studio-page .studio .studio-sub .studio-keyword-main textarea#studio-keyword{height:104px;min-height:0;max-height:104px;resize:none;overflow-y:auto}
-html body.studio-page .studio .studio-sub .studio-keyword-main .studio-keyword-icons{padding-top:0;gap:clamp(18px,6vw,40px)}
-html body.studio-page .studio .studio-sub .studio-keyword-main .studio-keyword-icons svg{width:40px;height:40px}
-html body.studio-page .studio .studio-sub .studio-keyword-main .studio-icon-btn span{font-size:12.5px;line-height:1.2;text-align:center}
-@media(min-width:1000px) and (max-height:820px){
-  html body.studio-page .studio .studio-sub .studio-keyword-main textarea#studio-keyword{height:92px;max-height:92px}
-  html body.studio-page .studio .studio-sub .studio-keyword-main .studio-keyword-icons svg{width:34px;height:34px}
-}
-@media(min-width:1000px) and (max-height:680px){
-  html body.studio-page .studio .studio-sub .studio-keyword-main textarea#studio-keyword{height:84px;max-height:84px}
-  html body.studio-page .studio .studio-sub .studio-keyword-main .studio-keyword-icons svg{width:30px;height:30px}
-}
-/* Handy: etwas höher für bequemes Antippen; während des Zuhörens Platz für Text + „Ich höre dir zu …“. */
-@media(max-width:600px){
-  html body.studio-page .studio .studio-sub .studio-keyword-main textarea#studio-keyword{height:112px;max-height:112px}
-  html body.studio-page .studio .studio-sub .studio-keyword-main.is-listening textarea#studio-keyword{height:176px;max-height:176px}
-}
-/* ===== Handy & Tablet: EINE Schaltfläche „⌨️ 🎤 Antippen & schreiben oder sprechen“ (Klasse sb-touch-input setzt gestalter.js
-   nur auf iPhone, Android-Handy, iPad und Android-Tablet). Computer bleiben unverändert. ===== */
-.studio-keyword-icons .studio-icon-btn[hidden]{display:none!important}
-html.sb-touch-input .studio-keyword-icons .studio-icon-combo{gap:8px;max-width:92%;padding:10px 18px 9px;border:1px solid #ffffff1f;border-radius:18px;background:#ffffff0a}
-html.sb-touch-input .studio-keyword-icons .studio-icon-combo:active{background:#ffffff1a}
-html.sb-touch-input .studio-icon-combo .studio-icon-pair{display:flex;align-items:center;justify-content:center;gap:14px}
-html.sb-touch-input .studio-keyword-icons .studio-icon-combo .icon-keys{color:#7fa2ff}
-html.sb-touch-input .studio-keyword-icons .studio-icon-combo .icon-mic{color:#ff9a3d;animation-delay:0s}
-html.sb-touch-input .studio-keyword-icons .studio-icon-combo > span:last-child{color:#eef1ff;line-height:1.25;text-align:center;white-space:normal}
-html.sb-touch-input .studio-edit-field .studio-icon-combo{flex:0 1 auto;max-width:92%}
+/* Feine Sport- und Designzeichnungen nur während der KI-Generierung. */
+.studio-wait{position:relative;isolation:isolate;overflow:hidden;min-height:148px;display:none;align-content:center}
+.studio-wait>strong,.studio-wait>span{position:relative;z-index:2}
+.studio-wait .sb-wait-flying{position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none}
+.studio-wait .sb-wait-flying i{position:absolute;display:block;width:var(--size);height:var(--size);color:var(--color);opacity:0;animation:sbWaitFly var(--duration) linear forwards;will-change:transform,opacity}
+.studio-wait .sb-wait-flying svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+@keyframes sbWaitFly{0%{opacity:0;transform:translate(var(--from-x),var(--from-y)) scale(.35) rotate(-35deg)}30%{opacity:.3}70%{opacity:.24}100%{opacity:0;transform:translate(var(--to-x),var(--to-y)) scale(1.3) rotate(35deg)}}
+@media(prefers-reduced-motion:reduce){.studio-wait .sb-wait-flying i{animation:none;opacity:.14;transform:none}}

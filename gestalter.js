@@ -8,13 +8,15 @@
   // Obergrenze des live laufenden Workers (black-snow-2fdf): Anfragen über 2000 Zeichen lehnt er ab
   // („3 bis 2000 Zeichen“). Darum bauen surprisePrompt() und die Änderungsanfrage ihre Anweisung so, dass sie hineinpasst.
   const MAX_PROMPT = 2000;
-  const TOO_LONG = 'Deine Beschreibung ist zu lang. Bitte kürzer fassen (etwa 800 Zeichen).';
+  const TOO_LONG = 'Ihre Beschreibung ist zu lang. Bitte kürzer fassen (etwa 800 Zeichen).';
   // Hängt Zusatzregeln nur an, wenn noch Platz ist – der Worker wiederholt die wichtigsten Regeln ohnehin selbst.
   const fit = (core, ...extras) => { let p = core; for (const x of extras) if ((p + ' ' + x).length <= MAX_PROMPT) p += ' ' + x; if (p.length > MAX_PROMPT) throw Error(TOO_LONG); return p; };
   // Shirt-Modelle: leere Vorlage (links vorne, rechts hinten) und Schnittbeschreibung für die KI.
   const MODELS = {
     polo: {label: 'Polo-Shirt', template: 'anleitung/polo-api-vorlage.jpg', cut: 'Sportpolo mit Polo-Kragen und Knopfleiste'},
-    zip: {label: 'Zip-Shirt', template: 'anleitung/zip-api-vorlage.jpg', cut: 'Sport-Jersey mit niedrigem Stehkragen und kurzem Reissverschluss vorne (kein Polo-Kragen, keine Knöpfe)'}
+    zip: {label: 'Zip-Shirt', template: 'anleitung/zip-api-vorlage.jpg', cut: 'Sport-Jersey mit niedrigem Stehkragen und kurzem Reissverschluss vorne (kein Polo-Kragen, keine Knöpfe)'},
+    tshirt: {label: 'T-Shirt', template: 'anleitung/tshirt-api-vorlage.jpg', cut: 'Klassisches T-Shirt mit Rundhalsausschnitt und regulärer Passform'},
+    oversize: {label: 'Oversize T-Shirt', template: 'anleitung/oversize-api-vorlage.jpg', cut: 'Weites Oversize-T-Shirt mit überschnittenen Schultern, weitem geradem Schnitt und Rundhalsausschnitt'}
   };
   let model = '';
   const TEMPLATE = () => MODELS[model]?.template || MODELS.polo.template;
@@ -32,7 +34,7 @@
   const fail = text => { error.textContent = text; error.hidden = !text; };
   // Fehlende Angabe: hinscrollen und deutlich markieren (window.sbMissing aus navigation.js).
   const en = () => document.documentElement.lang === 'en';
-  const missing = (el, focus, text, then) => { if (window.sbMissing) window.sbMissing(el, focus, text, then); else { el?.scrollIntoView({behavior: 'smooth', block: 'center'}); focus?.focus({preventScroll: true}); } };
+  const missing = (el, focus, text) => { if (window.sbMissing) window.sbMissing(el, focus, text); else { el?.scrollIntoView({behavior: 'smooth', block: 'center'}); focus?.focus({preventScroll: true}); } };
   const say = text => { status.textContent = text; };
   const ready = () => designs.filter(d => d.blob);
   const chosen = () => editingOrder ? ready() : ready().filter(d => d.selected);
@@ -40,7 +42,7 @@
   function render() {
     const d = designs[active];
     picture.src = d?.url || TEMPLATE();
-    picture.alt = d ? `Design ${active + 1}: Vorderseite und Rückseite` : model === 'zip' ? 'Weisse Zip-Shirt-Vorlage, Vorderseite und Rückseite' : 'Weisse Polo-Vorlage, Vorderseite und Rückseite';
+    picture.alt = d ? `Design ${active + 1}: Vorderseite und Rückseite` : `Weisse ${MODELS[model]?.label || 'Polo-Shirt'}-Vorlage, Vorderseite und Rückseite`;
     editRow.hidden = !d;
     list.replaceChildren();
     designs.forEach((item, i) => {
@@ -58,15 +60,13 @@
       const edit = document.createElement('button'); edit.type = 'button'; edit.className = 'studio-card-edit'; edit.disabled = busy;
       edit.textContent = '✎ Bild weiter bearbeiten'; edit.setAttribute('aria-label', `Design ${i + 1} weiter bearbeiten`);
       edit.addEventListener('click', () => editDesign(i));
-      // Bild und roter Löschknopf in einem eigenen Rahmen: Der Knopf sitzt immer oben rechts auf dem Bild,
-      // egal wie viele Zeilen „Bild weiter bearbeiten“ darüber braucht (der Text wird nicht mehr abgeschnitten).
-      const media = document.createElement('div'); media.className = 'studio-card-media'; media.append(view);
-      card.append(edit, media);
+      card.append(edit, view);
+      // Kleiner roter Löschknopf oben rechts auf dem Bild.
       if (!editingOrder) {
         const del = document.createElement('button'); del.type = 'button'; del.className = 'studio-card-delete'; del.disabled = busy;
         del.textContent = '×'; del.title = 'Design löschen'; del.setAttribute('aria-label', `Design ${i + 1} löschen`);
         del.addEventListener('click', () => removeDesign(i));
-        media.append(del);
+        card.append(del);
       }
       const pick = document.createElement('button'); pick.type = 'button'; pick.className = 'studio-card-pick';
       pick.setAttribute('aria-pressed', String(inCart)); pick.disabled = editingOrder || busy;
@@ -74,21 +74,15 @@
       pick.addEventListener('click', () => { if (busy) return; item.selected = !item.selected; render(); });
       card.append(head, pick); list.append(card);
     });
-    // „Weiteres T-Shirt designen“ steht fest neben dem Bestellknopf (nicht mehr als Karte hinter den Designs –
-    // dort rutschte er mit jedem weiteren Shirt nach unten aus dem Bildschirm).
+    // „Weiteres T-Shirt designen“ als gleich grosse Karte direkt neben den Designs – bewusst getrennt von den Änderungen.
+    if (designs.length) list.append(another);
     another.hidden = !designs.length;
     const n = ready().length, c = chosen().length;
-    if (count) count.textContent = n ? `${n} Design${n === 1 ? '' : 's'}` : '';
-    // Ohne Designs gibt es keinen leeren Platzhalter-Bereich mehr – der Bereich erscheint erst mit dem ersten Design.
-    collection.hidden = !designs.length;
-    // Noch nichts neben dem Shirt (erstes Shirt wird gestaltet): Shirt in der Mitte statt allein in der rechten Spalte.
-    stage.classList.toggle('is-solo', editRow.hidden && collection.hidden);
+    count.textContent = n ? `${n} Design${n === 1 ? '' : 's'}` : '';
     orderBar.hidden = !n;
     total.textContent = c ? `${c} T-Shirt${c === 1 ? '' : 's'} ausgewählt · ${window.ShirtboxOrder.money(window.ShirtboxOrder.totalForQuantity(c))}` : 'Kein T-Shirt ausgewählt';
     orderButton.textContent = editingOrder ? 'Zurück zur Bestellung →' : c > 1 ? `${c} T-Shirts zur Bestellung →` : 'T-Shirt zur Bestellung →';
     controls();
-    // Höhe der Design-Leiste neu messen (die Vorschau im Formular rechnet sie ein).
-    if (typeof measureBars === 'function') requestAnimationFrame(measureBars);
   }
 
   function controls() {
@@ -110,7 +104,6 @@
   const stepItems = [...document.querySelectorAll('#studio-steps [data-step]')], idea = $('studio-idea'), go = $('studio-go'), collection = $('studio-collection');
   const hasIdea = () => !!(keyword.value.trim() || photo.files[0] || styleChoice);
   function steps() {
-    markStarted();
     const current = designs.length && !startOver ? 4 : !model ? 1 : hasIdea() ? 3 : 2;
     stepItems.forEach(item => {
       const n = Number(item.dataset.step);
@@ -133,43 +126,28 @@
   // Spracheingabe (Web Speech API, Deutsch) für die Beschreibung und das Änderungsfeld – immer nur ein Diktat gleichzeitig.
   // Gestartet wird über den Mund im Feld. Beenden ist nicht nötig: „T-Shirt designen“ bzw. „Änderungen übernehmen“
   // beenden das Diktat selbst, warten das letzte Wort ab und arbeiten dann mit dem vollständigen Text.
-  // Zuverlässigkeit (Stand 03.11.2026):
-  //  - Ob der Browser Spracherkennung hat, wird erst beim Antippen geprüft (beste vorhandene: SpeechRecognition/webkit…).
-  //  - Start-Wächter: Startet das Mikrofon nicht innerhalb von 8 s (z. B. Erlaubnis-Abfrage hängt, Siri/Diktat aus),
-  //    wird sauber abgebrochen – nichts bleibt hängen.
-  //  - Erneutes Antippen während des Startens bricht ab; während des Zuhörens beendet es das Diktat (letzte Wörter bleiben).
-  //  - Ohne Spracherkennung oder bei gesperrtem Dienst: Ausweichweg über die Diktierfunktion der Tastatur – mit passender
-  //    Anleitung je Gerät (Handy: 🎤 auf der Tastatur, Windows: Win + H, Mac: zweimal Fn/🌐). Nur dann öffnet sich die Tastatur;
-  //    sonst bleibt sie zu (Feld während des Zuhörens schreibgeschützt). Betriebssystem-Sperren werden nicht umgangen.
+  // Safari/iPad beendet die Erkennung nach kurzen Sprechpausen von sich aus – dann hört sie automatisch weiter zu
+  // (bis dreimal hintereinander nichts mehr erkannt wurde).
+  // Ohne Unterstützung verschwindet der Mund, und ein Hinweis nennt die Diktierfunktion der Handy-Tastatur.
   const speechStatus = $('studio-speech-status'), editStatus = $('studio-edit-status');
-  const getRecognition = () => (window.isSecureContext && (window.SpeechRecognition || window.webkitSpeechRecognition)) || null;
-  // Statuszeile: Text oder Liste von Sätzen (je Satz ein eigenes Element, damit language.js jeden Satz einzeln übersetzt).
-  const setStatus = (el, text) => {
-    if (!Array.isArray(text)) { el.textContent = text || ''; return; }
-    el.replaceChildren(...text.filter(Boolean).flatMap((part, i) => [i ? ' ' : '', Object.assign(document.createElement('span'), {textContent: part})]));
-  };
-  const hear = text => setStatus(speechStatus, text);
-  const SPEECH_ERRORS = {'not-allowed': 'Bitte erlaube den Mikrofonzugriff im Browser.', 'service-not-allowed': 'Der Sprachdienst ist hier nicht verfügbar.',
-    'audio-capture': 'Kein Mikrofon gefunden. Bitte prüfe dein Mikrofon.', 'no-speech': 'Keine Sprache erkannt. Bitte nochmals den Mund antippen und sprechen.',
-    'network': 'Die Spracherkennung ist nicht erreichbar.', 'language-not-supported': 'Diese Sprache wird vom Browser nicht unterstützt.'};
-  // Bei diesen Fehlern hilft nur die Diktierfunktion der Tastatur; bei den ersten beiden auch beim nächsten Antippen.
-  const KEYBOARD_ERRORS = ['service-not-allowed', 'language-not-supported', 'not-allowed', 'network'];
-  let speechUnavailable = false;
-  // Handy/Tablet: Android-Chrome und iOS-Safari liefern im Dauer-Modus (continuous) oft gar keinen Text – dort Satz für Satz.
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const hear = text => { speechStatus.textContent = text; };
+  const SPEECH_ERRORS = {'not-allowed': 'Bitte erlauben Sie den Mikrofonzugriff im Browser.', 'service-not-allowed': 'Der Sprachdienst ist hier nicht verfügbar. Nutzen Sie das Mikrofon Ihrer Tastatur.',
+    'audio-capture': 'Kein Mikrofon gefunden. Bitte prüfen Sie Ihr Mikrofon.', 'no-speech': 'Keine Sprache erkannt. Bitte nochmals den Mund antippen und sprechen.',
+    'network': 'Die Spracherkennung ist nicht erreichbar. Bitte Internetverbindung prüfen.'};
+  const FATAL = ['not-allowed', 'service-not-allowed', 'audio-capture', 'network', 'language-not-supported'];
+  // Handy/Tablet: Android-Chrome und iOS-Safari liefern im Dauer-Modus (continuous) oft gar keinen Text.
+  // Dort wird darum Satz für Satz erkannt und nach jedem Satz automatisch weiter zugehört.
   const MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) || matchMedia('(pointer: coarse)').matches;
-  const MAC = !MOBILE && /Macintosh|Mac OS X/.test(navigator.userAgent);
-  const keyboardHint = () => MOBILE ? 'Tippe in der Tastatur auf das 🎤 Mikrofon und sprich – der Text erscheint im Feld.'
-    : MAC ? 'Drücke zweimal die Fn-Taste (🌐) und sprich – der Text erscheint im Feld.'
-    : 'Drücke Windows-Taste + H und sprich – der Text erscheint im Feld.';
   // Testmodus: Adresse mit ?sprachtest öffnen – dann zeigt die Statuszeile, was der Browser meldet.
   const DEBUG = /[?&]sprachtest\b/.test(location.search);
   let debugLog = [];
   const trace = (d, text) => { if (!DEBUG) return; debugLog = [...debugLog.slice(-7), text]; d.report('Sprachtest (' + (MOBILE ? 'Handy' : 'Computer') + '): ' + debugLog.join(' → ')); };
-  // dict = laufendes Diktat {button, field, report, changed, show, session, base, want, started, error, done}
+  // dict = laufendes Diktat {button, field, report, changed, show, session, base, want, quiet, error, done}
   let dict = null;
   function endDictation(d, text) {
     if (dict !== d) return;
-    clearTimeout(d.watchdog); clearTimeout(d.startTimer);
+    clearTimeout(d.watchdog);
     dict = null; d.show(false);
     if (text) d.report(text);
     d.done?.();
@@ -189,46 +167,31 @@
         resolve();
       }, 1500);
       d.done = () => { clearTimeout(timer); resolve(); };
-      if (!d.session || !d.started) { const s = d.session; d.session = null; try { s?.abort(); } catch {} endDictation(d); return; }
+      if (!d.session) { endDictation(d); return; }
       try { d.session.stop(); } catch { d.session = null; endDictation(d); }
     });
   }
-  // Ausweichweg: Diktierfunktion der Geräte-Tastatur (bzw. Windows/Mac-Diktat). Feld freigeben und Cursor hineinsetzen.
-  function keyboardDictation(field, report, why) {
-    report([why, keyboardHint()]);
-    field.readOnly = false;
-    try { field.focus({preventScroll: true}); } catch { field.focus(); }
-  }
-  function listen(d, Recognition) {
+  function listen(d) {
     const session = new Recognition(), field = d.field;
     d.session = session;
     d.base = field.value.trim();
-    d.lastFinal = ''; d.lastText = ''; d.heard = false; d.started = false;
+    d.lastFinal = ''; d.heard = false; d.started = false;
     session.lang = 'de-DE';
-    // iOS Safari unterstützt den Dauer-Modus nicht zuverlässig; ein Neustart bräuchte dort ein neues Antippen.
+    // iOS Safari does not reliably support continuous speech recognition.
+    // Do not restart automatically on iOS: subsequent starts require a fresh user gesture.
     session.continuous = !MOBILE;
     session.interimResults = true; session.maxAlternatives = 1;
     const armWatchdog = () => {
       clearTimeout(d.watchdog);
       d.watchdog = setTimeout(() => {
         if (dict !== d || d.session !== session || !d.want) return;
-        d.want = false; d.session = null;
+        d.want = false; d.error = 'Keine Antwort vom Sprachdienst. Bitte das Mikrofon Ihrer Tastatur verwenden oder erneut versuchen.';
         try { session.abort(); } catch {}
-        endDictation(d);
-        keyboardDictation(field, d.report, 'Keine Antwort vom Sprachdienst.');
+        endDictation(d, d.error);
       }, 12000);
     };
-    // Start-Wächter: Ohne Start nach 8 s sauber abbrechen und den Ausweichweg anbieten.
-    d.startTimer = setTimeout(() => {
-      if (dict !== d || d.started) return;
-      d.want = false; d.session = null;
-      try { session.abort(); } catch {}
-      endDictation(d);
-      keyboardDictation(field, d.report, 'Das Mikrofon startet nicht.');
-    }, 8000);
     session.onstart = () => {
       if (d.session !== session) return;
-      clearTimeout(d.startTimer);
       d.started = true; d.show(true);
       trace(d, 'start');
       if (!DEBUG) d.report(d.hint);
@@ -247,100 +210,62 @@
       }
       if (final.trim() || interim.trim()) d.heard = true;
       d.lastFinal = final.trim();
-      d.lastText = [final.trim(), interim.trim()].filter(Boolean).join(' ');
-      // Der erkannte Text erscheint sofort im Feld (auch die noch unsicheren Wörter).
       field.value = [d.base, final.trim(), interim.trim()].filter(Boolean).join(' ');
       field.scrollTop = field.scrollHeight; d.changed();
     };
     session.onerror = event => {
       if (d.session !== session) return;
       trace(d, 'Fehler ' + event.error);
-      if (event.error === 'aborted') return;
       d.want = false;
-      d.errorCode = event.error;
-      d.error = SPEECH_ERRORS[event.error] || 'Die Spracherkennung konnte nicht gestartet werden.';
-      if (['service-not-allowed', 'language-not-supported'].includes(event.error)) speechUnavailable = true;
-      // Manche iOS-Versionen liefern nach einem Fehler kein onend.
-      setTimeout(() => { if (dict === d && d.session === session) { d.session = null; finishWithError(d); } }, 400);
+      d.error = SPEECH_ERRORS[event.error] || (event.error === 'language-not-supported'
+        ? 'Diese Sprache wird vom Browser nicht unterstützt. Bitte das Mikrofon Ihrer Tastatur verwenden.'
+        : 'Die Spracherkennung konnte nicht gestartet werden. Bitte das Mikrofon Ihrer Tastatur verwenden.');
+      // On some iOS versions onend is not delivered after an error.
+      setTimeout(() => { if (dict === d && d.session === session) endDictation(d, d.error); }, 400);
     };
     session.onend = () => {
       if (d.session !== session) return;
       trace(d, 'Ende'); clearTimeout(d.watchdog);
-      // Handy/iPad: Safari (iPhone/iPad) und teils Android-Chrome markieren das Ergebnis nie als „final“ und beenden
-      // trotzdem – früher wurde der erkannte Text dann wieder gelöscht. Darum das zuletzt Erkannte behalten.
-      field.value = [d.base, d.lastFinal || d.lastText].filter(Boolean).join(' ');
+      // Keep only confirmed words; never delete existing text on a failed attempt.
+      field.value = [d.base, d.lastFinal].filter(Boolean).join(' ');
       d.changed();
       d.session = null;
       if (dict !== d) return;
-      if (d.error) { finishWithError(d); return; }
-      endDictation(d, d.heard
-        ? 'Diktat beendet. Prüfe den Text – zum Weitersprechen den Mund antippen.'
-        : 'Keine Sprache erkannt. Bitte nochmals den Mund antippen und sprechen.');
+      endDictation(d, d.error || (d.heard
+        ? 'Diktat beendet. Prüfen Sie den Text – zum Weitersprechen den Mund antippen.'
+        : 'Keine Sprache erkannt. Bitte erneut antippen oder das Mikrofon Ihrer Tastatur verwenden.'));
     };
     session.start();
   }
-  // Fehler: verständliche Meldung; bei gesperrtem/fehlendem Dienst zusätzlich der Weg über die Tastatur-Diktierfunktion.
-  function finishWithError(d) {
-    const code = d.errorCode, text = d.error;
-    endDictation(d);
-    if (KEYBOARD_ERRORS.includes(code) || !SPEECH_ERRORS[code]) keyboardDictation(d.field, d.report, text);
-    else d.report(text);
-  }
   function dictation(button, field, report, changed, hint) {
     const box = field.parentElement, label = button.querySelector('span'), idle = label.textContent;
-    // Animation „Ich höre dir zu …“: Schallwellen + Text unten im Feld, solange zugehört wird.
-    const badge = document.createElement('span'); badge.className = 'studio-listen-badge'; badge.setAttribute('aria-hidden', 'true');
-    badge.innerHTML = '<span class="studio-listen-waves"><i></i><i></i><i></i><i></i><i></i></span><b>Ich höre dir zu …</b>';
-    box.append(badge);
     const show = on => {
       box.classList.toggle('is-listening', on); button.classList.toggle('is-on', on);
       button.setAttribute('aria-pressed', String(on));
       label.textContent = on ? 'Stopp' : idle;
       field.readOnly = on; controls();
     };
-    let lastTap = 0;
     button.addEventListener('click', () => {
-      // Doppeltes Antippen (Zittern, Doppelklick) nicht als zweiten Befehl werten.
-      const now = Date.now(); if (now - lastTap < 400) return; lastTap = now;
-      if (dict?.button === button) { if (dict.started) finishDictation(); else { stopDictation(); report(''); } return; }
+      if (dict?.button === button) { finishDictation(); return; }
       stopDictation(); stopTour(); if (field === keyword) robotStop();
-      const Recognition = getRecognition();
-      if (!Recognition || speechUnavailable) { keyboardDictation(field, report, Recognition ? 'Der Sprachdienst ist hier nicht verfügbar.' : 'Dieser Browser hat keine eingebaute Spracherkennung.'); return; }
       if (document.activeElement === field) field.blur();
       const d = {button, field, report, changed, show, hint, want: true, error: '', start: field.value.trim()};
       debugLog = []; dict = d;
       report('Mikrofon wird gestartet …');
-      // Muss in Safari direkt im Antippen gestartet werden.
-      try { listen(d, Recognition); }
-      catch { clearTimeout(d.startTimer); d.session = null; endDictation(d); keyboardDictation(field, report, 'Die Spracheingabe konnte nicht gestartet werden.'); }
+      // Must be invoked synchronously inside the user tap on Safari.
+      try { listen(d); }
+      catch { endDictation(d, 'Die Spracheingabe konnte nicht gestartet werden. Bitte das Mikrofon Ihrer Tastatur verwenden.'); }
     });
   }
   const speakButton = field => field.parentElement.querySelector('.studio-icon-btn[data-act=speak]');
-  // Handy und Tablet (iPhone, Android-Handy, iPad, Android-Tablet): nur EINE Schaltfläche „⌨️ 🎤 Antippen & schreiben
-  // oder sprechen“. Sie öffnet die normale Bildschirmtastatur; gesprochen wird über das Mikrofon DER TASTATUR.
-  // Das orange Mikrofon ist nur ein Hinweis darauf – auf diesen Geräten startet keine eigene Spracherkennung mehr.
-  // Erkennung am Gerät (User-Agent / Mac mit Touchscreen = iPad), NICHT an der Breite: ein iPad ist so breit wie ein
-  // Computer. Computer (Windows, Mac, auch mit Touchscreen) behalten beide Schaltflächen und die eigene Spracheingabe.
-  const TOUCH_DEVICE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
-  if (TOUCH_DEVICE) {
-    document.documentElement.classList.add('sb-touch-input');
-    for (const field of [keyword, editInput]) {
-      const speak = speakButton(field), type = field.parentElement.querySelector('.studio-icon-btn[data-act=type]');
-      speak.hidden = true; speak.disabled = true; speak.tabIndex = -1; speak.setAttribute('aria-hidden', 'true');
-      const keys = type.querySelector('svg.icon-keys');
-      type.classList.add('studio-icon-combo');
-      type.innerHTML = '<span class="studio-icon-pair">' + keys.outerHTML
-        + '<svg class="icon-mic" viewBox="0 0 24 24"><rect x="8.5" y="2.5" width="7" height="12" rx="3.5"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5M8.5 21.5h7"/></svg>'
-        + '</span><span>Antippen &amp; schreiben oder sprechen</span>';
-      type.setAttribute('aria-label', 'Antippen & schreiben oder sprechen');
-    }
+  if (!Recognition || !window.isSecureContext) {
+    speakButton(keyword).hidden = speakButton(editInput).hidden = true;
+    hear('Tipp: Sie können Ihre Idee auch mit dem Mikrofon Ihrer Handy-Tastatur einsprechen.');
   } else {
-    dictation(speakButton(keyword), keyword, hear, () => { fail(''); steps(); }, 'Ich höre dir zu … Wenn du fertig bist, einfach auf „T-Shirt designen“ tippen.');
-    dictation(speakButton(editInput), editInput, text => setStatus(editStatus, text), () => controls(), 'Ich höre dir zu … Wenn du fertig bist, einfach auf „Änderungen übernehmen“ tippen.');
+    dictation(speakButton(keyword), keyword, hear, () => { fail(''); steps(); }, 'Ich höre zu … Wenn Sie fertig sind, einfach auf „T-Shirt designen“ tippen.');
+    dictation(speakButton(editInput), editInput, text => { editStatus.textContent = text; }, () => controls(), 'Ich höre zu … Wenn Sie fertig sind, einfach auf „Änderungen übernehmen“ tippen.');
   }
   window.addEventListener('pagehide', stopDictation);
-  // App gewechselt / Bildschirm aus: Diktat sauber beenden (der bisher erkannte Text bleibt).
-  document.addEventListener('visibilitychange', () => { if (document.hidden && dict) finishDictation(); });
   // Tastatur im leeren Feld: Klick setzt den Cursor ins Feld (auf dem Handy öffnet sich die Tastatur).
   for (const field of [keyword, editInput]) field.parentElement.querySelector('.studio-icon-btn[data-act=type]').addEventListener('click', () => field.focus());
 
@@ -367,14 +292,14 @@
     const file = photo.files[0];
     if (file && file.size > MAX_PHOTO) {
       photo.value = '';
-      photoProblem(`Die maximale Grösse von 5 MB ist überschritten (Dein Foto: ${(file.size / 1024 / 1024).toFixed(1).replace('.', ',')} MB). Bitte ein kleineres Foto wählen.`);
+      photoProblem(`Die maximale Grösse von 5 MB ist überschritten (Ihr Foto: ${(file.size / 1024 / 1024).toFixed(1).replace('.', ',')} MB). Bitte ein kleineres Foto wählen.`);
     } else if (file && !/^image\/(jpeg|png|webp)$/.test(file.type)) {
       photo.value = '';
       photoProblem('Dieses Dateiformat geht leider nicht. Bitte ein JPG-, PNG- oder WebP-Foto wählen.');
     } else if (file) photoProblem('');
     const current = photo.files[0];
     photoBox.classList.toggle('has-photo', !!current);
-    photoName.textContent = current ? current.name : 'Optional: eigenes Foto oder Logo hinzufügen';
+    photoName.textContent = current ? current.name : 'Eigenes Foto oder Logo hochladen';
     if (photoThumb.src) URL.revokeObjectURL(photoThumb.src);
     photoThumb.src = current ? URL.createObjectURL(current) : '';
     photoRemove.hidden = !current;
@@ -420,9 +345,7 @@
   // Ein eigenes Textfeld gibt es nicht mehr: Schriftzüge nennt die Kundschaft direkt in der Beschreibung.
   // Bewusst kompakt: Der live Worker nimmt höchstens 2000 Zeichen an (siehe MAX_PROMPT). Die ausführliche Randregel (INSIDE)
   // kommt nur dazu, wenn noch Platz ist – der Worker schickt dieselbe Regel ohnehin in seinen eigenen Anweisungen mit.
-  // printed = Kundentexte, die die Software selbst exakt setzt (shirt-form.js). Die KI zeichnet sie NICHT, sondern
-  // lässt an diesen Stellen eine ruhige Fläche frei; im Kundenwunsch stehen dafür nur Platzhalter [Schriftzug 1] usw.
-  function surprisePrompt(word, hasPhoto, printed = []) {
+  function surprisePrompt(word, hasPhoto) {
     const cut = MODELS[model].cut;
     let p = `Rundum bedrucktes 360-Grad-${cut} auf der Vorlage (links vorne, rechts hinten): EIN zusammenhängendes Design über Vorderseite, Rückseite, Kragen und Ärmel. `;
     // Foto-Regel: das Foto erscheint genau einmal und originalgetreu; die übrigen Flächen setzen nur Farben und Muster fort.
@@ -433,10 +356,7 @@
     if (!hasPhoto) p += 'Vorderseite mit Blickfang auf Brusthöhe, Rückseite mit dem grössten Hauptmotiv, Ärmel und Kragen mit passenden Akzenten. ';
     p += 'Höchstens 3–4 harmonische Farben. ';
     p += CENTER_LAYOUT + ' ';
-    if (printed.length) {
-      const areas = [...new Set(printed.map(t => window.ShirtboxForm.areaName(t)))].join(' und ');
-      p += `Die Platzhalter [Schriftzug …] setzt ShirtBOX nachträglich als echte Schrift ein: KEINE Buchstaben, Wörter oder Zahlen ins Design zeichnen (auch keine Platzhalter). Auf ${areas} eine ruhige, einheitliche Fläche mit gutem Kontrast ohne Figuren oder Gesichter frei lassen. `;
-    } else p += word ? 'Schrift nur, wenn der Kundenwunsch ausdrücklich einen Schriftzug nennt – dann Buchstabe für Buchstabe korrekt, gut lesbar, an der genannten Stelle (sonst hinten). Die Beschreibung selbst nicht als Text drucken. ' : 'Keine Schriftzüge ausser im Foto. ';
+    p += word ? 'Schrift nur, wenn der Kundenwunsch ausdrücklich einen Schriftzug nennt – dann Buchstabe für Buchstabe korrekt, gut lesbar, an der genannten Stelle (sonst hinten). Die Beschreibung selbst nicht als Text drucken. ' : 'Keine Schriftzüge ausser im Foto. ';
     p += `Alles bleibt innerhalb der Shirt-Umrisse, grauer Hintergrund leer. Keine rechteckige Foto-Auflage, keine Marken-Logos, keine Wasserzeichen. Schnitt und Perspektive der Vorlage beibehalten, druckfertige Qualität. Variante ${Date.now()}`;
     return fit(p, INSIDE);
   }
@@ -451,24 +371,7 @@
     modelField.classList.remove('attention');
     if (active < 0) render(); else steps();
     tour();
-    if (needModel) setTimeout(afterModel, 500);
   }));
-
-  // „T-Shirt designen“ ohne Shirt-Modell gedrückt → oben gelb markiert. Ist das Shirt dann angeklickt, geht es
-  // automatisch wieder nach unten zum nächsten Schritt: Fehlt noch die Idee, führt die Tour (unten) dorthin;
-  // fehlt das Häkchen, wird es markiert; ist alles da, leuchtet „T-Shirt designen“ mit „Jetzt hier weiter“.
-  let needModel = false;
-  function afterModel() {
-    if (!needModel || busy || !model) return;
-    needModel = false;
-    if (!hasIdea()) { if (!tourTimer) idea.scrollIntoView({behavior: 'smooth', block: 'center'}); return; }
-    if (!rights.checked) {
-      rights.closest('label').classList.add('attention');
-      missing(rights.closest('label'), rights, en() ? '👇 Please tick this box' : '👇 Bitte Häkchen setzen', surprise);
-      return;
-    }
-    if (window.sbNext) window.sbNext(surprise); else surprise.scrollIntoView({behavior: 'smooth', block: 'center'});
-  }
 
   // Führung nach der ersten Modellwahl: Roboter mit Sprechblase, Foto-Feld und Eingabefeld
   // leuchten nacheinander je 2 Sekunden auf – immer wieder von vorne, bis man ins Eingabefeld klickt (oder dort etwas steht).
@@ -481,7 +384,7 @@
   function tour() {
     if (toured || keyword.value.trim()) return;
     toured = true;
-    const parts = [keyword, photoBox].filter(Boolean);
+    const parts = [$('studio-guide'), photoBox, keyword].filter(Boolean);
     let i = 0;
     const next = () => {
       if (keyword.value.trim()) { stopTour(); return; }
@@ -494,16 +397,39 @@
     tourTimer = setTimeout(next, 700);
   }
   ['pointerdown', 'focus'].forEach(type => keyword.addEventListener(type, stopTour));
-  // Der Roboter mit Sprechblase ist aus dem Formular entfernt (Kundenwunsch 02.11.2026): Das Eingabefeld steht direkt da.
-  // robotType/robotStop bleiben als leere Funktionen, weil Diktat und "Weiteres T-Shirt designen" sie aufrufen.
-  let robotDone = true;
-  function robotType() {}
-  function robotStop() {}
+  // Roboter „schreibt“ seine Nachricht Buchstabe für Buchstabe (sein Mund bewegt sich dabei), wartet und beginnt von vorne –
+  // bis man ins Eingabefeld klickt; dann bleibt der ganze Text stehen. Text aus .studio-robot-source (von language.js übersetzbar).
+  const robot = $('studio-guide'), robotSource = robot.querySelector('.studio-robot-source');
+  const [typedHead, typedTail] = robot.querySelectorAll('.studio-robot-typed > strong, .studio-robot-typed > span');
+  const robotText = () => [robotSource.querySelector('strong').textContent, ' ' + robotSource.querySelector('span').textContent];
+  let robotTimer = null, robotDone = false;
+  // Statt des Worts „unten“ (EN: „below“) zeigt Shirti klein Tastatur und Mund mit Pfeil nach unten –
+  // dieselben Zeichen wie im Eingabefeld darunter. Die unsichtbare Vorlage (Vorlesen, Übersetzung) behält das Wort.
+  const robotTools = document.createElement('span');
+  robotTools.className = 'studio-robot-tools'; robotTools.setAttribute('aria-hidden', 'true');
+  keyword.parentElement.querySelectorAll('.studio-icon-btn svg').forEach(svg => robotTools.append(svg.cloneNode(true)));
+  robotTools.append(Object.assign(document.createElement('i'), {textContent: '↓'}));
+  function setHead(head, n) {
+    const m = /\b(unten|below)\b/i.exec(head);
+    if (!m || n <= m.index) { typedHead.textContent = head.slice(0, n); return; }
+    // Während das Wort „getippt“ würde, bleiben die Zeichen schon stehen; danach geht der Satz normal weiter.
+    typedHead.replaceChildren(head.slice(0, m.index), robotTools, head.slice(m.index + m[0].length, Math.max(n, m.index + m[0].length)));
+  }
+  function robotType() {
+    clearTimeout(robotTimer);
+    const [head, tail] = robotText();
+    if (robotDone || matchMedia('(prefers-reduced-motion: reduce)').matches) { setHead(head, head.length); typedTail.textContent = tail; robot.classList.remove('is-typing'); return; }
+    let n = 0; typedHead.textContent = typedTail.textContent = ''; robot.classList.add('is-typing');
+    const step = () => {
+      n++; setHead(head, n); typedTail.textContent = n > head.length ? tail.slice(0, n - head.length) : '';
+      if (n < head.length + tail.length) robotTimer = setTimeout(step, 42);
+      else { robot.classList.remove('is-typing'); robotTimer = setTimeout(robotType, 6000); }
+    };
+    robotTimer = setTimeout(step, 500);
+  }
+  function robotStop() { robotDone = true; robotType(); }
+  robotType();
   ['pointerdown', 'focus'].forEach(type => keyword.addEventListener(type, robotStop)); keyword.addEventListener('input', () => { if (keyword.value.trim()) stopTour(); });
-  // Orange Pfeil über dem Eingabefeld: weg, sobald man ins Feld tippt, schreibt oder diktiert;
-  // wieder da, wenn das Feld leer ist und man woanders hintippt. (Auch über steps() nach jedem Diktat-Wort.)
-  function markStarted() { keyword.closest('.sub-idea')?.classList.toggle('is-started', document.activeElement === keyword || !!keyword.value.trim() || keyword.parentElement.classList.contains('is-listening')); }
-  ['pointerdown', 'focus', 'blur', 'input'].forEach(type => keyword.addEventListener(type, () => setTimeout(markStarted)));
 
   // Stil-Knöpfe: einer aktiv, erneuter Klick hebt die Auswahl auf.
   const styleButtons = [...document.querySelectorAll('#studio-styles [data-style]')];
@@ -525,16 +451,119 @@
     return new Blob([bytes], {type: bytes[0] === 0x89 && bytes[1] === 0x50 ? 'image/png' : 'image/jpeg'});
   }
 
-  // Form und Druckflächen bestimmt die Software (shirt-form.js): Das KI-Design wird auf die feste Vorlage übertragen,
-  // Kundentexte werden exakt als echte Schrift gesetzt und geprüft. Ohne shirt-form.js bleibt das KI-Bild unverändert.
-  const shape = (blob, modelKey, options) => window.ShirtboxForm
-    ? window.ShirtboxForm.fit(blob, MODELS[modelKey]?.template || MODELS.polo.template, options)
-    : Promise.resolve({blob, layouts: [], locked: false});
+  // Sicherheitsnetz: Nichts darf ausserhalb der Shirts stehen (z. B. ein Fuss, der über den Saum ragt).
+  // Der Umriss der leeren Vorlage wird auf jedes Shirt im KI-Bild ausgerichtet; alles ausserhalb wird durch den grauen Hintergrund ersetzt.
+  // Passt der Umriss nicht sicher (KI hat die Form stark verändert), bleibt das Bild unverändert.
+  const canvasOf = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+  const pixels = (img, w, h) => { const c = canvasOf(w, h), x = c.getContext('2d', {willReadFrequently: true}); x.drawImage(img, 0, 0, w, h); return x.getImageData(0, 0, w, h).data; };
+  // 1 = Shirt, 0 = Hintergrund (vom Bildrand aus erreichbare, randfarbene Fläche).
+  // Zusätzlich: Randfarbe und wie stark der Rand davon abweicht (für die Prüfung, ob der Hintergrund noch grau und ruhig ist).
+  function silhouette(data, w, h) {
+    let r = 0, g = 0, b = 0, n = 0;
+    const border = [];
+    for (let x = 0; x < w; x++) border.push(x, (h - 1) * w + x);
+    for (let y = 0; y < h; y++) border.push(y * w, y * w + w - 1);
+    for (const i of border) { r += data[i * 4]; g += data[i * 4 + 1]; b += data[i * 4 + 2]; n++; }
+    r /= n; g /= n; b /= n;
+    const bg = i => { const dr = data[i * 4] - r, dg = data[i * 4 + 1] - g, db = data[i * 4 + 2] - b; return dr * dr + dg * dg + db * db < 2025; };
+    const m = new Uint8Array(w * h).fill(1), stack = [];
+    const visit = i => { if (m[i] && bg(i)) { m[i] = 0; stack.push(i); } };
+    for (let x = 0; x < w; x++) { visit(x); visit((h - 1) * w + x); }
+    for (let y = 0; y < h; y++) { visit(y * w); visit(y * w + w - 1); }
+    while (stack.length) {
+      const i = stack.pop(), x = i % w;
+      if (x > 0) visit(i - 1); if (x < w - 1) visit(i + 1); if (i >= w) visit(i - w); if (i < w * (h - 1)) visit(i + w);
+    }
+    m.color = [r, g, b]; m.calm = border.filter(i => !m[i]).length / border.length;
+    return m;
+  }
+  // Vorlage: nur die zwei grössten zusammenhängenden Flächen (die beiden Shirts) behalten, helle Flecken im Hintergrund zählen nicht.
+  function twoShirts(m, w, h) {
+    const label = new Int32Array(w * h), sizes = [0], stack = [];
+    for (let s = 0; s < m.length; s++) {
+      if (!m[s] || label[s]) continue;
+      const id = sizes.length; let n = 0; label[s] = id; stack.push(s);
+      while (stack.length) {
+        const i = stack.pop(), x = i % w; n++;
+        for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i - w, i + w]) if (j >= 0 && j < m.length && m[j] && !label[j]) { label[j] = id; stack.push(j); }
+      }
+      sizes.push(n);
+    }
+    const keep = sizes.map((n, id) => [n, id]).slice(1).sort((a, b) => b[0] - a[0]).slice(0, 2).map(e => e[1]);
+    for (let i = 0; i < m.length; i++) if (m[i] && !keep.includes(label[i])) m[i] = 0;
+    return m;
+  }
+  // Ausrichtung pro Shirt (links/rechts): Schwerpunkt und Fläche als Start, dann Feinsuche nach der besten Überdeckung.
+  function align(out, ow, oh, tpl, tw, th, half) {
+    const ox0 = half * ow / 2, ox1 = ox0 + ow / 2, tx0 = half * tw / 2, tx1 = tx0 + tw / 2;
+    const moments = (m, w, h, x0, x1) => { let a = 0, sx = 0, sy = 0; for (let y = 0; y < h; y++) for (let x = x0; x < x1; x++) if (m[y * w + x]) { a++; sx += x; sy += y; } return {a, cx: sx / a, cy: sy / a}; };
+    const mo = moments(out, ow, oh, ox0, ox1), mt = moments(tpl, tw, th, tx0, tx1);
+    if (!mo.a || !mt.a) return null;
+    const iou = (s, tx, ty) => {
+      let inter = 0, union = 0;
+      for (let y = 0; y < oh; y++) for (let x = ox0; x < ox1; x++) {
+        const u = Math.round((x - tx) / s), v = Math.round((y - ty) / s);
+        const t = u >= tx0 && u < tx1 && v >= 0 && v < th && tpl[v * tw + u], o = out[y * ow + x];
+        if (t && o) inter++; if (t || o) union++;
+      }
+      return union ? inter / union : 0;
+    };
+    const s0 = Math.sqrt(mo.a / mt.a);
+    let best = {score: -1};
+    for (let s = s0 * .94; s <= s0 * 1.061; s += s0 * .02) {
+      const bx = mo.cx - s * mt.cx, by = mo.cy - s * mt.cy;
+      for (let dx = -5; dx <= 5; dx++) for (let dy = -5; dy <= 5; dy++) {
+        const score = iou(s, bx + dx, by + dy);
+        if (score > best.score) best = {score, s, tx: bx + dx, ty: by + dy};
+      }
+    }
+    return best;
+  }
+  const templateMasks = {};
+  async function keepInside(blob, modelKey) {
+    try {
+      const src = MODELS[modelKey]?.template || MODELS.polo.template;
+      const [shirt, tpl] = await Promise.all([createImageBitmap(blob), fetch(src).then(r => r.blob()).then(b => createImageBitmap(b))]);
+      const W = shirt.width, H = shirt.height, TW = tpl.width, TH = tpl.height;
+      const ow = 256, oh = Math.round(H * ow / W), tw = 256, th = Math.round(TH * tw / TW);
+      const out = silhouette(pixels(shirt, ow, oh), ow, oh), small = silhouette(pixels(tpl, tw, th), tw, th);
+      twoShirts(small, tw, th);
+      // Nur eingreifen, wenn der Hintergrund noch grau wie in der Vorlage ist und beide Umrisse sehr gut passen.
+      const sameBack = Math.hypot(...out.color.map((v, i) => v - small.color[i])) < 40 && out.calm > .9;
+      const fits = sameBack ? [0, 1].map(half => align(out, ow, oh, small, tw, th, half)) : [];
+      if (!sameBack || fits.some(f => !f || f.score < .8)) { shirt.close(); tpl.close(); return blob; }
+      // Vorlagen-Umriss in voller Grösse als Maske (einmal pro Modell).
+      if (!templateMasks[src]) {
+        const m = twoShirts(silhouette(pixels(tpl, TW, TH), TW, TH), TW, TH), c = canvasOf(TW, TH), x = c.getContext('2d'), img = x.createImageData(TW, TH);
+        for (let i = 0; i < m.length; i++) if (m[i]) { img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = img.data[i * 4 + 3] = 255; }
+        x.putImageData(img, 0, 0); templateMasks[src] = c;
+      }
+      const mask = canvasOf(W, H), mx = mask.getContext('2d'), back = canvasOf(W, H), bx = back.getContext('2d');
+      // Hintergrund: grauer Verlauf wie in der Vorlage (Mitte zwischen den Shirts heller, Ecken dunkler) – ohne Shirts.
+      const probe = canvasOf(TW, TH), px = probe.getContext('2d', {willReadFrequently: true}); px.drawImage(tpl, 0, 0);
+      const rgb = d => `rgb(${d[0]},${d[1]},${d[2]})`, mid = px.getImageData(TW / 2 - 2, TH / 2, 4, 4).data, edge = px.getImageData(4, 4, 4, 4).data;
+      const grad = bx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.hypot(W, H) / 2);
+      grad.addColorStop(0, rgb(mid)); grad.addColorStop(1, rgb(edge)); bx.fillStyle = grad; bx.fillRect(0, 0, W, H);
+      // Kein radiales Aufweiten der Silhouette: gerade unter den Achseln erzeugt
+      // die 16-fache versetzte Maske kuenstliche Spitzen und Ausstuelpungen.
+      fits.forEach((f, half) => {
+        const k = f.s * (W / ow) / (TW / tw), dx = f.tx * W / ow, dy = f.ty * H / oh;
+        mx.save(); mx.beginPath(); mx.rect(half * W / 2, 0, W / 2, H); mx.clip(); mx.setTransform(k, 0, 0, k, dx, dy);
+        mx.drawImage(templateMasks[src], 0, 0);
+        mx.restore();
+      });
+      const front = canvasOf(W, H), fx = front.getContext('2d');
+      fx.drawImage(shirt, 0, 0); fx.globalCompositeOperation = 'destination-in'; fx.drawImage(mask, 0, 0);
+      bx.drawImage(front, 0, 0); shirt.close(); tpl.close();
+      // Verlustfrei speichern: keine zusätzliche JPG-Kompression des Designs.
+      return await new Promise(resolve => back.toBlob(b => resolve(b || blob), 'image/png'));
+    } catch { return blob; }
+  }
 
   // Ergebnis-Ansicht: Ab „T-Shirt designen“ sind Überschrift und Formular weg (Handy, iPad und Computer) –
   // das Shirt steht oben, darunter Änderungen / weiteres Shirt, darunter die Bestellung. Zurück nur über „Weiteres T-Shirt designen“.
   const studio = form.closest('.studio');
-  const showResult = on => { studio.classList.toggle('is-result', on); requestAnimationFrame(measureBars); };
+  const showResult = on => studio.classList.toggle('is-result', on);
 
   // Computer: rechte Seite senkrecht mittig zwischen Kopf- und Fusszeile festhalten (CSS position:sticky, Abstand hier berechnet).
   // Ist sie höher als der Bildschirm, bleibt sie oben unter der Kopfzeile stehen.
@@ -544,33 +573,6 @@
   const probe = document.createElement('div');
   probe.style.cssText = 'position:fixed;top:0;left:-9999px;width:1px;height:100vh;height:100svh;visibility:hidden;pointer-events:none';
   document.body.append(probe);
-  // Höhe der festen Kopfzeile (--sb-head) und der unten angehefteten Fusszeile (--sb-foot) für die mitlaufende
-  // Shirt-Vorschau in der Ergebnis-Ansicht. Bewusst ausserhalb des ResizeObservers (sonst Warnung „ResizeObserver loop“).
-  function measureBars() {
-    const headHeight = `${document.querySelector('.masthead')?.offsetHeight || 0}px`;
-    if (document.documentElement.style.getPropertyValue('--sb-head') !== headHeight) document.documentElement.style.setProperty('--sb-head', headHeight);
-    // Unten angeheftete Fusszeile (Computer) ebenfalls abziehen, damit nichts dahinter verschwindet.
-    const footEl = document.querySelector('.site-footer');
-    const footHeight = `${footEl && ['sticky', 'fixed'].includes(getComputedStyle(footEl).position) && footEl.offsetHeight ? footEl.offsetHeight : 0}px`;
-    if (document.documentElement.style.getPropertyValue('--sb-foot') !== footHeight) document.documentElement.style.setProperty('--sb-foot', footHeight);
-    // Überschrift + Schritte über dem Formular: Die Shirt-Vorschau der ersten Seite wird so gross, wie der Rest erlaubt.
-    const studioHead = document.querySelector('.studio-head');
-    const studioHeadHeight = `${studioHead && studioHead.offsetHeight ? Math.round(studioHead.offsetHeight + parseFloat(getComputedStyle(studioHead).marginBottom) + parseFloat(getComputedStyle(studioHead.parentElement).paddingTop)) : 0}px`;
-    if (document.documentElement.style.getPropertyValue('--sb-studio-head') !== studioHeadHeight) document.documentElement.style.setProperty('--sb-studio-head', studioHeadHeight);
-    // Gestaltungs-Formular mit bereits fertigen Designs: Unter der Vorschau steht die Design-Leiste mit Bestellknopf.
-    // Die Vorschau wird um deren Höhe kleiner, damit Formular-Knopf und Leiste ohne Scrollen sichtbar bleiben.
-    const coll = document.getElementById('studio-collection'), inForm = !document.querySelector('.studio')?.classList.contains('is-result');
-    const collHeight = `${coll && inForm && !coll.hidden && coll.offsetHeight ? coll.offsetHeight + 16 : 0}px`;
-    if (document.documentElement.style.getPropertyValue('--sb-coll') !== collHeight) document.documentElement.style.setProperty('--sb-coll', collHeight);
-    // Nur iPad (einspaltig): Höhe von allem, was in der Ergebnis-Ansicht über und unter dem Shirt steht (Status,
-    // Änderungen, Bestellen, Designs). Das Shirt wird so gross, dass all das ohne Scrollen darunter passt.
-    let below = 0;
-    const stageEl = document.querySelector('.studio-stage'), previewEl = stageEl?.querySelector('.studio-preview');
-    if (document.documentElement.classList.contains('is-ipad') && stageEl && !inForm)
-      below = [...stageEl.children].filter(el => el !== previewEl && el.tagName !== 'DIALOG' && el.getClientRects().length).reduce((sum, el) => sum + el.offsetHeight + 10, 0);
-    if (document.documentElement.style.getPropertyValue('--sb-ipad-below') !== `${below}px`) document.documentElement.style.setProperty('--sb-ipad-below', `${below}px`);
-  }
-  measureBars(); window.addEventListener('resize', measureBars); window.addEventListener('load', measureBars);
   function placeStage() {
     if (!wide.matches) { stage.style.removeProperty('--stage-top'); stage.style.removeProperty('--stage-max'); return; }
     const head = document.querySelector('.masthead')?.offsetHeight || 0, footer = document.querySelector('.site-footer');
@@ -583,17 +585,6 @@
   }
   new ResizeObserver(placeStage).observe(stage);
   window.addEventListener('resize', placeStage); wide.addEventListener('change', placeStage);
-
-  // Handy/iPad hoch: Während das Shirt gestaltet wird, steht das Bild mit der Sanduhr senkrecht mittig im
-  // sichtbaren Bereich unter der Kopfzeile (nicht ganz oben). Die rechte Seite wird dafür so hoch wie der Rest des Bildschirms.
-  // Ab 760 px Breite (iPad hoch, Tablets, Computer) ist die Ergebnis-Ansicht zweispaltig: links Bedienung, rechts das Shirt.
-  // Darunter (Handy) eine Spalte – nur dort wird das Shirt beim Gestalten senkrecht mittig gestellt.
-  const twoCol = matchMedia('(min-width: 760px)');
-  function centerWhileGenerating() {
-    // Die senkrechte Mitte übernimmt jetzt das CSS für alle Geräte (Gestaltungsbereich mittig zwischen Kopf- und Fusszeile).
-    stage.style.removeProperty('min-height'); return;
-  }
-  window.addEventListener('resize', centerWhileGenerating); twoCol.addEventListener('change', centerWhileGenerating);
 
   // T-Shirt-Vorschau mittig in den sichtbaren Bereich unter der fixen Kopfzeile scrollen.
   function showPreview() {
@@ -613,11 +604,7 @@
     requestAnimationFrame(showPreview);
     try { await task(); }
     catch (e) {
-      // Der Bild-Worker nimmt nur Anfragen von freigegebenen Adressen an (shirtbox.ch …). Lokale Testversion (Doppelklick)
-      // oder eine nicht freigegebene Test-Adresse werden blockiert – dann klar sagen, woran es liegt, statt „später erneut“.
-      const blocked = location.protocol === 'file:' || /^(localhost|127\.|192\.168\.)/.test(location.hostname) || /raspy-firefly/.test(location.hostname);
-      const unreachable = blocked ? 'Die Bildgestaltung funktioniert nur auf shirtbox.ch – diese Test-Adresse ist beim Bild-Dienst nicht freigeschaltet.' : 'Die Bildgestaltung ist nicht erreichbar. Bitte später erneut versuchen.';
-      const text = ['TimeoutError', 'AbortError'].includes(e.name) ? 'Die Anfrage dauert zu lange. Bitte später erneut versuchen.' : /Failed to fetch|Load failed|NetworkError/.test(e.message) ? unreachable : e.message;
+      const text = ['TimeoutError', 'AbortError'].includes(e.name) ? 'Die Anfrage dauert zu lange. Bitte später erneut versuchen.' : e.message === 'Failed to fetch' ? 'Die Bildgestaltung ist nicht erreichbar. Bitte später erneut versuchen.' : e.message;
       fail(text);
       // In der Ergebnis-Ansicht ist das Formular ausgeblendet – Fehler beim Ändern dann direkt unter dem Änderungsfeld zeigen.
       if (designs[active]) editStatus.textContent = text;
@@ -640,36 +627,33 @@
     if (busy || !(await afterDictation())) return;
     if (!speakButton(keyword).hidden) hear('');
     const word = keyword.value.trim(), file = photo.files[0];
-    if (!model) { fail('Bitte wähle zuerst ein Shirt-Modell (Polo-Shirt oder Zip-Shirt).'); modelField.classList.add('attention'); needModel = true; missing(modelField, modelButtons[0], en() ? '👇 Please pick a shirt' : '👇 Bitte ein Shirt anklicken', afterModel); return; }
-    if (!word && !file && !styleChoice) { fail('Bitte beschreibe dein Design oder lade ein Foto hoch.'); missing(keyword.parentElement, null,en() ? '👇 Describe your shirt here' : '👇 Hier dein Shirt beschreiben'); return; }
-    if (!rights.checked) { fail('Bitte bestätige deine Inhalts- und Bildrechte.'); rights.closest('label').classList.add('attention'); missing(rights.closest('label'), rights, en() ? '👇 Please tick this box' : '👇 Bitte Häkchen setzen'); return; }
+    if (!model) { fail('Bitte wählen Sie zuerst ein Shirt-Modell.'); modelField.classList.add('attention'); missing(modelField, modelButtons[0], en() ? '👇 Please pick a shirt' : '👇 Bitte ein Shirt anklicken'); return; }
+    if (!word && !file && !styleChoice) { fail('Bitte beschreiben Sie Ihr Design oder laden Sie ein Foto hoch.'); missing(keyword.parentElement, null,en() ? '👇 Describe your shirt here' : '👇 Hier Ihr Shirt beschreiben'); return; }
+    if (!rights.checked) { fail('Bitte bestätigen Sie Ihre Inhalts- und Bildrechte.'); rights.closest('label').classList.add('attention'); missing(rights.closest('label'), rights, en() ? '👇 Please tick this box' : '👇 Bitte Häkchen setzen'); return; }
     // Ab dem Klick nur noch das Shirt zeigen (auch Computer/iPad quer): Die linke Seite mit Modell, Idee und Knopf
     // verschwindet, damit niemand aus Versehen dort ein neues Shirt startet. Klappt es nicht, kommt das Formular samt Fehler zurück.
     let made = false;
     showResult(true);
     // Nur beim Erstellen über „T-Shirt designen“ (nicht bei Änderungen): Fusszeile (WhatsApp, Newsletter …) weg,
-    // (Der frühere Kasten „Deine Idee wird jetzt verwirklicht“ wurde am 03.11.2026 auf Wunsch entfernt.) Ist das Shirt fertig, ist alles wieder wie vorher.
-    document.body.classList.add('is-generating'); centerWhileGenerating();
+    // unter dem Shirt „Deine Idee wird jetzt verwirklicht“. Ist das Shirt fertig, ist alles wieder wie vorher.
+    document.body.classList.add('is-generating');
     await run(async () => {
       // Das Polo-Shirt holt der Worker selbst; alle anderen Modelle schicken ihre leere Vorlage mit.
-      // Kundentexte in Anführungszeichen (oder nach „Text:“) setzt die Software exakt – die KI bekommt nur Platzhalter.
-      const own = window.ShirtboxForm ? window.ShirtboxForm.extractTexts(word) : {texts: [], prompt: word};
-      const result = await shape(await request(surprisePrompt(own.prompt, !!file, own.texts), file ? await withPhoto(file) : model === 'polo' ? null : await template()), model, {texts: own.texts});
-      const blob = result.blob, layouts = result.layouts;
+      const blob = await keepInside(await request(surprisePrompt(word, !!file), file ? await withPhoto(file) : model === 'polo' ? null : await template()), model);
       const summary = [`Modell: ${MODELS[model].label}`, styleChoice && `Stil: ${STYLES[styleChoice].label}`, word && `Design: ${word}`, file && 'mit eigenem Foto'].filter(Boolean).join(' · ');
-      designs.push({blob, layouts, url: URL.createObjectURL(blob), prompt: `KI-Design – ${summary}`, model, selected: true, number: editingOrder ? Math.max(0, ...designs.map(d => d.number || 0)) + 1 : null});
+      designs.push({blob, url: URL.createObjectURL(blob), prompt: `KI-Design – ${summary}`, model, selected: true, number: editingOrder ? Math.max(0, ...designs.map(d => d.number || 0)) + 1 : null});
       active = designs.length - 1; startOver = false; made = true;
-      say(`Design ${active + 1} ist fertig. Du kannst es im Änderungsfeld noch ändern oder direkt bestellen.`);
+      say(`Design ${active + 1} ist fertig. Sie können es unten noch ändern oder direkt bestellen.`);
     });
-    document.body.classList.remove('is-generating'); centerWhileGenerating();
+    document.body.classList.remove('is-generating');
     if (!made) { showResult(false); error.scrollIntoView({behavior: 'smooth', block: 'center'}); }
   });
 
   // Weiteres T-Shirt: alle Eingaben (Modell, Stil, Beschreibung, Foto) zurücksetzen und oben bei Schritt 1 neu beginnen.
-  // Die fertigen Designs bleiben unten in „Deine T-Shirts“ erhalten.
+  // Die fertigen Designs bleiben unten in „Ihre T-Shirts“ erhalten.
   another.addEventListener('click', () => { if (!busy) startNew(); });
   function startNew() {
-    model = ''; needModel = false; modelButtons.forEach(b => b.setAttribute('aria-pressed', 'false'));
+    model = ''; modelButtons.forEach(b => b.setAttribute('aria-pressed', 'false'));
     styleChoice = ''; styleButtons.forEach(b => b.setAttribute('aria-pressed', 'false'));
     stopTour(); toured = false; robotDone = false; robotType();
     stopDictation(); if (!speakButton(keyword).hidden) hear(''); keyword.value = ''; photo.value = ''; photoProblem(''); photo.dispatchEvent(new Event('change'));
@@ -686,13 +670,10 @@
     if (busy || !designs[i]) return;
     stopDictation(); stopTour();
     active = i; startOver = false; showResult(true); editStatus.textContent = ''; fail('');
-    say(`Design ${i + 1}: Beschreibe im Änderungsfeld, was geändert werden soll.`);
+    say(`Design ${i + 1}: Beschreiben Sie unten, was geändert werden soll.`);
     render();
     requestAnimationFrame(() => {
-      // Handy (eine Spalte): ganz nach oben – dann ist das Shirt vollständig zu sehen und direkt darunter das
-      // Änderungsfeld mit „Antippen & schreiben / sprechen“. Computer/Tablet: Änderungsfeld links in die Mitte holen.
-      if (twoCol.matches && !document.documentElement.classList.contains('is-ipad')) editRow.scrollIntoView({behavior: 'smooth', block: 'center'});
-      else window.scrollTo({top: 0, behavior: 'smooth'});
+      editRow.scrollIntoView({behavior: 'smooth', block: 'center'});
       editRow.classList.remove('is-called'); void editRow.offsetWidth; editRow.classList.add('is-called');
     });
   }
@@ -722,16 +703,7 @@
     editStatus.textContent = '';
     run(async () => {
       const cut = MODELS[d.model]?.cut;
-      // Texte bei Änderungen: Neue Texte in Anführungszeichen setzt wieder die Software. Betrifft die Änderung keine
-      // Schrift, werden die bisher gesetzten Schriftzüge danach identisch (Ort, Grösse, Farbe) neu aufgedruckt.
-      const own = window.ShirtboxForm ? window.ShirtboxForm.extractTexts(change) : {texts: [], prompt: change};
-      const aboutText = own.texts.length || /\b(text\w*|schrift\w*|aufschrift|beschriftung|buchstab\w*|wort|wörter|name|namen|slogan)\b/i.test(change);
-      const keepLayouts = !aboutText && d.layouts?.length ? d.layouts : [];
-      let ask = `Bisheriges Shirt und Gestaltung beibehalten${cut ? ` (Schnitt: ${cut})` : ''}. Ändere nur Folgendes: ${own.prompt}\nErhalte alle anderen Merkmale.`;
-      if (own.texts.length) ask += ` Die Platzhalter [Schriftzug …] setzt ShirtBOX selbst als Schrift ein – nicht zeichnen; auf ${[...new Set(own.texts.map(t => window.ShirtboxForm.areaName(t)))].join(' und ')} vorhandene Schrift entfernen und eine ruhige Fläche lassen.`;
-      else if (keepLayouts.length) ask += ' Vorhandene Schriftzüge exakt unverändert lassen.';
-      const result = await shape(await request(fit(ask, CENTER_LAYOUT, INSIDE), d.blob), d.model, {texts: own.texts, layouts: keepLayouts});
-      const blob = result.blob; d.layouts = result.layouts;
+      const blob = await keepInside(await request(fit(`Bisheriges Shirt und Gestaltung beibehalten${cut ? ` (Schnitt: ${cut})` : ''}. Ändere nur Folgendes: ${change}\nErhalte alle anderen Merkmale.`, CENTER_LAYOUT, INSIDE), d.blob), d.model);
       URL.revokeObjectURL(d.url); d.blob = blob; d.url = URL.createObjectURL(blob); d.edited = true;
       d.prompt = `${d.prompt}\nÄnderung: ${change}`.slice(-1500); editInput.value = '';
       say(`Design ${active + 1} wurde angepasst. Weitere Änderungen sind jederzeit möglich.`);
@@ -758,7 +730,7 @@
       }
       await window.ShirtboxDesignTransfer.save(saved);
       location.href = 'bestellen.html#bestellen';
-    } catch { fail('Deine Designs konnten nicht gespeichert werden. Bitte die Speicherung im Browser erlauben und erneut versuchen.'); busy = false; controls(); }
+    } catch { fail('Ihre Designs konnten nicht gespeichert werden. Bitte die Speicherung im Browser erlauben und erneut versuchen.'); busy = false; controls(); }
   });
 
   // Aus der Bestellung zurück: gespeicherte Designs zum Weiterbearbeiten laden.
@@ -769,9 +741,9 @@
       const items = (await window.ShirtboxDesignTransfer.load())?.blobs || [];
       const index = items.findIndex((x, i) => String(x.number || i + 1) === number);
       if (index < 0) throw Error();
-      items.forEach((e, i) => { const blob = e.blob || e; if (blob instanceof Blob) designs.push({blob, url: URL.createObjectURL(blob), prompt: e.prompt || '', model: /Modell: Zip-Shirt/.test(e.prompt || '') ? 'zip' : 'polo', selected: true, number: e.number || i + 1, entry: e.blob ? e : {blob: e, number: i + 1}}); });
+      items.forEach((e, i) => { const blob = e.blob || e; if (blob instanceof Blob) designs.push({blob, url: URL.createObjectURL(blob), prompt: e.prompt || '', model: /Modell: Oversize T-Shirt/.test(e.prompt || '') ? 'oversize' : /Modell: T-Shirt/.test(e.prompt || '') ? 'tshirt' : /Modell: Zip-Shirt/.test(e.prompt || '') ? 'zip' : 'polo', selected: true, number: e.number || i + 1, entry: e.blob ? e : {blob: e, number: i + 1}}); });
       editingOrder = true; showResult(true); active = designs.findIndex(d => String(d.number) === number);
-      say('Dein Design wurde geladen. Beschreibe im Änderungsfeld die gewünschte Änderung.');
+      say('Ihr Design wurde geladen. Beschreiben Sie unten die gewünschte Änderung.');
       // Bewusst kein automatischer Cursor im Änderungsfeld: Sonst sind „Antippen & schreiben / sprechen“ versteckt,
       // bis man woanders hintippt. Die beiden Zeichen sollen sofort sichtbar sein.
       render();
