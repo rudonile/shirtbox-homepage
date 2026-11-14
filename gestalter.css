@@ -459,3 +459,26 @@ html[lang=en] .studio-designs:empty::before{content:"Your T-shirt designs will a
  .studio-keyword-box:not(.is-listening) .studio-keyword-icons .studio-icon-btn{min-width:52px;padding-left:4px;padding-right:4px}
  .studio-keyword-box:not(.is-listening) .studio-keyword-icons svg{width:38px;height:38px}
 }
+
+/* Mobile Shirt-Vorschau mit ✓ / ✕ (öffnet nur bei Touch, siehe gestalter.js) */
+html.studio-sheet-open,html.studio-sheet-open body{overflow:hidden}
+.studio-model-sheet{box-sizing:border-box;width:min(96vw,760px);max-width:96vw;max-height:calc(100dvh - 16px);margin:auto;padding:0;border:0;border-radius:18px;background:#666;color:#fff;overflow:hidden;box-shadow:0 20px 60px #000a}
+.studio-model-sheet::backdrop{background:#05070dc4}
+.studio-model-sheet[open]{display:block}
+.studio-model-sheet-body{box-sizing:border-box;display:flex;flex-direction:column;gap:10px;max-height:calc(100vh - 16px);max-height:calc(100dvh - 16px);padding:12px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.studio-model-sheet-title{margin:0;text-align:center;font-weight:700;font-size:1.05rem;color:#fff}
+.studio-model-sheet-pic{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;background:#666;border-radius:12px}
+.studio-model-sheet-pic img{display:block;width:100%;height:auto;max-height:calc(100dvh - 150px);object-fit:contain;aspect-ratio:1536/1228}
+.studio-model-sheet-actions{position:sticky;bottom:0;flex:none;display:flex;justify-content:space-between;gap:16px;padding-top:4px;background:#666}
+.studio-model-sheet-actions button{flex:1 1 0;min-width:44px;min-height:56px;border:0;border-radius:14px;color:#fff;font-size:30px;font-weight:700;line-height:1;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.studio-model-sheet-ok{background:#1fa34a}
+.studio-model-sheet-no{background:#d93636}
+.studio-model-sheet-actions button:active{filter:brightness(.88)}
+.studio-model-sheet-actions button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+@media (orientation:landscape) and (max-height:500px){
+.studio-model-sheet{width:auto;max-width:96vw}
+.studio-model-sheet-body{padding:8px;gap:6px}
+.studio-model-sheet-title{font-size:.95rem}
+.studio-model-sheet-pic img{width:auto;max-width:calc(96vw - 16px);max-height:calc(100dvh - 120px)}
+.studio-model-sheet-actions button{min-height:48px}
+}

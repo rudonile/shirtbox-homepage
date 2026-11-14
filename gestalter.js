@@ -415,6 +415,77 @@
     });
   });
 
+  // Nur Touch (Smartphone/Tablet): Antippen öffnet zuerst eine grosse Vorschau mit ✓ (auswählen) und ✕ (abbrechen).
+  // Maus, Stift und Tastatur behalten die bisherige Sofort-Auswahl. Die bestehende Klick-Logik oben bleibt unverändert:
+  // Erst ✓ löst über passThrough einen normalen Klick auf den Modell-Knopf aus.
+  (() => {
+    const modelsBox = $('studio-models');
+    if (!modelsBox || typeof HTMLDialogElement !== 'function' || !HTMLDialogElement.prototype.showModal) return;
+    const dlg = document.createElement('dialog');
+    dlg.className = 'studio-model-sheet';
+    dlg.id = 'studio-model-sheet';
+    dlg.setAttribute('aria-labelledby', 'studio-model-sheet-title');
+    dlg.innerHTML = '<div class="studio-model-sheet-body"><p class="studio-model-sheet-title" id="studio-model-sheet-title"></p>'
+      + '<div class="studio-model-sheet-pic"><img id="studio-model-sheet-img" alt=""/></div>'
+      + '<div class="studio-model-sheet-actions"><button type="button" class="studio-model-sheet-ok" data-sheet="ok">✓</button>'
+      + '<button type="button" class="studio-model-sheet-no" data-sheet="no">✕</button></div></div>';
+    document.body.appendChild(dlg);
+    const sheetImg = dlg.querySelector('img'), sheetTitle = dlg.querySelector('.studio-model-sheet-title');
+    const okBtn = dlg.querySelector('[data-sheet="ok"]'), noBtn = dlg.querySelector('[data-sheet="no"]');
+    let pending = null, opener = null, passThrough = false, lastPointer = '', openedAt = 0;
+
+    modelsBox.addEventListener('pointerdown', e => { lastPointer = e.pointerType || ''; }, true);
+    // Capture-Phase: läuft vor dem Auswahl-Listener am Knopf und hält ihn bei Touch an.
+    modelsBox.addEventListener('click', e => {
+      const button = e.target.closest('[data-model]');
+      if (!button || passThrough) return;
+      const type = typeof e.pointerType === 'string' && e.pointerType ? e.pointerType : (e.detail ? lastPointer : '');
+      if (type !== 'touch') return; // Maus/Stift/Tastatur: unverändert sofort auswählen
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if (busy || dlg.open) return;
+      openSheet(button);
+    }, true);
+
+    function openSheet(button) {
+      pending = button.dataset.model;
+      opener = button;
+      const m = MODELS[pending];
+      sheetImg.src = m.template;
+      sheetImg.alt = `${m.label}: ${en() ? 'front and back' : 'Vorderseite und Rückseite'}`;
+      sheetTitle.textContent = button.querySelector('span')?.firstChild?.textContent?.trim() || m.label;
+      okBtn.setAttribute('aria-label', en() ? `Choose ${m.label}` : `${m.label} auswählen`);
+      noBtn.setAttribute('aria-label', en() ? 'Cancel, back to overview' : 'Abbrechen, zurück zur Übersicht');
+      openedAt = Date.now();
+      document.documentElement.classList.add('studio-sheet-open');
+      dlg.showModal();
+      noBtn.focus({preventScroll: true});
+    }
+    function closeSheet(confirm) {
+      if (!dlg.open) return;
+      const key = pending, button = opener;
+      pending = null; opener = null;
+      dlg.close();
+      document.documentElement.classList.remove('studio-sheet-open');
+      if (!button) return;
+      button.focus({preventScroll: true});
+      if (confirm && key && !busy) {
+        passThrough = true;
+        try { button.click(); } finally { passThrough = false; } // bestehende Auswahlfunktion
+      }
+      // Fokus darf die Hauptvorschau nicht auf ein nur angesehenes Modell umstellen.
+      hoveredModel = null;
+      updateModelPreview();
+    }
+    // Schutz vor Geister-Klick direkt nach dem Öffnen (derselbe Finger-Tipp).
+    const guard = () => Date.now() - openedAt < 350;
+    okBtn.addEventListener('click', e => { e.stopPropagation(); if (!guard()) closeSheet(true); });
+    noBtn.addEventListener('click', e => { e.stopPropagation(); if (!guard()) closeSheet(false); });
+    dlg.addEventListener('cancel', e => { e.preventDefault(); closeSheet(false); }); // Escape
+    dlg.addEventListener('click', e => { if (e.target === dlg && !guard()) closeSheet(false); }); // Tipp auf abgedunkelten Rand
+    dlg.addEventListener('close', () => document.documentElement.classList.remove('studio-sheet-open'));
+  })();
+
   // Führung nach der ersten Modellwahl: Roboter mit Sprechblase, Foto-Feld und Eingabefeld
   // leuchten nacheinander je 2 Sekunden auf – immer wieder von vorne, bis man ins Eingabefeld klickt (oder dort etwas steht).
   // Nur in der ersten Runde scrollt die Seite mit; danach nicht mehr, damit niemand beim Scrollen gestört wird.
