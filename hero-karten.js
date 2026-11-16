@@ -6,12 +6,12 @@
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const pool = [
     ...['treff-nix', 'bubeler', 'portner', 'zafarkom', 'mike-johnson', 'hoenes', 'wickler'].map(name => `bilder/${name}-vorschau.webp?v=20261024`),
-    'bilder/beispiel-bierberge.png',
-    'bilder/beispiel-elefant.jpg',
-    'bilder/beispiel-wikinger.png',
-    'bilder/beispiel-gentle.png',
-    'bilder/beispiel-engel.png',
-    'bilder/beispiel-einhorn.png'
+    'bilder/beispiel-bierberge.png?v=20261116-quadrat-2',
+    'bilder/beispiel-elefant.jpg?v=20261116-quadrat-2',
+    'bilder/beispiel-wikinger.png?v=20261116-quadrat-2',
+    'bilder/beispiel-gentle.png?v=20261116-quadrat-2',
+    'bilder/beispiel-engel.png?v=20261116-quadrat-2',
+    'bilder/beispiel-einhorn.png?v=20261116-quadrat-2'
   ];
   function shuffle(items) {
     const result = [...items];
