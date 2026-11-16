@@ -249,9 +249,121 @@
       </div><div id="bestell-liste"><p class="loading">Wird geladen …</p></div></div>`;
   };
 
+  // ---- „Zum Weiterleiten“: .eml-Datei zum Herunterladen – läuft vollständig im Browser ----
+  // Inhalt ausschliesslich: Lieferadresse, vorhandene Shirtbilder (unverändert), Grössen und Stückzahlen je Design.
+  // Keine Preise, Zahlungs- oder Kontaktdaten. Kein R2 nötig, keine API-Kosten, keine Bildgenerierung, keine Änderung an shirtbox-email.
+  // Bilder: aus dem Bildspeicher, falls vorhanden; sonst die Anhänge der Mail „Neue Bestellung …“ auswählen (SB-…-design-1.png).
+  const wlNr = n => String(n).padStart(2, '0');
+  const WL_TYPES = {'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp'};
+  const wlBase64 = bytes => { let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000)); return btoa(s); };
+  const wlWrap = b64 => b64.replace(/.{1,76}/g, '$&\r\n');
+  const wlDataUrl = blob => new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = () => reject(Error('Bild nicht lesbar')); r.readAsDataURL(blob); });
+  const wlSize = g => `Grösse ${g.groesse} (beim Lieferanten ${g.bestellgroesse}): ${g.anzahl} Stück`;
+  function wlAddress(o) {
+    const a = o.lieferadresse || {};
+    return [`${a.vorname || ''} ${a.nachname || ''}`.trim(), a.strasse, `${a.plz || ''} ${a.ort || ''}`.trim(), a.land].filter(Boolean);
+  }
+  // E-Mail-Inhalt: nur Adresse, Grössen/Stückzahlen und Namen der angehängten Bilder.
+  function wlContent(o, designs, files) {
+    const address = wlAddress(o), f = 'font-family:Arial,Helvetica,sans-serif;';
+    const text = ['Zum Weiterleiten', '', 'LIEFERADRESSE', ...address, '',
+      ...designs.flatMap(d => [`DESIGN ${wlNr(d.design_nr)}`, ...d.groessen.map(wlSize), files.get(d.id) ? `Bild im Anhang: ${files.get(d.id).name}` : 'Bild: nicht beigefügt', ''])].join('\r\n');
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Zum Weiterleiten</title></head><body style="${f}color:#1d2330;margin:0;padding:20px">
+<h1 style="${f}font-size:22px;margin:0 0 16px">Zum Weiterleiten</h1>
+<h2 style="${f}font-size:16px;margin:0 0 6px">Lieferadresse</h2>
+<p style="${f}font-size:15px;line-height:1.5;margin:0 0 20px">${address.map(esc).join('<br>')}</p>
+${designs.map(d => `<h2 style="${f}font-size:16px;margin:16px 0 6px">Design ${wlNr(d.design_nr)}</h2>
+<p style="${f}font-size:15px;line-height:1.5;margin:0 0 4px">${d.groessen.map(g => esc(wlSize(g))).join('<br>')}</p>
+<p style="${f}font-size:13px;margin:0;color:${files.get(d.id) ? '#6b7280' : '#b42318'}">${files.get(d.id) ? `Bild im Anhang: ${esc(files.get(d.id).name)}` : 'Bild: nicht beigefügt'}</p>`).join('\n')}
+</body></html>`;
+    return {text, html};
+  }
+  // .eml (RFC 5322 / MIME): Text + HTML, Bilder unverändert als Anhänge. „X-Unsent: 1“ öffnet die Datei in Outlook als Entwurf.
+  async function wlEml(o, designs, files) {
+    const {text, html} = wlContent(o, designs, files), enc = new TextEncoder();
+    const id = () => crypto.randomUUID().replace(/-/g, ''), mixed = `sb_mixed_${id()}`, alt = `sb_alt_${id()}`;
+    const parts = ['From: ShirtBOX <bestellung@shirtbox.ch>', 'Subject: Zum Weiterleiten', `Date: ${new Date().toUTCString()}`, 'MIME-Version: 1.0', 'X-Unsent: 1',
+      `Content-Type: multipart/mixed; boundary="${mixed}"`, '', 'Dies ist eine Nachricht im MIME-Format.',
+      `--${mixed}`, `Content-Type: multipart/alternative; boundary="${alt}"`, '',
+      `--${alt}`, 'Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', wlWrap(wlBase64(enc.encode(text))),
+      `--${alt}`, 'Content-Type: text/html; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', wlWrap(wlBase64(enc.encode(html))),
+      `--${alt}--`, ''];
+    for (const d of designs) {
+      const file = files.get(d.id); if (!file) continue;
+      parts.push(`--${mixed}`, `Content-Type: ${file.type}; name="${file.name}"`, `Content-Disposition: attachment; filename="${file.name}"`, 'Content-Transfer-Encoding: base64', '',
+        wlWrap(wlBase64(new Uint8Array(await file.blob.arrayBuffer()))));
+    }
+    parts.push(`--${mixed}--`, '');
+    return new Blob([parts.join('\r\n')], {type: 'message/rfc822'});
+  }
+  // Datei einem Design zuordnen. Schutz vor Verwechslung: fremde Bestellnummer im Dateinamen wird abgelehnt.
+  function wlAccept(o, d, blob, original) {
+    const type = WL_TYPES[blob.type] ? blob.type : '';
+    if (!type) throw Error(`${original}: bitte PNG, JPG oder WebP wählen.`);
+    if (blob.size > 25 * 1024 * 1024) throw Error(`${original}: grösser als 25 MB.`);
+    const other = /SB-\d{6}-[A-Z0-9]{4}/.exec(original || '');
+    if (other && other[0] !== o.bestellnummer) throw Error(`${original} gehört zu Bestellung ${other[0]}, nicht zu ${o.bestellnummer}.`);
+    return {blob, type, name: `Design-${wlNr(d.design_nr)}.${WL_TYPES[type]}`, quelle: original || 'Bildspeicher'};
+  }
+  async function wlCard(o, designs) {
+    const box = $('wl-card'); if (!box) return;
+    const files = new Map();
+    // Falls ein Bildspeicher verbunden ist: dort gespeicherte Bilder automatisch verwenden (sonst bleibt die Auswahl leer).
+    for (const d of designs) {
+      const key = d.bild_druck || d.bild_vorschau; if (!key) continue;
+      try { const r = await fetch(`/api/bild?k=${encodeURIComponent(key)}`, {credentials: 'same-origin'}); if (r.ok) files.set(d.id, wlAccept(o, d, await r.blob(), '')); } catch {}
+    }
+    const draw = async () => {
+      if (!box.isConnected) return;
+      const rows = await Promise.all(designs.map(async d => { const f = files.get(d.id);
+        return `<div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;border-top:1px solid #e6e1d6;padding:12px 0">
+          <div style="width:240px;max-width:100%">${f ? `<img src="${await wlDataUrl(f.blob)}" alt="Design ${wlNr(d.design_nr)}" style="width:100%;height:auto;border:1px solid #d8d2c5;border-radius:8px">` : '<p class="error small">Noch kein Bild gewählt</p>'}</div>
+          <div style="flex:1;min-width:220px"><h3>Design ${wlNr(d.design_nr)}</h3>
+            <p class="small">${d.groessen.map(g => esc(wlSize(g))).join('<br>')}</p>
+            <p class="small muted">${f ? `Anhang: <b>${esc(f.name)}</b> · ${(f.blob.size / 1048576).toFixed(1)} MB · Quelle: ${esc(f.quelle)}` : ''}</p>
+            <label class="small">Bild für Design ${wlNr(d.design_nr)} wählen: <input type="file" accept="image/png,image/jpeg,image/webp" data-wl-file="${d.id}"></label></div></div>`; }));
+      const missing = designs.filter(d => !files.has(d.id));
+      box.innerHTML = `<h2>Zum Weiterleiten</h2>
+        <p class="muted small">Erstellt eine .eml-Datei mit Betreff „Zum Weiterleiten“: Lieferadresse, Shirtbilder (unverändert), Grössen und Stückzahlen – ohne Preise und Kontaktdaten. Datei öffnen (Outlook, Apple Mail, Thunderbird …) und weiterleiten. Es wird nichts gesendet und nichts gespeichert.</p>
+        <p class="small"><label>Bilder aus der Mail „🛒 Neue Bestellung ${esc(o.bestellnummer)}“ wählen (mehrere auf einmal möglich – Zuordnung über „design-1“, „design-2“ … im Dateinamen): <input type="file" multiple accept="image/png,image/jpeg,image/webp" id="wl-multi"></label></p>
+        ${rows.join('')}
+        ${missing.length ? `<p class="small"><label><input type="checkbox" id="wl-ohne"> Trotzdem ohne Bild für Design ${missing.map(d => wlNr(d.design_nr)).join(', ')} erstellen</label></p>` : ''}
+        <p style="margin-top:10px"><button class="btn btn-main" id="wl-eml">⬇ .eml-Datei herunterladen</button></p>`;
+      box.querySelectorAll('[data-wl-file]').forEach(input => input.addEventListener('change', async () => {
+        const d = designs.find(x => String(x.id) === input.dataset.wlFile), file = input.files[0]; if (!d || !file) return;
+        try { files.set(d.id, wlAccept(o, d, file, file.name)); await draw(); } catch (e) { toast(e.message, true); input.value = ''; }
+      }));
+      $('wl-multi').addEventListener('change', async e => {
+        const list = [...e.target.files], used = [], skipped = [];
+        // Druckdatei bevorzugen: Originalbilder und verkleinerte Vorschauen nur, wenn sonst nichts für das Design da ist.
+        const rank = n => /original/i.test(n) ? 2 : /vorschau/i.test(n) ? 1 : 0;
+        list.sort((p, q) => rank(q.name) - rank(p.name));
+        for (const file of list) {
+          const m = /design[-_ ]?0*(\d+)(?![\d])/i.exec(file.name);
+          const d = m ? designs.find(x => x.design_nr === Number(m[1])) : designs.length === 1 && list.length === 1 ? designs[0] : null;
+          if (!d) { skipped.push(file.name); continue; }
+          try { files.set(d.id, wlAccept(o, d, file, file.name)); used.push(file.name); } catch (err) { skipped.push(`${file.name} (${err.message})`); }
+        }
+        await draw();
+        toast(`${used.length} Bild${used.length === 1 ? '' : 'er'} zugeordnet${skipped.length ? ` · nicht zugeordnet: ${skipped.join(', ')}` : ''}.`, !!skipped.length && !used.length);
+      });
+      $('wl-eml').addEventListener('click', async () => {
+        if (designs.some(d => !files.has(d.id)) && !$('wl-ohne')?.checked) { toast('Bitte für jedes Design ein Bild wählen – oder „Trotzdem ohne Bild“ ankreuzen.', true); return; }
+        try {
+          const eml = await wlEml(o, designs, files), url = URL.createObjectURL(eml), a = document.createElement('a');
+          a.href = url; a.download = `Zum-Weiterleiten-${o.bestellnummer}.eml`; document.body.append(a); a.click(); a.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 60000);
+          toast(`.eml-Datei erstellt (${(eml.size / 1048576).toFixed(1)} MB).`);
+        } catch (e) { failed(e); }
+      });
+    };
+    await draw();
+  }
+
   async function orderDetail(id) {
     const d = await api('/api/bestellungen/' + id), o = d.bestellung, a = o.lieferadresse || {};
     const img = key => `/api/bild?k=${encodeURIComponent(key)}`;
+    after(() => { wlCard(o, d.designs).catch(failed); });
     after(() => {
       const save = async body => { try { await api('/api/bestellungen/' + id, {method: 'PATCH', body}); toast('Gespeichert.'); } catch (e) { failed(e); } };
       $('o-status').addEventListener('change', e => save({status: e.target.value}).then(() => $('o-status-badge').innerHTML = badge(STATUS, e.target.value)));
@@ -281,7 +393,8 @@
           ${x.details ? `<pre>${esc(x.details)}</pre>` : ''}</div></div>`).join('')}
         <table style="margin-top:12px"><tbody><tr><td>Versand</td><td class="num">${o.versand_rappen ? chf(o.versand_rappen) : 'inklusive'}</td></tr><tr><td><b>Total (${o.anzahl} Shirt${o.anzahl === 1 ? '' : 's'})</b></td><td class="num"><b>${chf(o.total_rappen)}</b></td></tr></tbody></table>
         <p class="muted small">Bezahlung per TWINT · ${esc(o.agb ? 'AGB akzeptiert (' + o.agb + ')' : 'AGB-Zustimmung nicht gespeichert')}</p>
-      </div>`;
+      </div>
+      <div class="card no-print" id="wl-card"><h2>Zum Weiterleiten</h2><p class="muted">Wird geladen …</p></div>`;
   }
 
   // Umsatz

@@ -1,7 +1,7 @@
 // ShirtBOX Verwaltungszentrale – Worker "shirtbox-admin" auf admin.shirtbox.ch.
 // Diese Datei wird von bauen.ps1 zu ../2-shirtbox-admin-worker.js zusammengesetzt (mit Oberfläche und Datenbank-Schema).
 // Bindings: D1 DB (shirtbox-verwaltung), R2 BILDER (shirtbox-bilder).
-// Secrets: RESEND_API_KEY, ADMIN_PASSWORD, ADMIN_TOTP_SECRET.
+// Secrets: RESEND_API_KEY, ADMIN_PASSWORD, ADMIN_TOTP_SECRET. „Zum Weiterleiten“ (.eml-Download) läuft vollständig im Browser – keine weiteren Secrets, kein R2 nötig.
 // Variablen (empfohlen): ACCESS_TEAM_DOMAIN (z. B. shirtbox.cloudflareaccess.com), ACCESS_AUD (Application Audience Tag).
 // Cron-Trigger: */15 * * * *  (setzt den Newsletter-Versand in Etappen fort).
 
@@ -10,7 +10,7 @@ const ADMIN_JS = __ADMIN_JS__;
 const ADMIN_CSS = __ADMIN_CSS__;
 const SCHEMA = __SCHEMA__;
 
-const VERSION = '20261031-buchhaltung';
+const VERSION = '20261116-weiterleiten-eml';
 const PUBLIC_WORKER = 'https://shirtbox-email.r-n.workers.dev';
 const SITE = 'https://shirtbox.ch';
 const STATUS = ['neu', 'bearbeitung', 'produziert', 'versendet', 'abgeschlossen', 'storniert'];
@@ -395,7 +395,20 @@ async function order(env, id) {
     d.bilder_original = JSON.parse(d.bilder_original || '[]');
   }
   delete b.client_id;
-  b.lieferadresse = JSON.parse(b.lieferadresse || '{}');
+  try {
+    b.lieferadresse = JSON.parse(b.lieferadresse || '{}');
+  } catch {
+    const zeilen = String(b.lieferadresse || '').trim().split(/\r?\n/);
+    const ort = (zeilen[2] || '').trim().match(/^(\S+)\s+(.+)$/);
+    b.lieferadresse = {
+      vorname: zeilen[0] || '',
+      nachname: '',
+      strasse: zeilen[1] || '',
+      plz: ort ? ort[1] : '',
+      ort: ort ? ort[2] : zeilen[2] || '',
+      land: zeilen.slice(3).join(', ')
+    };
+  }
   return json({bestellung: b, designs});
 }
 

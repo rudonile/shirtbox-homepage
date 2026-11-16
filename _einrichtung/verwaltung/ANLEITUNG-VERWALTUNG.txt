@@ -42,6 +42,20 @@ BUCHHALTUNG (ab 31.10.2026 im Verwaltungs-Worker enthalten)
   können wegen der 10-jährigen Aufbewahrungspflicht nicht gelöscht werden.
 - Export für den Treuhänder: Buchhaltung → Auswertungen → „Journal (alle Geldflüsse)“.
 
+ZUM WEITERLEITEN (ab 16.11.2026) – .eml-DOWNLOAD, KOSTENLOS, OHNE R2
+- In der Verwaltung: Bestellungen → Bestellung öffnen → Abschnitt „Zum Weiterleiten“.
+- Erstellt eine .eml-Datei (Betreff „Zum Weiterleiten“) nur mit: Lieferadresse, Shirtbildern (unverändert als Anhang,
+  Design-01.png, Design-02.png …), Grössen und Stückzahlen je Design. Keine Preise, Zahlungs- oder Kontaktdaten.
+- Läuft vollständig im Browser: nichts wird gesendet oder gespeichert, kein R2, keine API-Kosten, keine Bildgenerierung.
+  Die bisherigen Bestellmails und der Worker shirtbox-email bleiben unverändert.
+- Bilder: Ohne R2 speichert ShirtBOX keine Bilder. Darum die Anhänge der Mail „🛒 Neue Bestellung SB-…“ auf dem Computer
+  speichern und im Feld „Bilder … wählen“ alle auf einmal auswählen. Zuordnung automatisch über „design-1“, „design-2“ …
+  im Dateinamen (Druckdatei wird bevorzugt). Bilder einer anderen Bestellnummer werden abgelehnt.
+  Ist später R2 verbunden, werden gespeicherte Bilder automatisch übernommen.
+- .eml öffnen: Outlook öffnet sie als Entwurf (Empfänger eintragen, senden). Apple Mail / Thunderbird: öffnen → Weiterleiten.
+Einrichtung:
+ 1. Worker shirtbox-admin → Edit code: gesamten Inhalt durch 2-shirtbox-admin-worker.js ersetzen → Deploy.
+ 2. Sonst nichts. Worker shirtbox-email NICHT ersetzen. Keine neuen Secrets, Bindings oder Abos.
 SICHERHEIT
 - Drei Schutzschichten: Cloudflare Access (Code per E-Mail) → Passwort → 6-stelliger App-Code.
 - Automatische Abmeldung nach 30 Minuten ohne Aktivität (in Einstellungen änderbar).

@@ -1,0 +1,26 @@
+SHIRTBOX – VOLLSTAENDIGE PROJEKTDATEIEN, Stand 16.11.2026
+
+Enthalten:
+- Alle Dateien aus deiner zuletzt gelieferten vollstaendigen ZIP.
+- Alle sieben bisherigen Startseiten-Beispiele plus sechs neue Originalbilder.
+- Zufaellig gemischter Bildwechsel ohne direkt wiederholte oder gleichzeitig doppelte Motive.
+- Vollstaendige Darstellung der neuen Bilder ohne Beschnitt.
+- Alle vier Shirt-Vorlagen aus der zuletzt gelieferten ZIP.
+- Aktueller E-Mail-Worker mit zusaetzlicher automatischer Mail an jerome.straub@gmx.ch.
+- Aktueller Verwaltungs-Worker mit kostenloser EML-Funktion und Korrektur fuer alte Text-Lieferadressen.
+
+GITHUB / HOMEPAGE
+Der Ordner ShirtBOX enthaelt die Website. Die Website-Dateien gehoeren ins Hauptverzeichnis deines bestehenden GitHub-Projekts, nicht in einen zusaetzlichen Unterordner ShirtBOX.
+Fuer das neue Bilder-Update genuegen index.html, hero-karten.js und die sechs neuen Dateien bilder/beispiel-*.
+Vorhandene Dateien und Bilder nicht loeschen. Den Ordner _einrichtung nicht auf die oeffentliche Homepage hochladen.
+
+WORKER
+Die Codes unter _einrichtung sind Sicherungen fuer die separaten Cloudflare-Worker; sie werden durch das Homepage-Upload nicht automatisch veroeffentlicht.
+shirtbox-email-worker.js ist ausschliesslich fuer shirtbox-email.
+verwaltung/2-shirtbox-admin-worker.js ist ausschliesslich fuer shirtbox-admin.
+Deine zuletzt gemeinsam durchgefuehrten Worker-Aenderungen sind hier enthalten. Fuer die sechs neuen Bilder musst du keinen Worker erneut ersetzen.
+Secrets, Schluessel, Bindings und Datenbankdaten werden nicht in dieser ZIP gesichert und nicht veraendert.
+Der automatische Zusatzversand wurde lokal mit simuliertem Mailanbieter geprueft. Sein echter Empfang muss mit einer neuen Bestellung bestaetigt werden.
+Keine KI-Neugenerierung oder Glaettung der Bestellbilder; vorhandene Bilder werden unveraendert uebernommen. Bestehendes Gratis-Versandkontingent gilt weiterhin.
+
+Aeltere Einrichtungsanleitungen sind als Projektbestand erhalten. Fuer den aktuellen Stand gilt diese Datei.
