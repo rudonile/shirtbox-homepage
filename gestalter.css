@@ -468,7 +468,7 @@ html.studio-sheet-open,html.studio-sheet-open body{overflow:hidden}
 .studio-model-sheet-body{box-sizing:border-box;display:flex;flex-direction:column;gap:10px;max-height:calc(100vh - 16px);max-height:calc(100dvh - 16px);padding:12px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .studio-model-sheet-title{margin:0;text-align:center;font-weight:700;font-size:1.05rem;color:#fff}
 .studio-model-sheet-pic{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;background:#666;border-radius:12px}
-.studio-model-sheet-pic img{display:block;width:100%;height:auto;max-height:calc(100dvh - 150px);object-fit:contain;aspect-ratio:1536/1228}
+.studio-model-sheet-pic img{display:block;width:100%;height:auto;max-height:calc(100dvh - 150px);object-fit:contain;aspect-ratio:3/2}
 .studio-model-sheet-actions{position:sticky;bottom:0;flex:none;display:flex;justify-content:center;gap:40px;padding:6px 0 2px;background:#666}
 .studio-model-sheet-actions button{display:grid;place-items:center;flex:none;width:52px;height:52px;min-width:44px;min-height:44px;padding:0;border:1px solid #0000001a;border-radius:50%;background:#ffffffeb;font-size:22px;font-weight:600;line-height:1;cursor:pointer;box-shadow:0 2px 8px #0003;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .12s,background .12s}
 .studio-model-sheet-ok{color:#1f9d4c}

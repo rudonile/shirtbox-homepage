@@ -12,13 +12,15 @@
   // Hängt Zusatzregeln nur an, wenn noch Platz ist – der Worker wiederholt die wichtigsten Regeln ohnehin selbst.
   const fit = (core, ...extras) => { let p = core; for (const x of extras) if ((p + ' ' + x).length <= MAX_PROMPT) p += ' ' + x; if (p.length > MAX_PROMPT) throw Error(TOO_LONG); return p; };
   // Shirt-Modelle: leere Vorlage (links vorne, rechts hinten) und Schnittbeschreibung für die KI.
+  // Vorlagen *-vorlage-3x2.jpg (1536×1024, gleiches Format wie das KI-Ergebnis): In den alten *-api-vorlage.jpg (1536×1228)
+  // berührten sich die inneren Ärmel in der Bildmitte und die äusseren lagen fast am Bildrand – die KI übernahm das als
+  // spitz zusammenlaufende Ärmel und Stoffbrücken. Neu: 96 px Abstand, gleichmässiges Grau, freigestellt ohne Säume
+  // (erstellt mit _einrichtung/vorlagen-3x2-erstellen.ps1). Die alten Dateien bleiben für andere Seiten bestehen.
   const MODELS = {
-    polo: {label: 'Polo-Shirt', template: 'anleitung/polo-api-vorlage.jpg', cut: 'Sportpolo mit Polo-Kragen und Knopfleiste'},
-    zip: {label: 'Zip-Shirt', template: 'anleitung/zip-api-vorlage.jpg', cut: 'Sport-Jersey mit niedrigem Stehkragen und kurzem Reissverschluss vorne (kein Polo-Kragen, keine Knöpfe)'},
-    // T-Shirt und Oversize: eigenständige, saubere Vorlagen (einheitlicher grauer Hintergrund, Vorder- und Rückseite gleich gross,
-    // Ärmelspitzen berühren sich in der Bildmitte). ?v=… erzwingt das Neuladen statt der alten, fehlerhaften Vorlagen aus dem Cache.
-    tshirt: {label: 'T-Shirt', template: 'anleitung/tshirt-api-vorlage.jpg?v=20261114-clean-2', cut: 'Klassisches Rundhals-T-Shirt mit regulärer Passform (kein Polo-Kragen, keine Knopfleiste, kein Reissverschluss)'},
-    oversize: {label: 'Oversize T-Shirt', template: 'anleitung/oversize-api-vorlage.jpg?v=20261114-clean-2', cut: 'Weites Oversize-Rundhals-T-Shirt mit überschnittenen Schultern und weitem geradem Schnitt (kein Polo-Kragen, keine Knopfleiste)'}
+    polo: {label: 'Polo-Shirt', template: 'anleitung/polo-vorlage-3x2.jpg?v=20261116', cut: 'Sportpolo mit Polo-Kragen und Knopfleiste'},
+    zip: {label: 'Zip-Shirt', template: 'anleitung/zip-vorlage-3x2.jpg?v=20261116', cut: 'Sport-Jersey mit niedrigem Stehkragen und kurzem Reissverschluss vorne (kein Polo-Kragen, keine Knöpfe)'},
+    tshirt: {label: 'T-Shirt', template: 'anleitung/tshirt-vorlage-3x2.jpg?v=20261116', cut: 'Klassisches Rundhals-T-Shirt mit regulärer Passform (kein Polo-Kragen, keine Knopfleiste, kein Reissverschluss)'},
+    oversize: {label: 'Oversize T-Shirt', template: 'anleitung/oversize-vorlage-3x2.jpg?v=20261116', cut: 'Weites Oversize-Rundhals-T-Shirt mit überschnittenen Schultern und weitem geradem Schnitt (kein Polo-Kragen, keine Knopfleiste)'}
   };
   let model = '';
   const TEMPLATE = () => MODELS[model]?.template || MODELS.polo.template;
@@ -349,7 +351,12 @@
   const CENTER_LAYOUT = 'STANDARDPOSITION: Alle Hauptmotive, Tabellen, Listen, Zahlen und Schriftzüge horizontal MITTIG auf der jeweils gewünschten Shirt-Seite ausrichten, ausser der Kunde verlangt ausdrücklich links, rechts oder eine andere Position. Tabellen und Zahlenkolonnen vollständig und mit grosszügigem Sicherheitsabstand zu Seitennähten und Achseln setzen. Nie Buchstaben oder Zahlen um die Seitenkante wickeln oder am Rand abschneiden; bei Platzmangel das gesamte Motiv proportional verkleinern. Shirt-Schnitt und Achselkonturen exakt nach Vorlage, keine zusätzlichen Spitzen, Dreiecke oder Ausstülpungen unter den Ärmeln. Bei Rundhals-T-Shirts und Oversize-T-Shirts niemals einen Polo-Kragen, eine Knopfleiste oder ein weiteres Shirt hinter den beiden Ansichten darstellen. Zwischen Vorder- und Rückseite dürfen keine Stoffreste, zusätzlichen Ärmel oder Bildfragmente erscheinen.';
 
   // Kompakte Fassung von CENTER_LAYOUT, die immer mitgeht (Schnitt-Treue ist für alle vier Modelle Pflicht).
-  const SHAPE_RULE = 'Motive mittig, nichts am Rand abschneiden. Schnitt, Grösse und Abstand beider Shirts exakt wie in der Vorlage: keine Stoffdreiecke, keine zusätzlichen Ärmel oder Säume, kein weiteres Shirt dazwischen oder dahinter.';
+  // Pflichtsatz bei JEDER Generierung (Neu-Entwurf und Änderung) – steht immer im Kern der Anfrage, nie nur als optionaler Zusatz.
+  const FORM_RULE = 'Die ursprüngliche Kleidungsform und Silhouette beibehalten; nur Farben und Aufdruck gestalten. Keine zusätzlichen Stoffteile, veränderten Ärmel oder verformten Nähte erzeugen.';
+  // Bewusst knapp (Worker-Grenze 2000 Zeichen, sonst bleibt zu wenig Platz für den Kundenwunsch).
+  const SHAPE_RULE = FORM_RULE + ' Keine Stoffdreiecke; die Shirts berühren sich nicht, der graue Hintergrund dazwischen bleibt leer. Motive mittig, nichts am Rand abschneiden.';
+  // Zusatz, der per fit() angehängt wird, solange Platz ist.
+  const QUALITY_RULE = 'Natürlich gerundete Schultern, saubere Kragen und Ärmelsäume wie in der Vorlage. Gleichmässiger neutralgrauer Studiohintergrund, saubere Kanten ohne helle oder dunkle Ränder.';
 
   // Hilft der Kundeneingabe nach: ergänzt Aufbau, Farben, Schrift und Druckqualität zu einem vollständigen Briefing.
   // Ein eigenes Textfeld gibt es nicht mehr: Schriftzüge nennt die Kundschaft direkt in der Beschreibung.
@@ -369,8 +376,8 @@
     // (Fest eingebaut sprengte sie mit Foto + Beschreibung immer die 2000-Zeichen-Grenze des Workers.)
     p += SHAPE_RULE + ' ';
     p += word ? 'Schrift nur, wenn der Kundenwunsch ausdrücklich einen Schriftzug nennt – dann Buchstabe für Buchstabe korrekt, gut lesbar, an der genannten Stelle (sonst hinten). Die Beschreibung selbst nicht als Text drucken. ' : 'Keine Schriftzüge ausser im Foto. ';
-    p += `Alles bleibt innerhalb der Shirt-Umrisse, grauer Hintergrund leer. Keine rechteckige Foto-Auflage, keine Marken-Logos, keine Wasserzeichen. Schnitt und Perspektive der Vorlage beibehalten, druckfertige Qualität. Variante ${Date.now()}`;
-    return fit(p, CENTER_LAYOUT, INSIDE);
+    p += `Alles bleibt innerhalb der Shirt-Umrisse, grauer Hintergrund leer. Keine rechteckige Foto-Auflage, keine Marken-Logos, keine Wasserzeichen. Druckfertige Qualität. Variante ${Date.now()}`;
+    return fit(p, QUALITY_RULE, CENTER_LAYOUT, INSIDE);
   }
 
   // Modell-Knöpfe: genau eines muss vor dem Generieren gewählt sein.
@@ -645,48 +652,102 @@
     }
     return best;
   }
-  const templateMasks = {};
+  // Sicherheitsnetz, schonende Fassung (20261116). Die frühere Fassung schnitt jedes Bild hart entlang des Vorlagen-Umrisses aus
+  // und legte einen fremden Grauverlauf dahinter. Weicht die KI-Form nur leicht ab, entstanden dadurch doppelte/kantige Konturen
+  // an Schultern und Kragen, abgeschnittene Ärmelecken und graue Säume. Jetzt:
+  //  – Die eigenen Kanten, Schatten und der Stoff der KI bleiben unangetastet: Ersetzt wird nur, was mehr als R Rasterpixel
+  //    (≈18 px) ausserhalb des ausgerichteten Vorlagen-Umrisses liegt (Stoffbrücken zwischen den Ansichten, überstehende Motive).
+  //  – Ersatz ist der geglättete EIGENE Hintergrund des KI-Bildes (kein fremder Verlauf → keine Farbsprünge), weicher Übergang.
+  //  – Liegt nichts ausserhalb, bleibt das KI-Bild unverändert (Vorschau = Original). Passt der Umriss nicht sicher, ebenfalls.
   async function keepInside(blob, modelKey) {
-    // Gilt für alle vier Modelle. Früher für T-Shirt/Oversize abgeschaltet, weil deren Vorlagen eingefügte, andersgraue
-    // Rechtecke enthielten (die Maske hielt diese für „Shirt“). Mit den sauberen Vorlagen entfernt die Maske nun auch dort
-    // Stoffdreiecke zwischen den Ansichten oder einen Polo-Kragen hinter einem Rundhals-Shirt. Passt der Umriss nicht sicher,
-    // bleibt das KI-Bild unverändert (siehe Prüfung unten).
     try {
       const src = MODELS[modelKey]?.template || MODELS.polo.template;
       const [shirt, tpl] = await Promise.all([createImageBitmap(blob), fetch(src).then(r => r.blob()).then(b => createImageBitmap(b))]);
       const W = shirt.width, H = shirt.height, TW = tpl.width, TH = tpl.height;
       const ow = 256, oh = Math.round(H * ow / W), tw = 256, th = Math.round(TH * tw / TW);
-      const out = silhouette(pixels(shirt, ow, oh), ow, oh), small = silhouette(pixels(tpl, tw, th), tw, th);
-      twoShirts(small, tw, th);
+      const data = pixels(shirt, ow, oh);
+      const out = silhouette(data, ow, oh), small = silhouette(pixels(tpl, tw, th), tw, th);
+      tpl.close(); twoShirts(small, tw, th);
       // Nur eingreifen, wenn der Hintergrund noch grau wie in der Vorlage ist und beide Umrisse sehr gut passen.
       const sameBack = Math.hypot(...out.color.map((v, i) => v - small.color[i])) < 40 && out.calm > .9;
       const fits = sameBack ? [0, 1].map(half => align(out, ow, oh, small, tw, th, half)) : [];
-      if (!sameBack || fits.some(f => !f || f.score < .8)) { shirt.close(); tpl.close(); return blob; }
-      // Vorlagen-Umriss in voller Grösse als Maske (einmal pro Modell).
-      if (!templateMasks[src]) {
-        const m = twoShirts(silhouette(pixels(tpl, TW, TH), TW, TH), TW, TH), c = canvasOf(TW, TH), x = c.getContext('2d'), img = x.createImageData(TW, TH);
-        for (let i = 0; i < m.length; i++) if (m[i]) { img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = img.data[i * 4 + 3] = 255; }
-        x.putImageData(img, 0, 0); templateMasks[src] = c;
-      }
-      const mask = canvasOf(W, H), mx = mask.getContext('2d'), back = canvasOf(W, H), bx = back.getContext('2d');
-      // Hintergrund: grauer Verlauf wie in der Vorlage (Mitte zwischen den Shirts heller, Ecken dunkler) – ohne Shirts.
-      const probe = canvasOf(TW, TH), px = probe.getContext('2d', {willReadFrequently: true}); px.drawImage(tpl, 0, 0);
-      const rgb = d => `rgb(${d[0]},${d[1]},${d[2]})`, mid = px.getImageData(TW / 2 - 2, TH / 2, 4, 4).data, edge = px.getImageData(4, 4, 4, 4).data;
-      const grad = bx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.hypot(W, H) / 2);
-      grad.addColorStop(0, rgb(mid)); grad.addColorStop(1, rgb(edge)); bx.fillStyle = grad; bx.fillRect(0, 0, W, H);
-      // Kein radiales Aufweiten der Silhouette: gerade unter den Achseln erzeugt
-      // die 16-fache versetzte Maske kuenstliche Spitzen und Ausstuelpungen.
+      if (!sameBack || fits.some(f => !f || f.score < .85)) { shirt.close(); return blob; }
+      // inside = ausgerichteter Vorlagen-Umriss je Bildhälfte; keep = derselbe Umriss um R Rasterpixel (≈18 px) erweitert.
+      const R = 3, N = ow * oh, inside = new Uint8Array(N), keep = new Uint8Array(N);
+      const grow = (src, dst, r, x0, x1) => { for (let i = 0; i < N; i++) { if (!src[i]) continue; const x = i % ow, y = (i - x) / ow;
+        for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { const xx = x + dx, yy = y + dy;
+          if (dx * dx + dy * dy <= r * r && xx >= x0 && xx < x1 && yy >= 0 && yy < oh) dst[yy * ow + xx] = 1; } } };
       fits.forEach((f, half) => {
-        const k = f.s * (W / ow) / (TW / tw), dx = f.tx * W / ow, dy = f.ty * H / oh;
-        mx.save(); mx.beginPath(); mx.rect(half * W / 2, 0, W / 2, H); mx.clip(); mx.setTransform(k, 0, 0, k, dx, dy);
-        mx.drawImage(templateMasks[src], 0, 0);
-        mx.restore();
+        const x0 = half * ow / 2, x1 = x0 + ow / 2, tx0 = half * tw / 2, tx1 = tx0 + tw / 2, part = new Uint8Array(N);
+        for (let y = 0; y < oh; y++) for (let x = x0; x < x1; x++) {
+          const u = Math.round((x - f.tx) / f.s), v = Math.round((y - f.ty) / f.s);
+          if (u >= tx0 && u < tx1 && v >= 0 && v < th && small[v * tw + u]) part[y * ow + x] = inside[y * ow + x] = 1;
+        }
+        grow(part, keep, R, x0, x1);
       });
-      const front = canvasOf(W, H), fx = front.getContext('2d');
-      fx.drawImage(shirt, 0, 0); fx.globalCompositeOperation = 'destination-in'; fx.drawImage(mask, 0, 0);
-      bx.drawImage(front, 0, 0); shirt.close(); tpl.close();
+      // Deutlich überstehende Teile (ausserhalb von keep) gruppieren; Kleinstreste (< 6 Rasterpixel) ignorieren.
+      const far = new Uint8Array(N); for (let i = 0; i < N; i++) far[i] = out[i] && !keep[i] ? 1 : 0;
+      const lab = new Int32Array(N), stack = []; let removedCells = 0;
+      const remove = new Uint8Array(N);
+      for (let s = 0; s < N; s++) {
+        if (!far[s] || lab[s]) continue;
+        const comp = []; lab[s] = 1; stack.push(s);
+        while (stack.length) { const i = stack.pop(), x = i % ow; comp.push(i);
+          for (const j of [x > 0 ? i - 1 : -1, x < ow - 1 ? i + 1 : -1, i - ow, i + ow]) if (j >= 0 && j < N && far[j] && !lab[j]) { lab[j] = 1; stack.push(j); } }
+        if (comp.length >= 6) { for (const i of comp) remove[i] = 1; removedCells += comp.length; }
+      }
+      if (!removedCells) { shirt.close(); return blob; }
+      // Den Ansatz des Überstands (zwischen Shirt-Kante und keep-Grenze) mitnehmen – sonst bleiben Stummel stehen.
+      // Nur Überstand-Pixel ausserhalb des Vorlagen-Umrisses, nie Stoff innerhalb.
+      const reach = new Uint8Array(N); grow(remove, reach, R + 1, 0, ow);
+      for (let i = 0; i < N; i++) if (reach[i] && out[i] && !inside[i]) remove[i] = 1;
+      // Eine Rasterzelle Reserve (nur ausserhalb des Umrisses), damit keine geglätteten Ränder als Geisterkontur stehen bleiben.
+      const pad = new Uint8Array(N); grow(remove, pad, 1, 0, ow);
+      for (let i = 0; i < N; i++) if (pad[i] && !inside[i]) remove[i] = 1;
+      for (let i = 0; i < N; i++) keep[i] = remove[i] ? 0 : 1;
+      // Eigener Hintergrund des KI-Bildes, grob gerastert; Zellen unter den Shirts aus den Nachbarn aufgefüllt.
+      const GX = 32, GY = Math.max(2, Math.round(GX * oh / ow)), sum = new Float64Array(GX * GY * 3), cnt = new Uint32Array(GX * GY);
+      const near = new Uint8Array(N); grow(out, near, 2, 0, ow); // Randpixel (Kanten, Schatten) nicht als Hintergrund werten
+      for (let y = 0; y < oh; y++) for (let x = 0; x < ow; x++) {
+        const i = y * ow + x; if (near[i]) continue;
+        const c = Math.min(GY - 1, Math.floor(y * GY / oh)) * GX + Math.min(GX - 1, Math.floor(x * GX / ow));
+        sum[c * 3] += data[i * 4]; sum[c * 3 + 1] += data[i * 4 + 1]; sum[c * 3 + 2] += data[i * 4 + 2]; cnt[c]++;
+      }
+      const filled = Uint8Array.from(cnt, n => n ? 1 : 0);
+      for (let c = 0; c < cnt.length; c++) if (cnt[c]) for (let k = 0; k < 3; k++) sum[c * 3 + k] /= cnt[c];
+      for (let pass = 0, missing = true; missing && pass < 64; pass++) {
+        missing = false; const next = filled.slice();
+        for (let gy = 0; gy < GY; gy++) for (let gx = 0; gx < GX; gx++) {
+          const c = gy * GX + gx; if (filled[c]) continue;
+          let r = 0, g = 0, b = 0, n = 0;
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            const xx = gx + dx, yy = gy + dy; if (xx < 0 || yy < 0 || xx >= GX || yy >= GY) continue;
+            const e = yy * GX + xx; if (!filled[e]) continue;
+            r += sum[e * 3]; g += sum[e * 3 + 1]; b += sum[e * 3 + 2]; n++;
+          }
+          if (n) { sum[c * 3] = r / n; sum[c * 3 + 1] = g / n; sum[c * 3 + 2] = b / n; next[c] = 1; } else missing = true;
+        }
+        filled.set(next);
+      }
+      const bgSmall = canvasOf(GX, GY), gx2 = bgSmall.getContext('2d'), gimg = gx2.createImageData(GX, GY);
+      for (let c = 0; c < GX * GY; c++) { gimg.data[c * 4] = sum[c * 3]; gimg.data[c * 4 + 1] = sum[c * 3 + 1]; gimg.data[c * 4 + 2] = sum[c * 3 + 2]; gimg.data[c * 4 + 3] = 255; }
+      gx2.putImageData(gimg, 0, 0);
+      const maskSmall = canvasOf(ow, oh), mx = maskSmall.getContext('2d'), mimg = mx.createImageData(ow, oh);
+      for (let i = 0; i < keep.length; i++) if (keep[i]) mimg.data[i * 4 + 3] = 255;
+      mx.putImageData(mimg, 0, 0);
+      // Maske glatt hochskalieren und danach scharf ziehen: glatte Schnittlinie ohne Treppen, Übergang nur ≈1–2 px (keine Unschärfe).
+      const maskFull = canvasOf(W, H), mf = maskFull.getContext('2d', {willReadFrequently: true});
+      mf.imageSmoothingEnabled = true; mf.imageSmoothingQuality = 'high'; mf.drawImage(maskSmall, 0, 0, W, H);
+      const md = mf.getImageData(0, 0, W, H);
+      for (let i = 3; i < md.data.length; i += 4) md.data[i] = Math.max(0, Math.min(255, (md.data[i] - 128) * 4 + 128));
+      mf.putImageData(md, 0, 0);
+      const result = canvasOf(W, H), rx = result.getContext('2d'), front = canvasOf(W, H), fx = front.getContext('2d');
+      rx.imageSmoothingEnabled = true; rx.imageSmoothingQuality = 'high';
+      rx.drawImage(bgSmall, 0, 0, W, H);
+      fx.drawImage(shirt, 0, 0); fx.globalCompositeOperation = 'destination-in'; fx.drawImage(maskFull, 0, 0);
+      rx.drawImage(front, 0, 0); shirt.close();
       // Verlustfrei speichern: keine zusätzliche JPG-Kompression des Designs.
-      return await new Promise(resolve => back.toBlob(b => resolve(b || blob), 'image/png'));
+      return await new Promise(resolve => result.toBlob(b => resolve(b || blob), 'image/png'));
     } catch { return blob; }
   }
 
@@ -768,8 +829,9 @@
     // unter dem Shirt „Deine Idee wird jetzt verwirklicht“. Ist das Shirt fertig, ist alles wieder wie vorher.
     document.body.classList.add('is-generating');
     await run(async () => {
-      // Das Polo-Shirt holt der Worker selbst; alle anderen Modelle schicken ihre leere Vorlage mit.
-      const blob = await keepInside(await request(surprisePrompt(word, !!file), file ? await withPhoto(file) : model === 'polo' ? null : await template()), model);
+      // Alle Modelle (auch Polo) schicken ihre leere 3:2-Vorlage mit – so gilt immer die saubere Vorlage,
+      // unabhängig davon, welche Vorlage der Bild-Worker selbst laden würde.
+      const blob = await keepInside(await request(surprisePrompt(word, !!file), file ? await withPhoto(file) : await template()), model);
       const summary = [`Modell: ${MODELS[model].label}`, styleChoice && `Stil: ${STYLES[styleChoice].label}`, word && `Design: ${word}`, file && 'mit eigenem Foto'].filter(Boolean).join(' · ');
       designs.push({blob, url: URL.createObjectURL(blob), prompt: `KI-Design – ${summary}`, model, selected: true, number: editingOrder ? Math.max(0, ...designs.map(d => d.number || 0)) + 1 : null});
       active = designs.length - 1; startOver = false; made = true;
@@ -833,7 +895,7 @@
     editStatus.textContent = '';
     run(async () => {
       const cut = MODELS[d.model]?.cut;
-      const blob = await keepInside(await request(fit(`Bisheriges Shirt und Gestaltung beibehalten${cut ? ` (Schnitt: ${cut})` : ''}. Ändere nur Folgendes: ${change}\nErhalte alle anderen Merkmale.`, CENTER_LAYOUT, INSIDE), d.blob), d.model);
+      const blob = await keepInside(await request(fit(`Bisheriges Shirt und Gestaltung beibehalten${cut ? ` (Schnitt: ${cut})` : ''}. Ändere nur Folgendes: ${change}\nErhalte alle anderen Merkmale. ${SHAPE_RULE}`, QUALITY_RULE, CENTER_LAYOUT, INSIDE), d.blob), d.model);
       URL.revokeObjectURL(d.url); d.blob = blob; d.url = URL.createObjectURL(blob); d.edited = true;
       d.prompt = `${d.prompt}\nÄnderung: ${change}`.slice(-1500); editInput.value = '';
       say(`Design ${active + 1} wurde angepasst. Weitere Änderungen sind jederzeit möglich.`);
