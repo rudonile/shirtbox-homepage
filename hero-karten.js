@@ -1,35 +1,84 @@
-// Startseite: Die drei Shirt-Karten drehen sich nacheinander um und decken jeweils ein anderes Beispiel-Shirt auf.
-// Das leichte Schweben (CSS) bleibt erhalten; bei "Bewegung reduzieren" bleiben die Karten ruhig.
+// Startseite: alle bisherigen Beispiele plus sechs neue Motive.
+// Gemischte Durchläufe, keine gleichzeitig gleichen Bilder und kein fester Kartenturnus.
 (() => {
   const cards = [...document.querySelectorAll('.hx-stage .hx-card')];
-  if (cards.length < 2 || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const pool = ['treff-nix', 'bubeler', 'portner', 'zafarkom', 'mike-johnson', 'hoenes', 'wickler'].map(name => `bilder/${name}-vorschau.webp?v=20261024`);
+  if (cards.length < 2) return;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const pool = [
+    ...['treff-nix', 'bubeler', 'portner', 'zafarkom', 'mike-johnson', 'hoenes', 'wickler'].map(name => `bilder/${name}-vorschau.webp?v=20261024`),
+    'bilder/beispiel-bierberge.png',
+    'bilder/beispiel-elefant.jpg',
+    'bilder/beispiel-wikinger.png',
+    'bilder/beispiel-gentle.png',
+    'bilder/beispiel-engel.png',
+    'bilder/beispiel-einhorn.png'
+  ];
+  function shuffle(items) {
+    const result = [...items];
+    for (let i = result.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [result[i], result[j]] = [result[j], result[i]];
+    }
+    return result;
+  }
+  const unavailable = new Set(), loaded = new Map();
+  let remaining = shuffle(pool), cardTurns = [], lastCard = null, busy = false;
   const shown = () => cards.map(card => card.querySelector('img').getAttribute('src'));
-  let turn = 0, next = 0;
-  // Vorladen, damit beim Umdrehen nie ein leeres Bild erscheint.
-  pool.forEach(src => { const img = new Image(); img.decoding = 'async'; img.src = src; });
-  function pick() {
-    const visible = shown();
-    for (let i = 0; i < pool.length; i++) { const src = pool[(next + i) % pool.length]; if (!visible.includes(src)) { next = (next + i + 1) % pool.length; return src; } }
-    return null;
+  function take(excluded) {
+    if (!remaining.length) remaining = shuffle(pool.filter(src => !unavailable.has(src)));
+    const index = remaining.findIndex(src => !excluded.includes(src) && !unavailable.has(src));
+    return index < 0 ? null : remaining.splice(index, 1)[0];
   }
-  function flip() {
-    if (document.hidden) return;
-    const card = cards[[2, 0, 1][turn++ % 3]], img = card.querySelector('img'), src = pick();
-    if (!src) return;
-    card.classList.add('is-flipping');
-    setTimeout(() => {
-      const done = () => requestAnimationFrame(() => card.classList.remove('is-flipping'));
-      img.addEventListener('load', done, {once: true}); img.addEventListener('error', done, {once: true});
-      img.src = src;
-      if (img.complete) done();
-    }, 420);
+  function load(src) {
+    if (!loaded.has(src)) loaded.set(src, new Promise(resolve => {
+      const image = new Image();
+      image.decoding = 'async';
+      image.onload = () => resolve(true);
+      image.onerror = () => { unavailable.add(src); resolve(false); };
+      image.src = src;
+    }));
+    return loaded.get(src);
   }
-  setInterval(flip, 3400);
+  function show(card, src) {
+    const image = card.querySelector('img');
+    image.src = src;
+    // Originalbilder vollständig zeigen, ohne quadratischen Beschnitt.
+    image.style.objectFit = 'contain';
+  }
+  function nextCard() {
+    if (!cardTurns.length) {
+      cardTurns = shuffle(cards);
+      if (cardTurns[0] === lastCard) [cardTurns[0], cardTurns[1]] = [cardTurns[1], cardTurns[0]];
+    }
+    lastCard = cardTurns.shift();
+    return lastCard;
+  }
+  async function flip() {
+    if (busy || document.hidden || reduced.matches) return;
+    busy = true;
+    try {
+      const src = take(shown());
+      if (!src || !await load(src)) return;
+      if (document.hidden || reduced.matches) { remaining.unshift(src); return; }
+      const card = nextCard();
+      card.classList.add('is-flipping');
+      await new Promise(resolve => setTimeout(resolve, 420));
+      show(card, src);
+      requestAnimationFrame(() => card.classList.remove('is-flipping'));
+    } finally { busy = false; }
+  }
+  async function start() {
+    // Auch die drei Startbilder sind bei jedem Seitenaufruf neu gemischt.
+    for (const card of cards) {
+      const src = take(shown());
+      if (src && await load(src)) show(card, src);
+    }
+    setInterval(flip, 3400);
+  }
+  start();
 })();
 
-// Anlässe-Karussell: Die Reihe gleitet um einen Namen weiter, der Name in der Mitte wird gross (Klassen siehe home.css).
-// Danach wandert der erste Name unsichtbar ans Ende – so läuft das Karussell endlos. Bei "Bewegung reduzieren" steht es still.
+// Anlässe-Karussell: bestehendes Verhalten beibehalten.
 (() => {
   const track = document.querySelector('.occ-track');
   if (!track) return;

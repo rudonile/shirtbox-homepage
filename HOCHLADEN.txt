@@ -1,0 +1,11 @@
+ShirtBOX: sechs weitere Startseiten-Beispiele und zufaellige Reihenfolge
+
+1. Diese ZIP entpacken.
+2. GitHub: das Projekt shirtbox-homepage oeffnen, im Hauptverzeichnis bleiben.
+3. Add file > Upload files. Die Dateien index.html und hero-karten.js sowie den Ordner bilder aus dieser ZIP hineinziehen.
+4. Pruefen: sechs neue Bilder unter bilder/, zwei Dateien im Hauptverzeichnis.
+5. Commit changes. Cloudflare-Veroeffentlichung abwarten und Startseite mit Strg+F5 laden.
+
+WICHTIG: Nicht in den Ordner anleitung hochladen. HOCHLADEN.txt nicht hochladen.
+Bestehende Bilder bleiben erhalten. Es sind keine Worker-Aenderungen noetig.
+Die sechs gelieferten Bilder wurden unveraendert uebernommen. Bildwechsel werden bei reduzierter Bewegung pausiert.
