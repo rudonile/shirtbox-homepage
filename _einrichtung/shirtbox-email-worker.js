@@ -421,7 +421,7 @@ async function orderConfirmation(request, env, origin, ctx) {
   const result={bestellnummer:number,kunde,total:order.total/100};
   await env.ORDER_KV.put(key,JSON.stringify({status:'sent',result}),{expirationTtl:86400*14});
   // Erst nach erfolgreicher Originalbestellung zusätzlich senden. Kein erneuter Bestellversuch bei Mailfehlern.
-  const forwarding = forwardOrder(env, clientId, order, imageIds, printNames, originalNames, inline, prints, originals);
+  const forwarding = forwardOrder(env, clientId, order, imageIds, printNames, originalNames, inline, prints, originals, vectors);
   if (ctx && typeof ctx.waitUntil === 'function') ctx.waitUntil(forwarding);
   else await forwarding;
   return new Response(JSON.stringify(result),{headers:headers(origin)});
@@ -431,14 +431,20 @@ async function orderConfirmation(request, env, origin, ctx) {
 // Keine KI-Aufrufe, keine neue Bildablage. Versand über den vorhandenen Mailanbieter.
 const FORWARD_EMAIL = 'jerome.straub@gmx.ch';
 
-function buildForwardMail(order, imageIds, printNames, originalNames, inline, prints, originals) {
+function buildForwardMail(order, imageIds, printNames, originalNames, inline, prints, originals, vectors) {
   const c = order.customer;
   const address = [`${c.vorname} ${c.nachname}`, c.strasse, `${c.plz} ${c.ort}`, c.land];
   const attachments = [];
   const blocks = order.designs.map((d, i) => {
     const print = prints.find(f => f.filename === printNames[i]);
     const preview = inline.find(f => f.content_id === imageIds[i]);
-    const selected = print ? [print] : preview ? [preview] : originals.filter(f => (originalNames[i] || []).includes(f.filename));
+    // Produktionsmail: alle verfuegbaren Original-JPEGs, PNGs und SVGs.
+    // Vorschau nur als Rueckfall, niemals anstelle vorhandener Druckdateien.
+    const designOriginals = originals.filter(f => (originalNames[i] || []).includes(f.filename));
+    const vector = vectors.find(f => f.filename === `${order.number || ''}-design-${d.number}-vektor.svg`)
+      || vectors[i];
+    const selected = [...(print ? [print] : []), ...designOriginals, ...(vector ? [vector] : [])];
+    if (!selected.length && preview) selected.push(preview);
     if (!selected.length) throw Error(`Shirtbild für Design ${i + 1} fehlt`);
     const label = `Design ${String(i + 1).padStart(2, '0')}`;
     for (const [j, file] of selected.entries()) {
@@ -450,13 +456,13 @@ function buildForwardMail(order, imageIds, printNames, originalNames, inline, pr
   });
   const text = ['Zum Weiterleiten', '', 'Lieferadresse', ...address, '', ...blocks.flatMap(b => [b.label, ...b.rows, ''])].join('\n');
   const html = `<!doctype html><html lang="de"><meta charset="utf-8"><body style="font-family:Arial,sans-serif"><h1>Zum Weiterleiten</h1><h2>Lieferadresse</h2><p>${address.map(esc).join('<br>')}</p>${blocks.map(b => `<h2>${esc(b.label)}</h2><p>${b.rows.map(esc).join('<br>')}</p>`).join('')}</body></html>`;
-  return {to: [FORWARD_EMAIL], subject: 'Zum Weiterleiten', text, html, attachments};
+  return {to: [FORWARD_EMAIL, 'r-m@gmx.ch'], subject: 'Zum Weiterleiten', text, html, attachments};
 }
 
-async function forwardOrder(env, clientId, order, imageIds, printNames, originalNames, inline, prints, originals) {
+async function forwardOrder(env, clientId, order, imageIds, printNames, originalNames, inline, prints, originals, vectors) {
   const statusKey = `forward:${clientId}`;
   try {
-    const mail = buildForwardMail(order, imageIds, printNames, originalNames, inline, prints, originals);
+    const mail = buildForwardMail(order, imageIds, printNames, originalNames, inline, prints, originals, vectors);
     const sent = await sendMail(env, mail, `shirtbox-forward-${clientId}`);
     await env.ORDER_KV.put(statusKey, JSON.stringify({status: sent ? 'sent' : 'failed'}), {expirationTtl: 86400 * 14});
     if (!sent) console.error('Zusätzliche Bestellmail: Mailanbieter hat die Anfrage nicht angenommen.');
