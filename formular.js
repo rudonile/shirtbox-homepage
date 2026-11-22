@@ -162,6 +162,16 @@
       if (file) {
         body.set(`druck_${i}`, file, `ShirtBOX_Design-${i + 1}_Druckdatei.${file.type === 'image/png' ? 'png' : 'jpg'}`); size += file.size;
         body.set(`bild_${i}`, await mailImage(file), `design-${i + 1}.jpg`);
+        // Vektordatei im Browser erzeugen, damit kein kostenpflichtiger Dienst nötig ist.
+        // Eine fehlgeschlagene SVG-Konvertierung darf die eigentliche Bestellung nicht blockieren.
+        try {
+          const svg = await window.ShirtboxVector.make(file);
+          if (svg.size <= 3 * 1024 * 1024) {
+            body.set(`vektor_${i}`, svg, `ShirtBOX_Design-${i + 1}.svg`);
+            size += svg.size;
+          } else console.warn('ShirtBOX SVG zu gross:', svg.size);
+        } catch (error) { console.warn('ShirtBOX SVG fehlgeschlagen:', error); }
+
       }
       for (const input of state.card.querySelectorAll('input.print-original')) { const original = input.files[0]; if (original) { body.append(`original_${i}`, original, original.name); size += original.size; } }
     }
