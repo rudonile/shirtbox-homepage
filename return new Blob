@@ -1,0 +1,121 @@
+/* ShirtBOX – SVG-Vektorisierung mit automatischer Grössenanpassung */
+(() => {
+  'use strict';
+
+  const MAX_BYTES = 2.8 * 1024 * 1024;
+
+  async function make(file) {
+    const bitmap = await createImageBitmap(file);
+
+    try {
+      // Hohe Detailstufe zuerst, bei Bedarf reduzieren.
+      const widths = [480, 400, 320, 240, 160];
+
+      for (const maxWidth of widths) {
+        const width = Math.max(
+          1,
+          Math.min(maxWidth, bitmap.width)
+        );
+
+        const height = Math.max(
+          1,
+          Math.round(bitmap.height * width / bitmap.width)
+        );
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d', {
+          willReadFrequently: true
+        });
+
+        if (!ctx) {
+          throw new Error('Canvas nicht verfügbar');
+        }
+
+        ctx.drawImage(bitmap, 0, 0, width, height);
+
+        const data = ctx.getImageData(
+          0, 0, width, height
+        ).data;
+
+        const colors = new Map();
+
+        const parts = [
+          `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${bitmap.width}" height="${bitmap.height}">`
+        ];
+
+        const keyAt = (x, y) => {
+          const i = (y * width + x) * 4;
+
+          if (data[i + 3] < 64) {
+            return 'none';
+          }
+
+          const q = v =>
+            Math.min(255, Math.round(v / 17) * 17)
+              .toString(16)
+              .padStart(2, '0');
+
+          return `#${q(data[i])}${q(data[i + 1])}${q(data[i + 2])}`;
+        };
+
+        for (let y = 0; y < height; y++) {
+          let x = 0;
+
+          while (x < width) {
+            const color = keyAt(x, y);
+            let end = x + 1;
+
+            while (
+              end < width &&
+              keyAt(end, y) === color
+            ) {
+              end++;
+            }
+
+            if (color !== 'none') {
+              if (!colors.has(color)) {
+                colors.set(color, []);
+              }
+
+              colors.get(color).push(
+                `M${x} ${y}h${end - x}v1H${x}z`
+              );
+            }
+
+            x = end;
+          }
+        }
+
+        for (const [color, paths] of colors) {
+          parts.push(
+            `<path fill="${color}" d="${paths.join('')}"/>`
+          );
+        }
+
+        parts.push('</svg>');
+
+        const svg = new Blob(
+          [parts.join('')],
+          { type: 'image/svg+xml' }
+        );
+
+        // Passt die Detailstufe automatisch an.
+        if (svg.size <= MAX_BYTES) {
+          return svg;
+        }
+      }
+
+      throw new Error(
+        'SVG konnte nicht innerhalb der Grössengrenze erstellt werden.'
+      );
+
+    } finally {
+      bitmap.close();
+    }
+  }
+
+  window.ShirtboxVector = { make };
+})();
