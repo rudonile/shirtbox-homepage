@@ -168,6 +168,26 @@
   }
   // Schickt Bestellung, Druckdateien und Originalbilder an den Worker. Er versendet die interne Mail und die Kundenbestätigung.
   function getOrderId(){let id=sessionStorage.getItem('shirtbox-order-id');if(!id){id=crypto.randomUUID();sessionStorage.setItem('shirtbox-order-id',id);}return id;}
+  // SVG-Modul bei Bedarf nachladen. Verhindert den Fehler
+  // "Cannot read properties of undefined (reading make)" bei fehlendem Script.
+  let vectorLoadPromise;
+  async function ensureVectorModule() {
+    if (typeof window.ShirtboxVector?.make === 'function') return window.ShirtboxVector;
+    if (!vectorLoadPromise) {
+      vectorLoadPromise = new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'svg-vektor.js?v=20261122-svg-reparatur1';
+        script.async = true;
+        script.onload = () => {
+          if (typeof window.ShirtboxVector?.make === 'function') resolve(window.ShirtboxVector);
+          else reject(new Error('SVG-Modul wurde geladen, aber die Vektorfunktion fehlt.'));
+        };
+        script.onerror = () => reject(new Error('svg-vektor.js konnte nicht geladen werden. Bitte Homepage-Dateien vollständig veröffentlichen.'));
+        document.head.appendChild(script);
+      }).catch(error => { vectorLoadPromise = null; throw error; });
+    }
+    return vectorLoadPromise;
+  }
   async function sendConfirmation(order) {
     const states = [...designs.values()], value = id => document.getElementById(id).value.trim();
     const body = new FormData();
@@ -197,7 +217,8 @@
         // Vektordatei im Browser erzeugen, damit kein kostenpflichtiger Dienst nötig ist.
         // Eine fehlgeschlagene SVG-Konvertierung darf die eigentliche Bestellung nicht blockieren.
         try {
-          const svg = await window.ShirtboxVector.make(file);
+          const vector = await ensureVectorModule();
+          const svg = await vector.make(file);
           if (svg.size > 3 * 1024 * 1024) throw Error('SVG zu gross');
           body.set(`vektor_${i}`, svg, `ShirtBOX_Design-${i + 1}.svg`);
           size += svg.size;
