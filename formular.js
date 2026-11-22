@@ -142,6 +142,30 @@
     canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height); bitmap.close();
     return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(Error('Bild')), 'image/jpeg', .85));
   }
+  // Eine PNG-Datei aus der vorhandenen Bildquelle erstellen (ohne neue Details zu erfinden).
+  async function pngImage(file) {
+    const bitmap = await createImageBitmap(file);
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = bitmap.width; canvas.height = bitmap.height;
+      canvas.getContext('2d').drawImage(bitmap, 0, 0);
+      return await new Promise((resolve, reject) => canvas.toBlob(
+        blob => blob ? resolve(blob) : reject(Error('PNG-Konvertierung fehlgeschlagen')),
+        'image/png'
+      ));
+    } finally { bitmap.close(); }
+  }
+  async function jpegImage(file) {
+    const bitmap = await createImageBitmap(file);
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = bitmap.width; canvas.height = bitmap.height;
+      canvas.getContext('2d').drawImage(bitmap, 0, 0);
+      return await new Promise((resolve, reject) => canvas.toBlob(
+        blob => blob ? resolve(blob) : reject(Error('JPEG-Konvertierung fehlgeschlagen')),
+        'image/jpeg', 1.0));
+    } finally { bitmap.close(); }
+  }
   // Schickt Bestellung, Druckdateien und Originalbilder an den Worker. Er versendet die interne Mail und die Kundenbestätigung.
   function getOrderId(){let id=sessionStorage.getItem('shirtbox-order-id');if(!id){id=crypto.randomUUID();sessionStorage.setItem('shirtbox-order-id',id);}return id;}
   async function sendConfirmation(order) {
@@ -160,17 +184,27 @@
       const file = state.file.files[0];
       // Druckdatei: exakt das bestellte Design in Originalauflösung und verlustfrei (PNG) – nicht verkleinert, nicht aufgefüllt.
       if (file) {
-        body.set(`druck_${i}`, file, `ShirtBOX_Design-${i + 1}_Druckdatei.${file.type === 'image/png' ? 'png' : 'jpg'}`); size += file.size;
+        // Die Druckdatei immer als PNG mitsenden. Keine kuenstliche Hochskalierung.
+        const printPng = file.type === 'image/png' ? file : await pngImage(file);
+        body.set(`druck_${i}`, printPng, `ShirtBOX_Design-${i + 1}_Druckdatei.png`);
+        // JPEG in der tatsaechlich verfuegbaren Originalaufloesung fuer Jeroms Produktionsmail.
+        // Keine erneute JPEG-Kompression, falls das generierte Original bereits JPEG ist.
+        const originalJpeg = file.type === 'image/jpeg' ? file : await jpegImage(file);
+        body.append(`original_${i}`, originalJpeg, `ShirtBOX_Design-${i + 1}_Original.jpg`);
+        size += originalJpeg.size;
+        size += printPng.size;
         body.set(`bild_${i}`, await mailImage(file), `design-${i + 1}.jpg`);
         // Vektordatei im Browser erzeugen, damit kein kostenpflichtiger Dienst nötig ist.
         // Eine fehlgeschlagene SVG-Konvertierung darf die eigentliche Bestellung nicht blockieren.
         try {
           const svg = await window.ShirtboxVector.make(file);
-          if (svg.size <= 3 * 1024 * 1024) {
-            body.set(`vektor_${i}`, svg, `ShirtBOX_Design-${i + 1}.svg`);
-            size += svg.size;
-          } else console.warn('ShirtBOX SVG zu gross:', svg.size);
-        } catch (error) { console.warn('ShirtBOX SVG fehlgeschlagen:', error); }
+          if (svg.size > 3 * 1024 * 1024) throw Error('SVG zu gross');
+          body.set(`vektor_${i}`, svg, `ShirtBOX_Design-${i + 1}.svg`);
+          size += svg.size;
+        } catch (error) {
+          // SVG ist ausdruecklich fuer jede Bestellung erforderlich.
+          throw Error('SVG-Datei konnte nicht erstellt werden: ' + error.message);
+        }
 
       }
       for (const input of state.card.querySelectorAll('input.print-original')) { const original = input.files[0]; if (original) { body.append(`original_${i}`, original, original.name); size += original.size; } }
