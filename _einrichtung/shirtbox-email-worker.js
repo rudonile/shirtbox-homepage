@@ -380,7 +380,7 @@ async function orderConfirmation(request, env, origin, ctx) {
     await env.ORDER_KV.delete(key);
     return reply(origin, 503, 'Bestellung konnte nicht gespeichert werden. Bitte erneut versuchen.');
   }
-  const inline = [], imageIds = [], prints = [], printNames = [], originals = [], originalNames = [];
+  const inline = [], imageIds = [], prints = [], printNames = [], originals = [], originalNames = [], vectors = [];
   for (let i = 0; i < order.designs.length; i++) {
     const d = order.designs[i], image = form.get(`bild_${i}`), print = form.get(`druck_${i}`);
     if (image && typeof image !== 'string' && image.size && image.size <= MAX_MAIL_IMAGE && IMAGE_TYPES.includes(image.type)) {
@@ -391,6 +391,14 @@ async function orderConfirmation(request, env, origin, ctx) {
       const name = `${number}-design-${d.number}.${extension(print.type)}`;
       prints.push({filename: name, content: base64(await print.arrayBuffer())}); printNames.push(name);
     } else printNames.push('');
+    const vector = form.get(`vektor_${i}`);
+    if (vector && typeof vector !== 'string' && vector.size && vector.size <= 3 * 1024 * 1024 && (vector.type === 'image/svg+xml' || vector.type === 'application/octet-stream')) {
+      // Nur SVG-XML ohne eingebettete Rasterbilder oder aktive Inhalte akzeptieren.
+      const svgText = await vector.text();
+      if (/^\s*<svg\b/i.test(svgText) && !/<(?:script|foreignObject|image)\b|\bon\w+\s*=|javascript:|data:/i.test(svgText)) {
+        vectors.push({filename: `${number}-design-${d.number}-vektor.svg`, content: base64(new TextEncoder().encode(svgText))});
+      }
+    }
     const names = [];
     for (const [j, file] of form.getAll(`original_${i}`).entries()) {
       if (typeof file === 'string' || !file.size || file.size > MAX_PRINT_FILE || !IMAGE_TYPES.includes(file.type)) continue;
@@ -402,7 +410,7 @@ async function orderConfirmation(request, env, origin, ctx) {
   const customerName = `${order.customer.vorname} ${order.customer.nachname}`;
   try {
     const internal = buildShopMail(order, number, imageIds, printNames, originalNames);
-    const sent = await sendMail(env, {to: [shop], reply_to: order.customer.email, subject: `🛒 Neue Bestellung ${number} – ${chf(order.total)} – ${customerName}`, ...internal, attachments: [...inline, ...prints, ...originals]});
+    const sent = await sendMail(env, {to: [shop], reply_to: order.customer.email, subject: `🛒 Neue Bestellung ${number} – ${chf(order.total)} – ${customerName}`, ...internal, attachments: [...inline, ...prints, ...originals, ...vectors]});
     if (!sent) { await env.ORDER_KV.delete(key); return reply(origin, 502, 'Die Bestellung konnte nicht versendet werden.'); }
   } catch { await env.ORDER_KV.delete(key); return reply(origin, 504, 'Die Bestellung konnte nicht versendet werden.'); }
   let kunde = false;
