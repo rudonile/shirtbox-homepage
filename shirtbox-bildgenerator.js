@@ -114,9 +114,35 @@
       if(!response.ok)throw Error(result.error||'Die Bildgestaltung ist momentan nicht verfügbar.');
       const b64=result.data?.[0]?.b64_json;if(typeof b64!=='string'||!b64)throw Error('Es wurde kein Bild zurückgegeben.');
       const binary=atob(b64),bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
-      const d=current();if(d.url)URL.revokeObjectURL(d.url);d.printOriginals=[...(d.printOriginals||[]),...(d.uploads||[])];d.uploads=[];d.uploadBase='';d.uploadBaseBlob=null;editor?.clear();if(frontPhoto)frontPhoto.value='';if(backPhoto)backPhoto.value='';d.frontFile=null;d.backFile=null;if(d.previewUrl)URL.revokeObjectURL(d.previewUrl);d.previewUrl='';d.blob=new Blob([bytes],{type:'image/jpeg'});d.url=URL.createObjectURL(d.blob);d.prompt=previous?(previous+'\nÄnderung: '+change):change;d.draft='';prompt.value='';render();message(`Design ${active+1} ist bereit. Erstellen Sie bei Bedarf ein weiteres Design und wählen Sie unten aus, welche Designs Sie bestellen möchten.`);centreShirtResult();
+      const d=current();if(d.url)URL.revokeObjectURL(d.url);d.printOriginals=[...(d.printOriginals||[]),...(d.uploads||[])];d.uploads=[];d.uploadBase='';d.uploadBaseBlob=null;editor?.clear();if(frontPhoto)frontPhoto.value='';if(backPhoto)backPhoto.value='';d.frontFile=null;d.backFile=null;if(d.previewUrl)URL.revokeObjectURL(d.previewUrl);d.previewUrl='';d.blob=new Blob([bytes],{type:'image/jpeg'});d.url=URL.createObjectURL(d.blob);d.prompt=previous?(previous+'\nÄnderung: '+change):change;d.draft='';prompt.value='';d.sidePrints=null;render();message('Shirt-Vorschau erstellt.');centreShirtResult();
     }catch(error){message(['TimeoutError','AbortError'].includes(error.name)?'Die Anfrage dauert zu lange. Bitte später erneut versuchen. ':error.message==='Failed to fetch'?'Die Bildgestaltung ist noch nicht erreichbar. Bitte versuchen Sie es später erneut.':error.message);}
     finally{busy=false;controls();}
+  }
+  // Separate Druckmotive werden aus dem finalen Entwurf abgeleitet, nicht aus einem
+  // ausgeschnittenen Shirt-Bild. Bei fehlgeschlagener Generierung nie eine Vorschau
+  // stillschweigend als professionelle Druckdatei ausgeben.
+  async function buildSidePrints(design) {
+    if (!design.blob || uploadOnly) return;
+    const results = {};
+    for (const side of ['front', 'back']) {
+      const fd = new FormData();
+      fd.set('mode', 'print');
+      fd.set('side', side);
+      fd.set('prompt', design.prompt || 'Originalentwurf');
+      fd.set('image', design.blob, 'shirtbox-entwurf.jpg');
+      const response = await fetch(`${base}/generate`, {method:'POST',body:fd,signal:AbortSignal.timeout(195000)});
+      const data = await response.json();
+      if (!response.ok) throw Error(data.error || 'Separates Druckmotiv konnte nicht erstellt werden.');
+      const encoded = data.data?.[0]?.b64_json;
+      if (typeof encoded !== 'string') throw Error('Druckmotiv fehlt.');
+      const binary = atob(encoded), bytes = new Uint8Array(binary.length);
+      for (let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
+      // Nicht blind JPEG/WebP als PNG deklarieren.
+      const png=bytes.length>8&&bytes[0]===137&&bytes[1]===80&&bytes[2]===78&&bytes[3]===71;
+      if(!png)throw Error('Der Bildserver hat für '+side+' keine echte PNG-Druckdatei geliefert.');
+      results[side] = new Blob([bytes],{type:'image/png'});
+    }
+    design.sidePrints = results;
   }
   form.addEventListener('submit',event=>{event.preventDefault();generate(current().blob?'edit':'new');});
   prompt.addEventListener('input',()=>{current().draft=prompt.value;controls();});
@@ -124,7 +150,7 @@
   const missing=(el,focus,text)=>{if(!el)return;if(window.sbMissing)window.sbMissing(el,focus,text);else el.scrollIntoView({behavior:'smooth',block:'center'});};
   order.addEventListener('click',async()=>{if(busy||saving)return;const en=document.documentElement.lang==='en';const apply=document.getElementById('upload-apply');
     if(form.dataset.uploadDirty==='true'&&apply&&!apply.hidden){const rights=document.getElementById('ai-rights');if(rights&&!rights.checked){missing(rights.closest('.ai-consent'),rights,en?'👇 Please tick this box':'👇 Bitte Häkchen setzen');return;}missing(apply,null,en?'👇 Please click “Apply” first':'👇 Bitte zuerst hier klicken');return;}
-    if(!chosen().length){missing(document.querySelector('.upload-editor')||document.getElementById('upload-layers'),null,en?'👇 Please upload an image first':'👇 Bitte zuerst ein Bild hochladen');return;}const blobs=(editingOrder?finished():chosen()).map(d=>({blob:d.blob,number:d.number||designs.indexOf(d)+1,prompt:d.prompt,originals:[...(d.printOriginals||[]),...(d.uploads||[])].map(l=>({file:l.file,region:l.region,x:l.x,y:l.y,width:l.width,angle:l.angle,effects:l.effects||{}})),placement:editor?.describe(d)||''}));if(!blobs.length)return;if(blobs.reduce((sum,d)=>sum+d.blob.size+d.originals.reduce((n,l)=>n+l.file.size,0),0)>18*1024*1024){message('Die ausgewählten Designs und Originalbilder sind zusammen grösser als 18 MB. Bitte kleinere Bilder verwenden oder weniger Designs auswählen.');return;}saving=true;controls();try{if(editingOrder){const old=await window.ShirtboxDesignTransfer.load();const previous=old?.blobs||[];for(const item of blobs){const position=previous.findIndex((entry,i)=>(entry.number||i+1)===item.number);if(position>=0)previous[position]=item;else previous.push(item);}await window.ShirtboxDesignTransfer.save(previous);}else{const old=await window.ShirtboxDesignTransfer.load();const previous=old?.blobs||[];const nextNumber=Math.max(0,...previous.map((entry,i)=>Number(entry.number||i+1)||0));const additions=blobs.map((item,i)=>({...item,number:nextNumber+i+1}));await window.ShirtboxDesignTransfer.save([...previous,...additions]);}location.href='bestellen.html#bestellen';}catch{message('Ihre Entwürfe konnten nicht für die Bestellung gespeichert werden. Bitte erlauben Sie die Speicherung in diesem Browser und versuchen Sie es erneut.');saving=false;controls();}});
+    if(!chosen().length){missing(document.querySelector('.upload-editor')||document.getElementById('upload-layers'),null,en?'👇 Please upload an image first':'👇 Bitte zuerst ein Bild hochladen');return;}const blobs=(editingOrder?finished():chosen()).map(d=>({blob:d.blob,number:d.number||designs.indexOf(d)+1,prompt:d.prompt,originals:[...(d.printOriginals||[]),...(d.uploads||[])].map(l=>({file:l.file,region:l.region,x:l.x,y:l.y,width:l.width,angle:l.angle,effects:l.effects||{}})),placement:editor?.describe(d)||'',sidePrints:d.sidePrints||null,sidePrintError:d.sidePrintError||'',uploadOnly:uploadOnly}));if(!blobs.length)return;if(blobs.reduce((sum,d)=>sum+d.blob.size+d.originals.reduce((n,l)=>n+l.file.size,0),0)>18*1024*1024){message('Die ausgewählten Designs und Originalbilder sind zusammen grösser als 18 MB. Bitte kleinere Bilder verwenden oder weniger Designs auswählen.');return;}saving=true;controls();try{if(editingOrder){const old=await window.ShirtboxDesignTransfer.load();const previous=old?.blobs||[];for(const item of blobs){const position=previous.findIndex((entry,i)=>(entry.number||i+1)===item.number);if(position>=0)previous[position]=item;else previous.push(item);}await window.ShirtboxDesignTransfer.save(previous);}else{const old=await window.ShirtboxDesignTransfer.load();const previous=old?.blobs||[];const nextNumber=Math.max(0,...previous.map((entry,i)=>Number(entry.number||i+1)||0));const additions=blobs.map((item,i)=>({...item,number:nextNumber+i+1}));await window.ShirtboxDesignTransfer.save([...previous,...additions]);}location.href='bestellen.html#bestellen';}catch{message('Ihre Entwürfe konnten nicht für die Bestellung gespeichert werden. Bitte erlauben Sie die Speicherung in diesem Browser und versuchen Sie es erneut.');saving=false;controls();}});
   async function restoreForEditing(){
     const number=new URLSearchParams(location.search).get('weiterbearbeiten');
     if(!number || uploadOnly || !window.ShirtboxDesignTransfer?.load)return false;
@@ -135,7 +161,7 @@
       if(!item)throw Error('Design nicht gefunden');
       const blob=item.blob||item;
       if(!(blob instanceof Blob))throw Error('Bild nicht verfügbar');
-      editingOrder=true;designs.splice(0,designs.length,...items.map((entry,i)=>({blob:entry.blob||entry,url:URL.createObjectURL(entry.blob||entry),prompt:entry.prompt||'',draft:'',selected:true,originals:entry.originals||[],number:entry.number||i+1})));active=items.indexOf(item);
+      editingOrder=true;designs.splice(0,designs.length,...items.map((entry,i)=>({blob:entry.blob||entry,url:URL.createObjectURL(entry.blob||entry),prompt:entry.prompt||'',draft:'',selected:true,sidePrints:entry.sidePrints||null,originals:entry.originals||[],number:entry.number||i+1})));active=items.indexOf(item);
       render();message('Ihr bestehendes Shirt wurde geladen. Geben Sie Ihre Änderung ein und klicken Sie auf „Generieren“.');
       return true;
     }catch(e){message('Das gespeicherte Design konnte nicht geladen werden. Bitte übernehmen Sie es erneut aus der Bestellung.');return false;}

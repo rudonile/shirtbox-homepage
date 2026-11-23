@@ -81,6 +81,7 @@
         if(!input.files || !input.files.length)throw Error('Die Dateiübernahme wurde vom Browser blockiert.');
         input.dispatchEvent(new Event('change',{bubbles:true}));
         window.ShirtboxOrderDesigns.attachOriginals(input,item.originals||[],item.placement||'');
+        window.ShirtboxOrderDesigns.attachSidePrints(input,item.sidePrints||null,!!item.uploadOnly);
         window.ShirtboxOrderDesigns.restoreDetails?.(input,number);
       }
       note(saved.dropped?'Ein früher fehlerhaft gespeichertes Design wurde entfernt. Ihre übrigen Shirts sind in der Bestellung.':'');

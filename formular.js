@@ -1,3 +1,398 @@
+/* ===== Eingebaut: weisser-hintergrund.js ===== */
+/* ShirtBOX: Druckmotive auf total weissen Hintergrund (#FFFFFF) stellen.
+   1. Transparente Bereiche werden exakt auf Weiss gerechnet (weiche Kanten bleiben weich).
+   2. Ein einfarbiger heller oder grauer Hintergrund wird vom Bildrand her erkannt und
+      durch reines Weiss ersetzt; die Uebergangskante wird sauber auf Weiss umgerechnet.
+   Das Motiv selbst bleibt Pixel fuer Pixel unveraendert. Dunkle oder bunte Hintergruende
+   (z. B. ein bewusst schwarzes Motiv) werden nicht angetastet.
+   Ergebnis: {png, jpg, changed} oder null, wenn das Bild schon passt. */
+(() => {
+  'use strict';
+  const EDGE = 60;         // Uebergangskante zwischen Motiv und Hintergrund
+
+  // Loest ein kleines lineares Gleichungssystem (Gauss).
+  function solve(A, y) {
+    const n = y.length, M = A.map((r, i) => [...r, y[i]]);
+    for (let c = 0; c < n; c++) {
+      let piv = c; for (let r = c + 1; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[piv][c])) piv = r;
+      [M[c], M[piv]] = [M[piv], M[c]];
+      if (Math.abs(M[c][c]) < 1e-12) return null;
+      for (let r = 0; r < n; r++) if (r !== c) { const f = M[r][c] / M[c][c]; for (let k = c; k <= n; k++) M[r][k] -= f * M[c][k]; }
+    }
+    return M.map((r, i) => r[n] / r[i]);
+  }
+
+  // Hintergrund als weicher Verlauf (Vignette): je Farbkanal a + bx + cy + dx^2 + ey^2 + fxy.
+  function fitSurface(px, w, h, mask) {
+    const A = Array.from({length: 6}, () => new Float64Array(6)), Y = [0, 1, 2].map(() => new Float64Array(6));
+    const step = Math.max(1, Math.round(Math.sqrt(w * h / 40000)));
+    let n = 0;
+    for (let y = 0; y < h; y += step) for (let x = 0; x < w; x += step) {
+      const p = y * w + x; if (!mask[p]) continue;
+      const u = 2 * x / w - 1, v = 2 * y / h - 1, f = [1, u, v, u * u, v * v, u * v];
+      for (let i = 0; i < 6; i++) { for (let j = 0; j < 6; j++) A[i][j] += f[i] * f[j]; for (let k = 0; k < 3; k++) Y[k][i] += f[i] * px[p * 4 + k]; }
+      n++;
+    }
+    if (n < 50) return null;
+    const coef = Y.map(y => solve(A.map(r => [...r]), [...y]));
+    if (coef.some(c => !c)) return null;
+    return (x, y, k) => { const u = 2 * x / w - 1, v = 2 * y / h - 1, c = coef[k]; return c[0] + c[1] * u + c[2] * v + c[3] * u * u + c[4] * v * v + c[5] * u * v; };
+  }
+
+  // Arbeitet direkt auf RGBA-Pixeln (auch ohne Browser testbar). Gibt true zurueck, wenn etwas geaendert wurde.
+  function whiten(px, w, h) {
+    let changed = false;
+    // 1. Transparenz exakt ueber Weiss legen.
+    for (let i = 0; i < px.length; i += 4) {
+      const a = px[i + 3];
+      if (a === 255) continue;
+      const f = a / 255;
+      for (let k = 0; k < 3; k++) px[i + k] = Math.round(px[i + k] * f + 255 * (1 - f));
+      px[i + 3] = 255; changed = true;
+    }
+    // 2. Randfarbe bestimmen; nur neutrale (graue/weisse), nicht zu dunkle Hintergruende.
+    const border = [];
+    for (let x = 0; x < w; x++) border.push(x, (h - 1) * w + x);
+    for (let y = 1; y < h - 1; y++) border.push(y * w, y * w + w - 1);
+    const neutralPx = i => Math.max(px[i], px[i + 1], px[i + 2]) - Math.min(px[i], px[i + 1], px[i + 2]) <= 14;
+    const edgeNeutral = border.filter(p => neutralPx(p * 4));
+    if (edgeNeutral.length < border.length * 0.6) return changed;
+    const lum = i => 0.2126 * px[i] + 0.7152 * px[i + 1] + 0.0722 * px[i + 2];
+    const avg = edgeNeutral.reduce((s, p) => s + lum(p * 4), 0) / edgeNeutral.length;
+    if (avg < 45) return changed;
+    // 3. Hintergrund-Modell: zuerst konstant, dann als Verlauf nachgefuehrt (2 Runden).
+    const base = [0, 1, 2].map(k => edgeNeutral.reduce((s, p) => s + px[p * 4 + k], 0) / edgeNeutral.length);
+    let model = (x, y, k) => base[k];
+    let mark = new Uint8Array(w * h);
+    const flat = (p, lim) => {
+      const x = p % w, y = (p - x) / w, i = p * 4;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= w || yy >= h) continue;
+        const k = (yy * w + xx) * 4;
+        if (Math.abs(px[k] - px[i]) > lim || Math.abs(px[k + 1] - px[i + 1]) > lim || Math.abs(px[k + 2] - px[i + 2]) > lim) return false;
+      }
+      return true;
+    };
+    let mdist;
+    for (let round = 0; round < 3; round++) {
+      const M = new Float32Array(w * h * 3);
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) for (let k = 0; k < 3; k++) M[(y * w + x) * 3 + k] = model(x, y, k);
+      mdist = p => Math.max(Math.abs(px[p * 4] - M[p * 3]), Math.abs(px[p * 4 + 1] - M[p * 3 + 1]), Math.abs(px[p * 4 + 2] - M[p * 3 + 2]));
+      const ok = p => neutralPx(p * 4) && (mdist(p) <= 8 || (mdist(p) <= 18 && flat(p, 4)));
+      mark = new Uint8Array(w * h); const stack = [];
+      for (const p of border) if (!mark[p] && ok(p)) { mark[p] = 1; stack.push(p); }
+      while (stack.length) {
+        const p = stack.pop(), x = p % w;
+        for (const q of [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, p - w, p + w]) {
+          if (q < 0 || q >= w * h || mark[q] || !ok(q)) continue;
+          mark[q] = 1; stack.push(q);
+        }
+      }
+      if (round === 2) { model.cache = M; break; }
+      const next = fitSurface(px, w, h, mark); if (!next) { model.cache = M; break; }
+      model = next;
+    }
+    const M = model.cache;
+    // 3b. Eingeschlossene Hintergrundstuecke (z. B. Kragen-Ausschnitt): nur sehr nahe am Modell, flach und gross genug.
+    const minArea = Math.max(50, Math.round(w * h * 0.001)), seen = new Uint8Array(w * h);
+    const close = p => neutralPx(p * 4) && mdist(p) <= 6 && flat(p, 3);
+    for (let s = 0; s < w * h; s++) {
+      if (mark[s] || seen[s] || !close(s)) continue;
+      const region = [s]; seen[s] = 1;
+      for (let r = 0; r < region.length; r++) {
+        const p = region[r], x = p % w;
+        for (const q of [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, p - w, p + w]) {
+          if (q < 0 || q >= w * h || seen[q] || mark[q] || !close(q)) continue;
+          seen[q] = 1; region.push(q);
+        }
+      }
+      if (region.length >= minArea) for (const p of region) mark[p] = 1;
+    }
+    // 4. Kante (2 Pixel tief) umrechnen: Mischfarbe aus Motiv + Hintergrund -> Motiv + Weiss.
+    for (let ring = 2; ring <= 3; ring++) {
+      for (let p = 0; p < w * h; p++) {
+        if (mark[p]) continue;
+        const x = p % w;
+        const near = q => mark[q] === 1 || (ring === 3 && mark[q] === 2);
+        if (!((x > 0 && near(p - 1)) || (x < w - 1 && near(p + 1)) || (p >= w && near(p - w)) || (p < w * (h - 1) && near(p + w)))) continue;
+        const d = mdist(p); if (d >= EDGE) continue;
+        const rest = 1 - d / EDGE, i = p * 4;
+        for (let k = 0; k < 3; k++) px[i + k] = Math.max(0, Math.min(255, Math.round(px[i + k] + rest * (255 - M[p * 3 + k]))));
+        mark[p] = ring; changed = true;
+      }
+    }
+    for (let p = 0; p < w * h; p++) if (mark[p] === 1) {
+      const i = p * 4;
+      if (px[i] !== 255 || px[i + 1] !== 255 || px[i + 2] !== 255) { px[i] = px[i + 1] = px[i + 2] = 255; changed = true; }
+    }
+    return changed;
+  }
+
+  // Trennlinie zwischen den zwei Shirts (links Vorderseite, rechts Rueckseite).
+  // Laeuft durch die weisse Luecke; beruehren sich die Shirts, folgt sie der Umrisslinie.
+  // Liefert pro Bildzeile die x-Position der Trennung.
+  function shirtSeam(px, w, h) {
+    const ink = i => px[i] < 232 || px[i + 1] < 232 || px[i + 2] < 232; // blasse Schattenreste zaehlen nicht
+    const L = new Float32Array(w * h);
+    for (let p = 0; p < w * h; p++) L[p] = 0.2126 * px[p * 4] + 0.7152 * px[p * 4 + 1] + 0.0722 * px[p * 4 + 2];
+    const cols = new Uint32Array(w);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (ink((y * w + x) * 4)) cols[x]++;
+    let c0 = w >> 1, mn = Infinity;
+    for (let x = Math.floor(w * 0.3); x < w * 0.7; x++) if (cols[x] < mn) { mn = cols[x]; c0 = x; }
+    // Bei klarer Luecke: Mitte der Luecke nehmen.
+    if (mn === 0) { let a = c0, b = c0; while (a > 0 && cols[a - 1] === 0) a--; while (b < w - 1 && cols[b + 1] === 0) b++; c0 = (a + b) >> 1; }
+    const x0 = Math.max(1, Math.round(c0 - w * 0.15)), x1 = Math.min(w - 2, Math.round(c0 + w * 0.15)), W = x1 - x0 + 1;
+    const cost = (x, y) => {
+      const p = y * w + x;
+      if (!ink(p * 4)) return Math.abs(x - c0) * 0.002;
+      const gx = Math.abs(L[p + 1] - L[p - 1]), gy = y > 0 && y < h - 1 ? Math.abs(L[p + w] - L[p - w]) : 0;
+      return 6 + Math.max(0, 40 - (gx + gy) / 4) - (L[p] < 70 ? 20 : 0) + Math.abs(x - c0) * 0.02;
+    };
+    const D = new Float32Array(W * h), P = new Int8Array(W * h);
+    for (let i = 0; i < W; i++) D[i] = cost(x0 + i, 0);
+    for (let y = 1; y < h; y++) for (let i = 0; i < W; i++) {
+      let b = D[(y - 1) * W + i], bp = 0;
+      for (const d of [-2, -1, 1, 2]) { const j = i + d; if (j < 0 || j >= W) continue; const v = D[(y - 1) * W + j] + Math.abs(d) * 1.5; if (v < b) { b = v; bp = d; } }
+      D[y * W + i] = b + cost(x0 + i, y); P[y * W + i] = bp;
+    }
+    let i = 0; for (let k = 1; k < W; k++) if (D[(h - 1) * W + k] < D[(h - 1) * W + i]) i = k;
+    const path = new Int32Array(h);
+    for (let y = h - 1; y >= 0; y--) { path[y] = x0 + i; i += P[y * W + i]; }
+    return path;
+  }
+
+  // ---------- Kontur einer Seite ----------
+  // Maske des Shirts dieser Seite: groesste zusammenhaengende Flaeche(n), Loecher gefuellt,
+  // Kruemel/Ausfransungen entfernt und der graue Schatten-Randring abgetragen.
+  function shirtMask(px, w, h, path, left) {
+    const N = w * h, ink = i => px[i] < 250 || px[i + 1] < 250 || px[i + 2] < 250;
+    const mine = p => { const x = p % w, y = (p - x) / w; return left ? x < path[y] : x >= path[y]; };
+    const label = new Int32Array(N).fill(-1), sizes = [], stack = [];
+    for (let s = 0; s < N; s++) {
+      if (label[s] >= 0 || !mine(s) || !ink(s * 4)) continue;
+      const id = sizes.length; let n = 0; label[s] = id; stack.push(s);
+      while (stack.length) {
+        const p = stack.pop(), x = p % w, y = (p - x) / w; n++;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= w || yy >= h) continue;
+          const q = yy * w + xx; if (label[q] >= 0 || !mine(q) || !ink(q * 4)) continue;
+          label[q] = id; stack.push(q);
+        }
+      }
+      sizes.push(n);
+    }
+    const biggest = Math.max(0, ...sizes);
+    let m = new Uint8Array(N);
+    for (let p = 0; p < N; p++) if (label[p] >= 0 && sizes[label[p]] >= biggest * 0.02) m[p] = 1;
+    const morph = (src, grow) => { // 3x3 Erosion/Dilatation
+      const out = new Uint8Array(N);
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        let v = grow ? 0 : 1;
+        for (let dy = -1; dy <= 1 && v === (grow ? 0 : 1); dy++) for (let dx = -1; dx <= 1; dx++) {
+          const xx = x + dx, yy = y + dy, q = xx < 0 || yy < 0 || xx >= w || yy >= h ? 0 : src[yy * w + xx];
+          if (grow && q) { v = 1; break; } if (!grow && !q) { v = 0; break; }
+        }
+        out[y * w + x] = v;
+      }
+      return out;
+    };
+    // Loecher fuellen (weisse Stoffflaechen, Kragen-Innenseite gehoeren zum Shirt).
+    const outside = new Uint8Array(N); stack.length = 0;
+    for (let x = 0; x < w; x++) for (const p of [x, (h - 1) * w + x]) if (!m[p] && !outside[p]) { outside[p] = 1; stack.push(p); }
+    for (let y = 0; y < h; y++) for (const p of [y * w, y * w + w - 1]) if (!m[p] && !outside[p]) { outside[p] = 1; stack.push(p); }
+    while (stack.length) {
+      const p = stack.pop(), x = p % w;
+      for (const q of [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, p - w, p + w]) if (q >= 0 && q < N && !m[q] && !outside[q]) { outside[q] = 1; stack.push(q); }
+    }
+    for (let p = 0; p < N; p++) if (!outside[p]) m[p] = 1;
+    // Oeffnen (entfernt Kruemel und duenne Ausfransungen), dann Randring abtragen.
+    m = morph(morph(m, false), true);
+    // Grauen Schatten-/Umrissring Schicht fuer Schicht abtragen (max. 4 Pixel): nur farblose,
+    // nicht weisse und nicht schwarze Randpixel. Stofffarben, Weiss und Schwarz bleiben.
+    const grey = p => { const i = p * 4, mx = Math.max(px[i], px[i + 1], px[i + 2]), mn = Math.min(px[i], px[i + 1], px[i + 2]), L = 0.2126 * px[i] + 0.7152 * px[i + 1] + 0.0722 * px[i + 2]; return mx - mn <= 28 && L > 55 && L < 238; };
+    for (let it = 0; it < 4; it++) {
+      const drop = [];
+      for (let p = 0; p < N; p++) {
+        if (!m[p]) continue;
+        const x = p % w;
+        const edge = x === 0 || x === w - 1 || p < w || p >= N - w || !m[p - 1] || !m[p + 1] || !m[p - w] || !m[p + w];
+        if (edge && grey(p)) drop.push(p);
+      }
+      if (!drop.length) break;
+      for (const p of drop) m[p] = 0;
+    }
+    // 1 Pixel Sicherheitsabstand und Kontur glaetten (Mehrheitsfilter 5x5 gegen Treppen/Zacken).
+    m = morph(m, false);
+    const sm = new Uint8Array(N);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      let n = 0, t = 0;
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { const xx = x + dx, yy = y + dy; t++; if (xx >= 0 && yy >= 0 && xx < w && yy < h && m[yy * w + xx]) n++; }
+      sm[y * w + x] = n * 2 > t ? 1 : 0;
+    }
+    m = sm;
+    // Bounding Box
+    let l = w, r = -1, t = h, b = -1;
+    for (let p = 0; p < N; p++) if (m[p]) { const x = p % w, y = (p - x) / w; if (x < l) l = x; if (x > r) r = x; if (y < t) t = y; if (y > b) b = y; }
+    if (r < 0) { l = 0; r = w - 1; t = 0; b = h - 1; m.fill(1); }
+    return {mask: m, box: {l, r, t, b}};
+  }
+
+  // ---------- Hochwertiges Vergroessern (Lanczos-3) und Nachschaerfen ----------
+  const sinc = x => x === 0 ? 1 : Math.sin(Math.PI * x) / (Math.PI * x);
+  const lanczos = x => (x = Math.abs(x)) < 3 ? sinc(x) * sinc(x / 3) : 0;
+  function resample(src, sw, sh, ch, dw, dh) {
+    const pass = (data, w, h, nw, horizontal) => { // eine Achse
+      const n = horizontal ? nw : h, len = horizontal ? w : h, scale = len / (horizontal ? nw : nw);
+      const outW = horizontal ? nw : w, outH = horizontal ? h : nw, out = new Float32Array(outW * outH * ch);
+      const support = Math.max(1, scale) * 3;
+      for (let i = 0; i < nw; i++) {
+        const center = (i + 0.5) * scale - 0.5, lo = Math.max(0, Math.floor(center - support)), hi = Math.min(len - 1, Math.ceil(center + support));
+        const wts = [], idx = []; let sum = 0;
+        for (let j = lo; j <= hi; j++) { const v = lanczos((j - center) / Math.max(1, scale)); if (v) { wts.push(v); idx.push(j); sum += v; } }
+        for (let k = 0; k < wts.length; k++) wts[k] /= sum;
+        const lines = horizontal ? h : w;
+        for (let line = 0; line < lines; line++) for (let c = 0; c < ch; c++) {
+          let acc = 0;
+          for (let k = 0; k < wts.length; k++) acc += wts[k] * (horizontal ? data[(line * w + idx[k]) * ch + c] : data[(idx[k] * w + line) * ch + c]);
+          out[(horizontal ? line * outW + i : i * outW + line) * ch + c] = acc;
+        }
+      }
+      return out;
+    };
+    return pass(pass(src, sw, sh, dw, true), dw, sh, dh, false);
+  }
+  function gaussBlur(src, w, h, ch, sigma) {
+    const r = Math.ceil(sigma * 3), k = []; let s = 0;
+    for (let i = -r; i <= r; i++) { const v = Math.exp(-(i * i) / (2 * sigma * sigma)); k.push(v); s += v; }
+    for (let i = 0; i < k.length; i++) k[i] /= s;
+    const tmp = new Float32Array(src.length), out = new Float32Array(src.length);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) for (let c = 0; c < ch; c++) {
+      let a = 0; for (let i = -r; i <= r; i++) a += k[i + r] * src[(y * w + Math.min(w - 1, Math.max(0, x + i))) * ch + c]; tmp[(y * w + x) * ch + c] = a;
+    }
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) for (let c = 0; c < ch; c++) {
+      let a = 0; for (let i = -r; i <= r; i++) a += k[i + r] * tmp[(Math.min(h - 1, Math.max(0, y + i)) * w + x) * ch + c]; out[(y * w + x) * ch + c] = a;
+    }
+    return out;
+  }
+
+  // Druckbild einer Seite: Shirt sauber freigestellt auf Weiss, vergroessert und nachgeschaerft.
+  // Ergebnis: RGBA-Pixel (deckend) in Zielgroesse.
+  function printSide(px, w, h, path, left, targetH) {
+    const {mask, box} = shirtMask(px, w, h, path, left);
+    const pad = Math.round(Math.max(box.r - box.l, box.b - box.t) * 0.02);
+    const X = Math.max(0, box.l - pad), Y = Math.max(0, box.t - pad);
+    const cw = Math.min(w, box.r + pad + 1) - X, chh = Math.min(h, box.b + pad + 1) - Y;
+    // Farbe ausserhalb der Maske mit naechster Shirtfarbe auffuellen, damit beim Vergroessern kein Grau einblutet.
+    const rgb = new Float32Array(cw * chh * 3), alpha = new Float32Array(cw * chh), filled = new Uint8Array(cw * chh), queue = [];
+    for (let y = 0; y < chh; y++) for (let x = 0; x < cw; x++) {
+      const p = (Y + y) * w + X + x, d = y * cw + x;
+      if (mask[p]) { rgb[d * 3] = px[p * 4]; rgb[d * 3 + 1] = px[p * 4 + 1]; rgb[d * 3 + 2] = px[p * 4 + 2]; alpha[d] = 1; filled[d] = 1; queue.push(d); }
+    }
+    for (let qi = 0; qi < queue.length; qi++) {
+      const d = queue[qi], x = d % cw;
+      for (const n of [x > 0 ? d - 1 : -1, x < cw - 1 ? d + 1 : -1, d - cw, d + cw]) {
+        if (n < 0 || n >= cw * chh || filled[n]) continue;
+        filled[n] = 1; rgb[n * 3] = rgb[d * 3]; rgb[n * 3 + 1] = rgb[d * 3 + 1]; rgb[n * 3 + 2] = rgb[d * 3 + 2]; queue.push(n);
+      }
+    }
+    // Weiche Kante: Maske leicht weichzeichnen (Kantenglaettung).
+    const softA = gaussBlur(alpha, cw, chh, 1, 0.9);
+    const scale = Math.max(1, Math.min(3, targetH / chh));
+    const dw = Math.round(cw * scale), dh = Math.round(chh * scale);
+    let big = scale > 1 ? resample(rgb, cw, chh, 3, dw, dh) : rgb;
+    const bigA = scale > 1 ? resample(softA, cw, chh, 1, dw, dh) : softA;
+    // Nachschaerfen (Unscharf maskieren), dezent, ohne Rauschen zu verstaerken.
+    const blur = gaussBlur(big, dw, dh, 3, Math.max(0.8, scale * 0.6)), amount = 0.7, thresh = 2;
+    const out = new Uint8ClampedArray(dw * dh * 4);
+    for (let i = 0; i < dw * dh; i++) {
+      // Kante: unter 0.5 komplett weiss, darueber weich bis voll deckend -> keine grauen Saeume.
+      const a = Math.max(0, Math.min(1, (bigA[i] - 0.5) * 1.8 + 0.5));
+      for (let c = 0; c < 3; c++) {
+        const v = big[i * 3 + c], diff = v - blur[i * 3 + c];
+        const sharp = Math.abs(diff) > thresh ? v + amount * diff : v;
+        out[i * 4 + c] = Math.round(sharp * a + 255 * (1 - a));
+      }
+      out[i * 4 + 3] = 255;
+    }
+    return {data: out, w: dw, h: dh};
+  }
+
+  // ---------- Dateien: PNG (pHYs), JPEG (dpi), PDF ----------
+  const MAX_W_MM = 400, MAX_H_MM = 500;
+  const mmPerPx = (w, h) => Math.min(MAX_W_MM / w, MAX_H_MM / h);
+  const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  const crc32 = b => { let c = 0xFFFFFFFF; for (const v of b) c = CRC[(c ^ v) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+  const concat = parts => { const o = new Uint8Array(parts.reduce((s, p) => s + p.length, 0)); let i = 0; for (const p of parts) { o.set(p, i); i += p.length; } return o; };
+  function pngPrintSize(b, w, h) {
+    const ppm = Math.round(1000 / mmPerPx(w, h)), c = new Uint8Array(21), dv = new DataView(c.buffer);
+    dv.setUint32(0, 9); c.set([112, 72, 89, 115], 4); dv.setUint32(8, ppm); dv.setUint32(12, ppm); c[16] = 1; dv.setUint32(17, crc32(c.subarray(4, 17)));
+    const src = new DataView(b.buffer, b.byteOffset, b.byteLength), out = [b.subarray(0, 8)]; let p = 8;
+    while (p + 8 <= b.length) {
+      const len = src.getUint32(p), type = String.fromCharCode(b[p + 4], b[p + 5], b[p + 6], b[p + 7]), end = p + 12 + len;
+      if (type !== 'pHYs') out.push(b.subarray(p, end)); if (type === 'IHDR') out.push(c); if (type === 'IEND') break; p = end;
+    }
+    return concat(out);
+  }
+  function jpegPrintSize(b, w, h) {
+    const dpi = Math.max(1, Math.min(65535, Math.round(25.4 / mmPerPx(w, h))));
+    if (b[2] === 0xFF && b[3] === 0xE0 && b[6] === 0x4A && b[7] === 0x46 && b[8] === 0x49 && b[9] === 0x46) { const o = b.slice(); o[13] = 1; o[14] = dpi >> 8; o[15] = dpi & 255; o[16] = dpi >> 8; o[17] = dpi & 255; return o; }
+    return concat([b.subarray(0, 2), new Uint8Array([0xFF, 0xE0, 0, 16, 0x4A, 0x46, 0x49, 0x46, 0, 1, 1, 1, dpi >> 8, dpi & 255, dpi >> 8, dpi & 255, 0, 0]), b.subarray(2)]);
+  }
+  // PDF mit dem JPEG (Qualitaet 100) als Bild, Seite exakt in Druckgroesse.
+  function pdfFromJpeg(jpg, w, h, title) {
+    const enc = new TextEncoder(), s = mmPerPx(w, h), pt = mm => +(mm * 72 / 25.4).toFixed(3), W = pt(w * s), H = pt(h * s);
+    const content = enc.encode(`q ${W} 0 0 ${H} 0 0 cm /Im0 Do Q`);
+    const stream = (dict, data) => [enc.encode(`<< ${dict} /Length ${data.length} >>\nstream\n`), data, enc.encode('\nendstream')];
+    const objs = [[enc.encode('<< /Type /Catalog /Pages 2 0 R >>')], [enc.encode('<< /Type /Pages /Kids [3 0 R] /Count 1 >>')],
+      [enc.encode(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /TrimBox [0 0 ${W} ${H}] /Resources << /XObject << /Im0 5 0 R >> >> /Contents 4 0 R >>`)],
+      stream('', content), stream(`/Type /XObject /Subtype /Image /Width ${w} /Height ${h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode`, jpg),
+      [enc.encode(`<< /Producer (ShirtBOX) /Title (${title} ${Math.round(w * s)} x ${Math.round(h * s)} mm) >>`)]];
+    const parts = [enc.encode('%PDF-1.4\n'), new Uint8Array([0x25, 0xE2, 0xE3, 0xCF, 0xD3, 0x0A])];
+    let off = parts[0].length + parts[1].length; const offs = [];
+    objs.forEach((chunks, i) => { offs.push(off); const hd = enc.encode(`${i + 1} 0 obj\n`), tl = enc.encode('\nendobj\n'); parts.push(hd, ...chunks, tl); off += hd.length + tl.length + chunks.reduce((a, c) => a + c.length, 0); });
+    let x = `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n`; for (const o of offs) x += `${String(o).padStart(10, '0')} 00000 n \n`;
+    x += `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R /Info ${objs.length} 0 R >>\nstartxref\n${off}\n%%EOF\n`;
+    parts.push(enc.encode(x));
+    return concat(parts);
+  }
+
+  const pause = () => new Promise(r => setTimeout(r)); // Browser zwischendurch atmen lassen
+
+  // Shirt-Bild -> {front, back}: je {png, jpg, pdf} (Blobs), weisser Hintergrund, saubere Kante,
+  // vergroessert/nachgeschaerft und mit Druckgroesse (passt in 40 x 50 cm).
+  async function split(file, opt = {}) {
+    const targetH = opt.targetHeight || 1600;
+    const bitmap = await createImageBitmap(file, {colorSpaceConversion: 'none', premultiplyAlpha: 'none'});
+    try {
+      const canvas = document.createElement('canvas'); canvas.width = bitmap.width; canvas.height = bitmap.height;
+      const ctx = canvas.getContext('2d', {willReadFrequently: true});
+      if (!ctx) throw Error('Canvas nicht verfuegbar');
+      ctx.drawImage(bitmap, 0, 0);
+      const w = canvas.width, h = canvas.height, px = ctx.getImageData(0, 0, w, h).data;
+      whiten(px, w, h); await pause();
+      const path = shirtSeam(px, w, h), out = {};
+      for (const [side, left, label] of [['front', true, 'Vorderseite'], ['back', false, 'Rueckseite']]) {
+        await pause();
+        const img = printSide(px, w, h, path, left, targetH);
+        const c = document.createElement('canvas'); c.width = img.w; c.height = img.h;
+        c.getContext('2d').putImageData(new ImageData(img.data, img.w, img.h), 0, 0);
+        const blob = (type, q) => new Promise((ok, fail) => c.toBlob(b => b ? ok(b) : fail(Error('Bild konnte nicht gespeichert werden')), type, q));
+        const png = pngPrintSize(new Uint8Array(await (await blob('image/png')).arrayBuffer()), img.w, img.h);
+        const jpg = jpegPrintSize(new Uint8Array(await (await blob('image/jpeg', 1.0)).arrayBuffer()), img.w, img.h);
+        const pdf = pdfFromJpeg(jpg, img.w, img.h, `ShirtBOX ${label}`);
+        const s = mmPerPx(img.w, img.h);
+        out[side] = {png: new Blob([png], {type: 'image/png'}), jpg: new Blob([jpg], {type: 'image/jpeg'}), pdf: new Blob([pdf], {type: 'application/pdf'}),
+          size: `${(img.w * s / 10).toFixed(1)} x ${(img.h * s / 10).toFixed(1)} cm, ${img.w} x ${img.h} px`};
+      }
+      return out;
+    } finally { bitmap.close(); }
+  }
+
+  if (typeof window !== 'undefined') window.ShirtboxWhite = {split, whiten, shirtSeam, printSide};
+  if (typeof module !== 'undefined') module.exports = {whiten, shirtSeam, printSide, pngPrintSize, jpegPrintSize, pdfFromJpeg};
+})();
+/* ===== Ende weisser-hintergrund.js ===== */
+
 (() => {
   'use strict';
   const form = document.getElementById('bestellung');
@@ -156,10 +551,10 @@
       let status=state.card.querySelector('.shirtbox-print-status');
       if(!status){status=document.createElement('p');status.className='shirtbox-print-status';status.style.cssText='font-size:13px;font-weight:700;margin:10px 0;line-height:1.5';state.card.querySelector('.design-file-preview')?.append(status);}
       if(status){
-        const ready=good(front)&&good(back);
-        status.textContent=uploadOnly?'Eigene Bilder: Originaldateien für den Druck werden übernommen.':ready?'✓ Separate Druckmotive vorhanden: Vorderseite ('+Math.round(front.size/1024)+' KB) und Rückseite ('+Math.round(back.size/1024)+' KB).':'⚠ Separate Druckmotive nicht vollständig vorhanden. Bitte Shirt im Designer neu erstellen, bevor Sie bestellen.';
-        status.style.color=(ready||uploadOnly)?'#31d68a':'#ffb454';
-        state.printsMissing=!ready&&!uploadOnly;
+        // Vorder-/Rueckseite werden beim Absenden direkt aus dem Shirt-Bild geschnitten.
+        status.textContent=uploadOnly?'Eigene Bilder: Originaldateien für den Druck werden übernommen.':'✓ Vorder- und Rückseite werden beim Bestellen als separate Druckdateien erstellt.';
+        status.style.color='#31d68a';
+        state.printsMissing=false;
       }
     }
   }

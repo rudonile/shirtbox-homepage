@@ -937,10 +937,9 @@
       : {...(d.entry || {}), blob: d.blob, number: d.number, prompt: d.prompt, originals: d.entry?.originals || [], placement: d.entry?.placement || ''});
     busy = true; controls();
     try {
-      // Fuer jedes neu erzeugte oder bearbeitete Shirt beide Druckseiten separat anfordern.
-      // Bei Fehler nicht zur Bestellung wechseln und keine fehlenden Dateien als vorhanden melden.
-      for (const d of picked) await generatePrintSides(d);
-      const itemsWithPrints = items.map((item, i) => ({...item, sidePrints: picked[i].sidePrints, uploadOnly:false}));
+      // Vorder- und Rueckseite werden beim Bestellen direkt aus dem Shirt-Bild geschnitten
+      // (weisser-hintergrund.js). Keine zusaetzlichen KI-Aufrufe mehr -> sofort zur Bestellung.
+      const itemsWithPrints = items.map(item => ({...item, sidePrints: null, uploadOnly:false}));
       const previous = (await window.ShirtboxDesignTransfer.load())?.blobs || [];
       let saved;
       if (editingOrder) {
