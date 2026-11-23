@@ -221,15 +221,17 @@
       if (!drop.length) break;
       for (const p of drop) m[p] = 0;
     }
-    // 1 Pixel Sicherheitsabstand und Kontur glaetten (Mehrheitsfilter 5x5 gegen Treppen/Zacken).
-    m = morph(m, false);
-    const sm = new Uint8Array(N);
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-      let n = 0, t = 0;
-      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { const xx = x + dx, yy = y + dy; t++; if (xx >= 0 && yy >= 0 && xx < w && yy < h && m[yy * w + xx]) n++; }
-      sm[y * w + x] = n * 2 > t ? 1 : 0;
-    }
-    m = sm;
+    // Kontur professionell glaetten: kleine Einkerbungen schliessen (Closing), dann den Umriss
+    // weichzeichnen und bei 50 % schneiden -> ruhige, glatte Kante ohne Ausfransungen und Zacken.
+    const unit = Math.max(w, h) / 1536, S = 2; // Glaettungsstaerke (getestet: glatte Kante, Form bleibt)
+    const R = Math.max(2, Math.round(3 * unit * S)), O = Math.max(2, Math.round(5 * unit * S));
+    for (let k = 0; k < R; k++) m = morph(m, true);   // Einkerbungen schliessen
+    for (let k = 0; k < R; k++) m = morph(m, false);
+    for (let k = 0; k < O; k++) m = morph(m, false);  // Ausbuchtungen (z. B. Schuppen am Saum) abtragen
+    for (let k = 0; k < O; k++) m = morph(m, true);
+    const blurred = gaussBlur(Float32Array.from(m), w, h, 1, 4 * unit * S);
+    for (let p = 0; p < N; p++) m[p] = blurred[p] > 0.55 ? 1 : 0;  // leicht nach innen: kein Saum
+    m = morph(m, false);                                              // 1 px Sicherheitsabstand
     // Bounding Box
     let l = w, r = -1, t = h, b = -1;
     for (let p = 0; p < N; p++) if (m[p]) { const x = p % w, y = (p - x) / w; if (x < l) l = x; if (x > r) r = x; if (y < t) t = y; if (y > b) b = y; }
@@ -275,6 +277,86 @@
     return out;
   }
 
+  // ---------- Saubere Vektor-Kontur ----------
+  // Umriss der Maske als geschlossene Linie (Pixelecken), laengste Schleife = Aussenkontur.
+  function outerContour(mask, w, h) {
+    const W = w + 1, nxt = new Int32Array((h + 1) * W).fill(-1);
+    const at = (x, y) => x >= 0 && y >= 0 && x < w && y < h && mask[y * w + x];
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      if (!mask[y * w + x]) continue;
+      if (!at(x, y - 1)) nxt[y * W + x] = y * W + x + 1;
+      if (!at(x + 1, y)) nxt[y * W + x + 1] = (y + 1) * W + x + 1;
+      if (!at(x, y + 1)) nxt[(y + 1) * W + x + 1] = (y + 1) * W + x;
+      if (!at(x - 1, y)) nxt[(y + 1) * W + x] = y * W + x;
+    }
+    let best = [];
+    const seen = new Uint8Array(nxt.length);
+    for (let s = 0; s < nxt.length; s++) {
+      if (nxt[s] < 0 || seen[s]) continue;
+      const loop = []; let c = s, guard = 0;
+      while (!seen[c] && nxt[c] >= 0 && guard++ < nxt.length) { seen[c] = 1; loop.push([c % W, (c - c % W) / W]); c = nxt[c]; }
+      if (loop.length > best.length) best = loop;
+    }
+    return best;
+  }
+  // Treppen glaetten, dann vereinfachen (gerade Strecken werden gerade Linien).
+  function simplifyContour(pts, tol) {
+    const n = pts.length; if (n < 8) return pts;
+    const k = 4, sm = [];
+    for (let i = 0; i < n; i++) { let x = 0, y = 0; for (let j = -k; j <= k; j++) { const q = pts[(i + j + n) % n]; x += q[0]; y += q[1]; } sm.push([x / (2 * k + 1), y / (2 * k + 1)]); }
+    const rdp = arr => {
+      const keep = new Uint8Array(arr.length); keep[0] = keep[arr.length - 1] = 1; const st = [[0, arr.length - 1]];
+      while (st.length) {
+        const [a, b] = st.pop(), A = arr[a], B = arr[b], dx = B[0] - A[0], dy = B[1] - A[1], L = Math.hypot(dx, dy) || 1;
+        let md = 0, mi = -1;
+        for (let i = a + 1; i < b; i++) { const d = Math.abs(dy * arr[i][0] - dx * arr[i][1] + B[0] * A[1] - B[1] * A[0]) / L; if (d > md) { md = d; mi = i; } }
+        if (md > tol) { keep[mi] = 1; st.push([a, mi], [mi, b]); }
+      }
+      return arr.filter((_, i) => keep[i]);
+    };
+    let far = 0, fd = 0; for (let i = 1; i < n; i++) { const d = (sm[i][0] - sm[0][0]) ** 2 + (sm[i][1] - sm[0][1]) ** 2; if (d > fd) { fd = d; far = i; } }
+    const a = rdp(sm.slice(0, far + 1)), b = rdp([...sm.slice(far), sm[0]]);
+    return [...a.slice(0, -1), ...b.slice(0, -1)];
+  }
+  // Sanfte Kurven an flachen Knicken, Ecken nur minimal abrunden (Chaikin mit begrenztem Schnitt).
+  function roundContour(pts, soft, sharp, iterations) {
+    let p = pts;
+    for (let it = 0; it < iterations; it++) {
+      const out = [], n = p.length;
+      for (let i = 0; i < n; i++) {
+        const A = p[(i - 1 + n) % n], B = p[i], C = p[(i + 1) % n];
+        const v1 = [B[0] - A[0], B[1] - A[1]], v2 = [C[0] - B[0], C[1] - B[1]], l1 = Math.hypot(...v1) || 1, l2 = Math.hypot(...v2) || 1;
+        const turn = Math.acos(Math.max(-1, Math.min(1, (v1[0] * v2[0] + v1[1] * v2[1]) / (l1 * l2))));
+        const cut = turn > 0.9 ? sharp : soft;                           // >~50 Grad = Ecke
+        const c1 = Math.min(l1 * 0.3, cut), c2 = Math.min(l2 * 0.3, cut);
+        out.push([B[0] - v1[0] / l1 * c1, B[1] - v1[1] / l1 * c1], [B[0] + v2[0] / l2 * c2, B[1] + v2[1] / l2 * c2]);
+      }
+      p = out;
+    }
+    return p;
+  }
+  // Polygon kantengeglaettet rastern (4 Unterzeilen, exakte horizontale Abdeckung).
+  function rasterPolygon(poly, w, h) {
+    const cov = new Float32Array(w * h), SUB = 4, n = poly.length;
+    for (let y = 0; y < h; y++) for (let sy = 0; sy < SUB; sy++) {
+      const yy = y + (sy + 0.5) / SUB, xs = [];
+      for (let i = 0; i < n; i++) {
+        const [x1, y1] = poly[i], [x2, y2] = poly[(i + 1) % n];
+        if ((y1 <= yy && y2 > yy) || (y2 <= yy && y1 > yy)) xs.push(x1 + (yy - y1) / (y2 - y1) * (x2 - x1));
+      }
+      xs.sort((a, b) => a - b);
+      for (let i = 0; i + 1 < xs.length; i += 2) {
+        const a = Math.max(0, xs[i]), b = Math.min(w, xs[i + 1]); if (b <= a) continue;
+        const ia = Math.floor(a), ib = Math.floor(b), row = y * w;
+        if (ia === ib) { cov[row + ia] += (b - a) / SUB; continue; }
+        cov[row + ia] += (ia + 1 - a) / SUB;
+        for (let x = ia + 1; x < ib && x < w; x++) cov[row + x] += 1 / SUB;
+        if (ib < w) cov[row + ib] += (b - ib) / SUB;
+      }
+    }
+    return cov;
+  }
+
   // Druckbild einer Seite: Shirt sauber freigestellt auf Weiss, vergroessert und nachgeschaerft.
   // Ergebnis: RGBA-Pixel (deckend) in Zielgroesse.
   function printSide(px, w, h, path, left, targetH) {
@@ -295,18 +377,23 @@
         filled[n] = 1; rgb[n * 3] = rgb[d * 3]; rgb[n * 3 + 1] = rgb[d * 3 + 1]; rgb[n * 3 + 2] = rgb[d * 3 + 2]; queue.push(n);
       }
     }
-    // Weiche Kante: Maske leicht weichzeichnen (Kantenglaettung).
-    const softA = gaussBlur(alpha, cw, chh, 1, 0.9);
     const scale = Math.max(1, Math.min(3, targetH / chh));
     const dw = Math.round(cw * scale), dh = Math.round(chh * scale);
     let big = scale > 1 ? resample(rgb, cw, chh, 3, dw, dh) : rgb;
-    const bigA = scale > 1 ? resample(softA, cw, chh, 1, dw, dh) : softA;
+    // Saubere Kante: Umriss nachziehen, Fransen ausgleichen (gerade Strecken bleiben gerade,
+    // Rundungen werden gleichmaessige Kurven) und in Zielgroesse kantengeglaettet zeichnen.
+    const cropMask = new Uint8Array(cw * chh);
+    for (let y = 0; y < chh; y++) for (let x = 0; x < cw; x++) cropMask[y * cw + x] = mask[(Y + y) * w + X + x];
+    const unit = Math.max(w, h) / 1536;
+    let poly = simplifyContour(outerContour(cropMask, cw, chh), 3 * unit);
+    poly = roundContour(poly, 10 * unit, 1.5 * unit, 3);
+    const sx = dw / cw, sy = dh / chh;
+    const bigA = rasterPolygon(poly.map(([x, y]) => [x * sx, y * sy]), dw, dh);
     // Nachschaerfen (Unscharf maskieren), dezent, ohne Rauschen zu verstaerken.
     const blur = gaussBlur(big, dw, dh, 3, Math.max(0.8, scale * 0.6)), amount = 0.7, thresh = 2;
     const out = new Uint8ClampedArray(dw * dh * 4);
     for (let i = 0; i < dw * dh; i++) {
-      // Kante: unter 0.5 komplett weiss, darueber weich bis voll deckend -> keine grauen Saeume.
-      const a = Math.max(0, Math.min(1, (bigA[i] - 0.5) * 1.8 + 0.5));
+      const a = Math.max(0, Math.min(1, bigA[i]));
       for (let c = 0; c < 3; c++) {
         const v = big[i * 3 + c], diff = v - blur[i * 3 + c];
         const sharp = Math.abs(diff) > thresh ? v + amount * diff : v;
@@ -389,7 +476,7 @@
   }
 
   if (typeof window !== 'undefined') window.ShirtboxWhite = {split, whiten, shirtSeam, printSide};
-  if (typeof module !== 'undefined') module.exports = {whiten, shirtSeam, printSide, pngPrintSize, jpegPrintSize, pdfFromJpeg};
+  if (typeof module !== 'undefined') module.exports = {whiten, shirtSeam, printSide, pngPrintSize, jpegPrintSize, pdfFromJpeg, outerContour, simplifyContour, roundContour, rasterPolygon};
 })();
 /* ===== Ende weisser-hintergrund.js ===== */
 
