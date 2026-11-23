@@ -584,6 +584,32 @@
     return new Blob([bytes], {type: bytes[0] === 0x89 && bytes[1] === 0x50 ? 'image/png' : 'image/jpeg'});
   }
 
+  // Druckdateien muessen aus diesem Haupt-Designer kommen (nicht nur aus dem alten Bildgenerator).
+  // Ein Druckmotiv ist eine eigene, flache Grafik, nicht die Shirt-Vorschau.
+  async function generatePrintSides(d) {
+    if (d.sidePrints?.front instanceof Blob && d.sidePrints?.back instanceof Blob) return;
+    const result = {};
+    for (const side of ['front', 'back']) {
+      say(`Separates Druckmotiv ${side === 'front' ? 'Vorderseite' : 'Rueckseite'} wird erstellt ...`);
+      const form = new FormData();
+      form.set('mode', 'print');
+      form.set('side', side);
+      form.set('prompt', (d.prompt || 'Originalentwurf').slice(0, MAX_PROMPT));
+      form.set('image', d.blob, 'shirtbox-vorschau.' + (d.blob.type === 'image/png' ? 'png' : 'jpg'));
+      const response = await fetch(`${API}/generate`, {method:'POST', body:form, signal:AbortSignal.timeout(195000)});
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw Error(data.error || `Druckmotiv ${side} konnte nicht erzeugt werden (HTTP ${response.status}).`);
+      const b64 = data.data?.[0]?.b64_json;
+      if (!b64) throw Error(`Druckmotiv ${side}: Bildgenerator hat keine Bilddatei geliefert.`);
+      const bin = atob(b64), bytes = new Uint8Array(bin.length);
+      for (let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+      const png = bytes.length > 24 && bytes[0]===137 && bytes[1]===80 && bytes[2]===78 && bytes[3]===71;
+      if (!png) throw Error(`Druckmotiv ${side}: Der Bildgenerator liefert kein PNG. Bitte Worker-Ausgabeformat pruefen.`);
+      result[side] = new Blob([bytes], {type:'image/png'});
+    }
+    d.sidePrints = result;
+  }
+
   // Sicherheitsnetz: Nichts darf ausserhalb der Shirts stehen (z. B. ein Fuss, der über den Saum ragt).
   // Der Umriss der leeren Vorlage wird auf jedes Shirt im KI-Bild ausgerichtet; alles ausserhalb wird durch den grauen Hintergrund ersetzt.
   // Passt der Umriss nicht sicher (KI hat die Form stark verändert), bleibt das Bild unverändert.
@@ -897,7 +923,7 @@
       const cut = MODELS[d.model]?.cut;
       const blob = await keepInside(await request(fit(`Bisheriges Shirt und Gestaltung beibehalten${cut ? ` (Schnitt: ${cut})` : ''}. Ändere nur Folgendes: ${change}\nErhalte alle anderen Merkmale. ${SHAPE_RULE}`, QUALITY_RULE, CENTER_LAYOUT, INSIDE), d.blob), d.model);
       URL.revokeObjectURL(d.url); d.blob = blob; d.url = URL.createObjectURL(blob); d.edited = true;
-      d.prompt = `${d.prompt}\nÄnderung: ${change}`.slice(-1500); editInput.value = '';
+      d.prompt = `${d.prompt}\nÄnderung: ${change}`.slice(-1500); d.sidePrints = null; editInput.value = '';
       say(`Design ${active + 1} wurde angepasst. Weitere Änderungen sind jederzeit möglich.`);
     });
   });
@@ -911,18 +937,22 @@
       : {...(d.entry || {}), blob: d.blob, number: d.number, prompt: d.prompt, originals: d.entry?.originals || [], placement: d.entry?.placement || ''});
     busy = true; controls();
     try {
+      // Fuer jedes neu erzeugte oder bearbeitete Shirt beide Druckseiten separat anfordern.
+      // Bei Fehler nicht zur Bestellung wechseln und keine fehlenden Dateien als vorhanden melden.
+      for (const d of picked) await generatePrintSides(d);
+      const itemsWithPrints = items.map((item, i) => ({...item, sidePrints: picked[i].sidePrints, uploadOnly:false}));
       const previous = (await window.ShirtboxDesignTransfer.load())?.blobs || [];
       let saved;
       if (editingOrder) {
         saved = previous.slice();
-        for (const item of items) { const at = saved.findIndex((e, i) => (e.number || i + 1) === item.number); if (at >= 0) saved[at] = item; else saved.push(item); }
+        for (const item of itemsWithPrints) { const at = saved.findIndex((e, i) => (e.number || i + 1) === item.number); if (at >= 0) saved[at] = item; else saved.push(item); }
       } else {
         let next = Math.max(0, ...previous.map((e, i) => Number(e.number || i + 1) || 0));
-        saved = [...previous, ...items.map(item => ({...item, number: ++next}))];
+        saved = [...previous, ...itemsWithPrints.map(item => ({...item, number: ++next}))];
       }
       await window.ShirtboxDesignTransfer.save(saved);
       location.href = 'bestellen.html#bestellen';
-    } catch { fail('Ihre Designs konnten nicht gespeichert werden. Bitte die Speicherung im Browser erlauben und erneut versuchen.'); busy = false; controls(); }
+    } catch (e) { fail(e?.message || 'Druckmotive konnten nicht gespeichert werden.'); busy = false; controls(); }
   });
 
   // Aus der Bestellung zurück: gespeicherte Designs zum Weiterbearbeiten laden.
@@ -933,7 +963,7 @@
       const items = (await window.ShirtboxDesignTransfer.load())?.blobs || [];
       const index = items.findIndex((x, i) => String(x.number || i + 1) === number);
       if (index < 0) throw Error();
-      items.forEach((e, i) => { const blob = e.blob || e; if (blob instanceof Blob) designs.push({blob, url: URL.createObjectURL(blob), prompt: e.prompt || '', model: /Modell: Oversize T-Shirt/.test(e.prompt || '') ? 'oversize' : /Modell: T-Shirt/.test(e.prompt || '') ? 'tshirt' : /Modell: Zip-Shirt/.test(e.prompt || '') ? 'zip' : 'polo', selected: true, number: e.number || i + 1, entry: e.blob ? e : {blob: e, number: i + 1}}); });
+      items.forEach((e, i) => { const blob = e.blob || e; if (blob instanceof Blob) designs.push({blob, url: URL.createObjectURL(blob), prompt: e.prompt || '', model: /Modell: Oversize T-Shirt/.test(e.prompt || '') ? 'oversize' : /Modell: T-Shirt/.test(e.prompt || '') ? 'tshirt' : /Modell: Zip-Shirt/.test(e.prompt || '') ? 'zip' : 'polo', selected: true, sidePrints: e.sidePrints || null, number: e.number || i + 1, entry: e.blob ? e : {blob: e, number: i + 1}}); });
       editingOrder = true; showResult(true); active = designs.findIndex(d => String(d.number) === number);
       say('Ihr Design wurde geladen. Beschreiben Sie unten die gewünschte Änderung.');
       // Bewusst kein automatischer Cursor im Änderungsfeld: Sonst sind „Antippen & schreiben / sprechen“ versteckt,

@@ -67,7 +67,7 @@ export default {async fetch(request,env,ctx){
 // ---------------------------------------------------------------------------
 // Bestellbestätigung für Kundinnen und Kunden: gestaltete HTML-Mail mit Shirt-Bildern über Resend.
 // Preise werden hier neu berechnet; der Browser liefert nur Grössen, Stückzahlen und Adressdaten.
-const MAX_ORDER_BODY = 28 * 1024 * 1024;
+const MAX_ORDER_BODY = 40 * 1024 * 1024;
 const MAX_MAIL_IMAGE = 1.5 * 1024 * 1024, MAX_PRINT_FILE = 12 * 1024 * 1024;
 const PRICE_FIRST = 8900, PRICE_MORE = 8010;
 const ORDER_SIZE = {S:'L',M:'XL',L:'XXL',XL:'3XL',XXL:'4XL','3XL':'5XL','4XL':'6XL','5XL':'7XL'};
@@ -391,18 +391,20 @@ async function orderConfirmation(request, env, origin, ctx) {
       const name = `${number}-design-${d.number}.${extension(print.type)}`;
       prints.push({filename: name, content: base64(await print.arrayBuffer())}); printNames.push(name);
     } else printNames.push('');
-    const vector = form.get(`vektor_${i}`);
-    if (vector && typeof vector !== 'string' && vector.size && vector.size <= 3 * 1024 * 1024 && (vector.type === 'image/svg+xml' || vector.type === 'application/octet-stream')) {
-      // Nur SVG-XML ohne eingebettete Rasterbilder oder aktive Inhalte akzeptieren.
-      const svgText = await vector.text();
-      if (/^\s*<svg\b/i.test(svgText) && !/<(?:script|foreignObject|image)\b|\bon\w+\s*=|javascript:|data:/i.test(svgText)) {
-        vectors.push({filename: `${number}-design-${d.number}-vektor.svg`, content: base64(new TextEncoder().encode(svgText))});
-      }
-    }
     const names = [];
     for (const [j, file] of form.getAll(`original_${i}`).entries()) {
-      if (typeof file === 'string' || !file.size || file.size > MAX_PRINT_FILE || !IMAGE_TYPES.includes(file.type)) continue;
-      const name = `${number}-design-${d.number}-original-${j + 1}.${extension(file.type)}`;
+      if (typeof file === 'string' || !file.size || file.size > MAX_PRINT_FILE) continue;
+      // Fertige Druckdateien aus dem Browser (Vorder-/Rueckseite als PNG, JPEG, PDF):
+      // unveraendert weiterreichen, erst beim Versand umwandeln (spart Speicher und Rechenzeit).
+      const print = String(file.name || '').match(/_Design-\d+_(Vorderseite|Rueckseite)\.(png|jpg|pdf)$/);
+      if (print) {
+        const okType = {png: 'image/png', jpg: 'image/jpeg', pdf: 'application/pdf'}[print[2]];
+        if (file.type === okType || file.type === 'application/octet-stream') vectors.push({design: i, side: print[1], name: `${print[1]}.${print[2]}`, file});
+        continue;
+      }
+      if (!IMAGE_TYPES.includes(file.type)) continue;
+      const sideMatch = String(file.name||'').match(/_(Vorderseite|Rueckseite)(?:_Druckmotiv)?\.(png|jpg|jpeg)$/i);
+      const name = sideMatch ? `${number}-design-${d.number}-${sideMatch[1]}-${j+1}.${extension(file.type)}` : `${number}-design-${d.number}-original-${j + 1}.${extension(file.type)}`;
       originals.push({filename: name, content: base64(await file.arrayBuffer())}); names.push(name);
     }
     originalNames.push(names);
@@ -410,7 +412,7 @@ async function orderConfirmation(request, env, origin, ctx) {
   const customerName = `${order.customer.vorname} ${order.customer.nachname}`;
   try {
     const internal = buildShopMail(order, number, imageIds, printNames, originalNames);
-    const sent = await sendMail(env, {to: [shop], reply_to: order.customer.email, subject: `🛒 Neue Bestellung ${number} – ${chf(order.total)} – ${customerName}`, ...internal, attachments: [...inline, ...prints, ...originals, ...vectors]});
+    const sent = await sendMail(env, {to: [shop], reply_to: order.customer.email, subject: `🛒 Neue Bestellung ${number} – ${chf(order.total)} – ${customerName}`, ...internal, attachments: [...inline, ...prints, ...originals]});
     if (!sent) { await env.ORDER_KV.delete(key); return reply(origin, 502, 'Die Bestellung konnte nicht versendet werden.'); }
   } catch { await env.ORDER_KV.delete(key); return reply(origin, 504, 'Die Bestellung konnte nicht versendet werden.'); }
   let kunde = false;
@@ -431,39 +433,59 @@ async function orderConfirmation(request, env, origin, ctx) {
 // Keine KI-Aufrufe, keine neue Bildablage. Versand über den vorhandenen Mailanbieter.
 const FORWARD_EMAIL = 'jerome.straub@gmx.ch';
 
-function buildForwardMail(order, imageIds, printNames, originalNames, inline, prints, originals, vectors) {
+// Pro Shirt genau zwei Motive (Vorderseite, Rueckseite), je als PNG, JPEG und PDF.
+// Fehlen die Seitendateien, werden wie bisher die vorhandenen Druckdateien angehaengt.
+// Die Dateien werden erst beim Versand des jeweiligen Mails kodiert (Speicher sparen).
+function buildForwardMails(order, imageIds, printNames, originalNames, inline, prints, originals, sideSets) {
   const c = order.customer;
   const address = [`${c.vorname} ${c.nachname}`, c.strasse, `${c.plz} ${c.ort}`, c.land];
-  const attachments = [];
-  const blocks = order.designs.map((d, i) => {
-    const print = prints.find(f => f.filename === printNames[i]);
-    const preview = inline.find(f => f.content_id === imageIds[i]);
-    // Produktionsmail: alle verfuegbaren Original-JPEGs, PNGs und SVGs.
-    // Vorschau nur als Rueckfall, niemals anstelle vorhandener Druckdateien.
-    const designOriginals = originals.filter(f => (originalNames[i] || []).includes(f.filename));
-    const vector = vectors.find(f => f.filename === `${order.number || ''}-design-${d.number}-vektor.svg`)
-      || vectors[i];
-    const selected = [...(print ? [print] : []), ...designOriginals, ...(vector ? [vector] : [])];
-    if (!selected.length && preview) selected.push(preview);
-    if (!selected.length) throw Error(`Shirtbild für Design ${i + 1} fehlt`);
-    const label = `Design ${String(i + 1).padStart(2, '0')}`;
-    for (const [j, file] of selected.entries()) {
-      const suffix = selected.length > 1 ? `-${j + 1}` : '';
-      const ext = file.filename.split('.').pop();
-      attachments.push({filename: `${label.replace(' ', '-')}${suffix}.${ext}`, content: file.content});
+  const order3 = ['Vorderseite.png', 'Vorderseite.jpg', 'Vorderseite.pdf', 'Rueckseite.png', 'Rueckseite.jpg', 'Rueckseite.pdf'];
+  const parts = order.designs.map((d, i) => {
+    const label = `Design ${String(i + 1).padStart(2, '0')}`, slug = label.replace(' ', '-');
+    const sides = sideSets.filter(f => f.design === i).sort((a, b) => order3.indexOf(a.name) - order3.indexOf(b.name));
+    let files = sides.map(f => ({filename: `${slug}_${f.name}`, file: f.file, bytes: f.file.size}));
+    if (!files.length) {
+      const print = prints.find(f => f.filename === printNames[i]);
+      const preview = inline.find(f => f.content_id === imageIds[i]);
+      const selected = [...(print ? [print] : []), ...originals.filter(f => (originalNames[i] || []).includes(f.filename))];
+      if (!selected.length && preview) selected.push(preview);
+      if (!selected.length) throw Error(`Shirtbild für Design ${i + 1} fehlt`);
+      files = selected.map((file, j) => ({filename: `${slug}${selected.length > 1 ? `-${j + 1}` : ''}.${file.filename.split('.').pop()}`, content: file.content, bytes: file.content.length * 0.75}));
     }
-    return {label, rows: d.rows.map(r => `Grösse ${r.size} (beim Lieferanten ${r.ordered}): ${r.count} Stück`)};
+    const rows = [...d.rows.map(r => `Grösse ${r.size} (beim Lieferanten ${r.ordered}): ${r.count} Stück`),
+      ...(sides.length ? ['Dateien: Vorderseite und Rückseite je als PNG, JPEG und PDF – weisser Hintergrund, Druckgrösse 50 cm hoch (passend in 40 x 50 cm)'] : [])];
+    return {label, rows, files, bytes: files.reduce((n, f) => n + f.bytes, 0)};
   });
-  const text = ['Zum Weiterleiten', '', 'Lieferadresse', ...address, '', ...blocks.flatMap(b => [b.label, ...b.rows, ''])].join('\n');
-  const html = `<!doctype html><html lang="de"><meta charset="utf-8"><body style="font-family:Arial,sans-serif"><h1>Zum Weiterleiten</h1><h2>Lieferadresse</h2><p>${address.map(esc).join('<br>')}</p>${blocks.map(b => `<h2>${esc(b.label)}</h2><p>${b.rows.map(esc).join('<br>')}</p>`).join('')}</body></html>`;
-  return {to: [FORWARD_EMAIL, 'r-m@gmx.ch'], subject: 'Zum Weiterleiten', text, html, attachments};
+  // Mailanbieter-Grenze 40 MB (inkl. Kodierung): pro Mail hoechstens ca. 20 MB Dateien.
+  const LIMIT = 20 * 1024 * 1024, groups = [];
+  for (const part of parts) {
+    const last = groups[groups.length - 1];
+    if (last && last.bytes + part.bytes <= LIMIT) { last.items.push(part); last.bytes += part.bytes; }
+    else groups.push({items: [part], bytes: part.bytes});
+  }
+  return groups.map((group, g) => {
+    const subject = groups.length > 1 ? `Zum Weiterleiten (Teil ${g + 1} von ${groups.length})` : 'Zum Weiterleiten';
+    const text = [subject, '', 'Lieferadresse', ...address, '', ...group.items.flatMap(b => [b.label, ...b.rows, ''])].join('\n');
+    const html = `<!doctype html><html lang="de"><meta charset="utf-8"><body style="font-family:Arial,sans-serif"><h1>${esc(subject)}</h1><h2>Lieferadresse</h2><p>${address.map(esc).join('<br>')}</p>${group.items.map(b => `<h2>${esc(b.label)}</h2><p>${b.rows.map(esc).join('<br>')}</p>`).join('')}</body></html>`;
+    return {to: [FORWARD_EMAIL, 'r-m@gmx.ch'], subject, text, html, files: group.items.flatMap(b => b.files)};
+  });
+}
+
+async function encodeAttachments(mail) {
+  const {files, ...rest} = mail, attachments = [];
+  for (const f of files) attachments.push({filename: f.filename, content: f.content || base64(await f.file.arrayBuffer())});
+  return {...rest, attachments};
 }
 
 async function forwardOrder(env, clientId, order, imageIds, printNames, originalNames, inline, prints, originals, vectors) {
   const statusKey = `forward:${clientId}`;
   try {
-    const mail = buildForwardMail(order, imageIds, printNames, originalNames, inline, prints, originals, vectors);
-    const sent = await sendMail(env, mail, `shirtbox-forward-${clientId}`);
+    const mails = buildForwardMails(order, imageIds, printNames, originalNames, inline, prints, originals, vectors);
+    let sent = true;
+    for (const [g, mail] of mails.entries()) {
+      const ok = await sendMail(env, await encodeAttachments(mail), g ? `shirtbox-forward-${clientId}-${g + 1}` : `shirtbox-forward-${clientId}`);
+      sent = sent && ok;
+    }
     await env.ORDER_KV.put(statusKey, JSON.stringify({status: sent ? 'sent' : 'failed'}), {expirationTtl: 86400 * 14});
     if (!sent) console.error('Zusätzliche Bestellmail: Mailanbieter hat die Anfrage nicht angenommen.');
   } catch {

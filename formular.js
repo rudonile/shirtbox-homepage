@@ -132,8 +132,36 @@
     state.card.querySelectorAll('.print-original').forEach(el=>el.remove());
     if(!originals.length&&!placement)return;
     const data=document.createElement('textarea');data.hidden=true;data.className='print-original';data.name=`Design_${state.slot}_Bildplatzierungen`;data.value=placement;state.card.append(data);
-    originals.forEach((item,i)=>{const file=item.file;if(!(file instanceof Blob))throw Error('Originalbild fehlt');const field=document.createElement('input');field.type='file';field.hidden=true;field.className='print-original';field.name=`attachment_original_${state.slot}_${i+1}`;const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';const transfer=new DataTransfer();transfer.items.add(new File([file],`design-${state.designNumber}-original-${i+1}.${ext}`,{type:file.type}));field.files=transfer.files;state.card.append(field);});
+    originals.forEach((item,i)=>{
+      const file=item.file;
+      if(!(file instanceof Blob))throw Error('Originalbild fehlt');
+      const side=String(item.region||'').toLowerCase();
+      const label=side==='front'?'Vorderseite':side==='back'?'Rueckseite':side==='left'?'Linker-Aermel':side==='right'?'Rechter-Aermel':'Nicht-zugeordnet';
+      const field=document.createElement('input');field.type='file';field.hidden=true;field.className='print-original';
+      field.name=`attachment_original_${state.slot}_${i+1}`;
+      const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
+      const transfer=new DataTransfer();
+      transfer.items.add(new File([file],`Design-${state.designNumber}-${label}-Original-${i+1}.${ext}`,{type:file.type}));
+      field.files=transfer.files;state.card.append(field);
+    });
     const note=document.createElement('p');note.className='print-original';note.textContent=originals.length?`${originals.length} Originalbild${originals.length===1?'':'er'} und Platzierungsangaben für den Druck beigefügt.`:'Shirt-Farbe und Gestaltungseinstellungen für den Druck beigefügt.';state.card.append(note);
+  }
+  function attachSidePrints(input, sidePrints, uploadOnly=false) {
+    const state=[...designs.values()].find(d=>d.file===input);
+    if(state){
+      state.sidePrints=sidePrints;
+      state.uploadOnly=uploadOnly;
+      const front=sidePrints?.front, back=sidePrints?.back;
+      const good=v=>v instanceof Blob && v.size>0 && ['image/png','image/jpeg','image/webp'].includes(v.type);
+      let status=state.card.querySelector('.shirtbox-print-status');
+      if(!status){status=document.createElement('p');status.className='shirtbox-print-status';status.style.cssText='font-size:13px;font-weight:700;margin:10px 0;line-height:1.5';state.card.querySelector('.design-file-preview')?.append(status);}
+      if(status){
+        const ready=good(front)&&good(back);
+        status.textContent=uploadOnly?'Eigene Bilder: Originaldateien für den Druck werden übernommen.':ready?'✓ Separate Druckmotive vorhanden: Vorderseite ('+Math.round(front.size/1024)+' KB) und Rückseite ('+Math.round(back.size/1024)+' KB).':'⚠ Separate Druckmotive nicht vollständig vorhanden. Bitte Shirt im Designer neu erstellen, bevor Sie bestellen.';
+        status.style.color=(ready||uploadOnly)?'#31d68a':'#ffb454';
+        state.printsMissing=!ready&&!uploadOnly;
+      }
+    }
   }
   // Verkleinerte Kopie des Entwurfs für die Bestätigungsmail (die Druckdatei bleibt unverändert).
   async function mailImage(file) {
@@ -166,30 +194,49 @@
         'image/jpeg', 1.0));
     } finally { bitmap.close(); }
   }
+  // Druckvorlagen der vom Kunden einzeln hochgeladenen Vorder-/Rueckseiten.
+  // Keine Ausschnitte aus der Polo-Vorschau als vermeintliche Druckdateien.
+  async function attachSideOriginals(body, slot, state) {
+    const fields = [...state.card.querySelectorAll('input.print-original[type="file"]')];
+    let total = 0;
+    for (const field of fields) {
+      const original = field.files?.[0];
+      if (!original) continue;
+      const match = original.name.match(/-(Vorderseite|Rueckseite)-Original-/i);
+      const side = match?.[1];
+      // Unbekannte Platzierung: Original erhalten, aber keine Druckseite erfinden.
+      if (!side) {
+        body.append(`original_${slot}`, original, original.name);
+        total += original.size;
+        continue;
+      }
+      // Kunden-Original unveraendert als Zusatz fuer die Bestellmail.
+      const ext = original.type === 'image/png' ? 'png' : original.type === 'image/webp' ? 'webp' : 'jpg';
+      if (original.size > 12 * 1024 * 1024) throw Error(`${side}: Originalbild ist groesser als 12 MB.`);
+      body.append(`original_${slot}`, original, `ShirtBOX_Design-${state.designNumber}_Kunde-Original-${side}.${ext}`);
+      total += original.size;
+    }
+    return total;
+  }
   // Schickt Bestellung, Druckdateien und Originalbilder an den Worker. Er versendet die interne Mail und die Kundenbestätigung.
   function getOrderId(){let id=sessionStorage.getItem('shirtbox-order-id');if(!id){id=crypto.randomUUID();sessionStorage.setItem('shirtbox-order-id',id);}return id;}
-  // SVG-Modul bei Bedarf nachladen. Verhindert den Fehler
-  // "Cannot read properties of undefined (reading make)" bei fehlendem Script.
-  let vectorLoadPromise;
-  async function ensureVectorModule() {
-    if (typeof window.ShirtboxVector?.make === 'function') return window.ShirtboxVector;
-    if (!vectorLoadPromise) {
-      vectorLoadPromise = new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = 'svg-vektor.js?v=20261122-svg-reparatur1';
-        script.async = true;
-        script.onload = () => {
-          if (typeof window.ShirtboxVector?.make === 'function') resolve(window.ShirtboxVector);
-          else reject(new Error('SVG-Modul wurde geladen, aber die Vektorfunktion fehlt.'));
-        };
-        script.onerror = () => reject(new Error('svg-vektor.js konnte nicht geladen werden. Bitte Homepage-Dateien vollständig veröffentlichen.'));
-        document.head.appendChild(script);
-      }).catch(error => { vectorLoadPromise = null; throw error; });
-    }
-    return vectorLoadPromise;
+  // Shirt-Bild teilen und auf total weissen Hintergrund stellen (weisser-hintergrund.js).
+  let whiteLoad;
+  async function whiteModule() {
+    if (typeof window.ShirtboxWhite?.make === 'function') return window.ShirtboxWhite;
+    whiteLoad ||= new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'weisser-hintergrund.js?v=20261123-scharf1';
+      script.onload = () => window.ShirtboxWhite?.make ? resolve(window.ShirtboxWhite) : reject(Error('Modul fuer weissen Hintergrund fehlt.'));
+      script.onerror = () => reject(Error('weisser-hintergrund.js konnte nicht geladen werden. Bitte Homepage-Dateien vollständig veröffentlichen.'));
+      document.head.appendChild(script);
+    }).catch(error => { whiteLoad = null; throw error; });
+    return whiteLoad;
   }
   async function sendConfirmation(order) {
     const states = [...designs.values()], value = id => document.getElementById(id).value.trim();
+    // Bei KI-Entwürfen darf eine blosse Shirt-Vorschau nicht als Druckdatei gelten.
+    // Vorder-/Rueckseite werden direkt aus dem Shirt-Bild geschnitten; fehlende KI-Einzelmotive blockieren nicht mehr.
     const body = new FormData();
     body.set('bestell-id', getOrderId());
     body.set('cf-turnstile-response', window.turnstile?.getResponse() || '');
@@ -214,23 +261,24 @@
         size += originalJpeg.size;
         size += printPng.size;
         body.set(`bild_${i}`, await mailImage(file), `design-${i + 1}.jpg`);
-        // Vektordatei im Browser erzeugen, damit kein kostenpflichtiger Dienst nötig ist.
-        // Eine fehlgeschlagene SVG-Konvertierung darf die eigentliche Bestellung nicht blockieren.
-        try {
-          const vector = await ensureVectorModule();
-          const svg = await vector.make(file);
-          if (svg.size > 3 * 1024 * 1024) throw Error('SVG zu gross');
-          body.set(`vektor_${i}`, svg, `ShirtBOX_Design-${i + 1}.svg`);
-          size += svg.size;
-        } catch (error) {
-          // SVG ist ausdruecklich fuer jede Bestellung erforderlich.
-          throw Error('SVG-Datei konnte nicht erstellt werden: ' + error.message);
+        // Shirt-Bild auseinanderschneiden: links Vorderseite, rechts Rueckseite.
+        // Weisser Hintergrund, saubere Kante, hochwertig vergroessert + nachgeschaerft,
+        // je als PNG, JPEG (100 %) und PDF mit Druckgroesse (passend in 40 x 50 cm).
+        // Bei vielen Shirts etwas kleiner, damit die Mails nicht zu gross werden.
+        const targetHeight = states.length <= 2 ? 1600 : states.length === 3 ? 1300 : 1000;
+        const parts = await (await whiteModule()).split(file, {targetHeight});
+        for (const [side, label] of [['front', 'Vorderseite'], ['back', 'Rueckseite']]) {
+          for (const ext of ['png', 'jpg', 'pdf']) {
+            const blob = parts[side][ext];
+            if (blob.size > 12 * 1024 * 1024) throw Error(label + ': Druckdatei zu gross.');
+            body.append(`original_${i}`, blob, `ShirtBOX_Design-${i + 1}_${label}.${ext}`);
+            size += blob.size;
+          }
         }
-
       }
-      for (const input of state.card.querySelectorAll('input.print-original')) { const original = input.files[0]; if (original) { body.append(`original_${i}`, original, original.name); size += original.size; } }
+      size += await attachSideOriginals(body, i, state);
     }
-    if (size > 24 * 1024 * 1024) throw Error('Zu gross für den Mailversand');
+    if (size > 38 * 1024 * 1024) throw Error('Die Druckdateien sind zusammen zu gross fuer den Mailversand (38 MB). Bitte weniger Designs pro Bestellung oder kleinere Originalbilder verwenden.');
     const response = await fetch(MAIL_API, {method: 'POST', body, signal: AbortSignal.timeout(60000)});
     const result = await response.json().catch(() => ({}));
     if (!response.ok || !result.bestellnummer) throw Error(result.error || 'Bestellung nicht versendet');
@@ -260,7 +308,7 @@
   form.addEventListener('input',saveDetails);
   form.addEventListener('change',saveDetails);
   document.querySelector('.order-design-edit')?.addEventListener('click',saveDetails);
-  window.ShirtboxOrderDesigns = { add: addDesign, attachOriginals, restoreDetails };
+  window.ShirtboxOrderDesigns = { add: addDesign, attachOriginals, attachSidePrints, restoreDetails };
   if (online) {
     document.getElementById('weiter').disabled = false;
     document.getElementById('formular-url').disabled = false;
