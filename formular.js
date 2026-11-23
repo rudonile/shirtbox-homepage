@@ -390,13 +390,18 @@
     const sx = dw / cw, sy = dh / chh;
     const bigA = rasterPolygon(poly.map(([x, y]) => [x * sx, y * sy]), dw, dh);
     // Nachschaerfen (Unscharf maskieren), dezent, ohne Rauschen zu verstaerken.
-    const blur = gaussBlur(big, dw, dh, 3, Math.max(0.8, scale * 0.6)), amount = 0.7, thresh = 2;
+    // Schaerfen in zwei Stufen: feine Details (kleiner Radius) und Konturen (groesserer Radius).
+    // Schwelle verhindert, dass Rauschen in Flaechen verstaerkt wird.
+    const SH = {a1: 1.2, a2: 0.5, t: 2}; // getestet: deutlich schaerfer, ohne Halos
+    const blur = gaussBlur(big, dw, dh, 3, Math.max(0.8, scale * 0.6)), amount = SH.a1, thresh = SH.t;
+    const blur2 = SH.a2 ? gaussBlur(big, dw, dh, 3, Math.max(2, scale * 1.6)) : null;
     const out = new Uint8ClampedArray(dw * dh * 4);
     for (let i = 0; i < dw * dh; i++) {
       const a = Math.max(0, Math.min(1, bigA[i]));
       for (let c = 0; c < 3; c++) {
         const v = big[i * 3 + c], diff = v - blur[i * 3 + c];
-        const sharp = Math.abs(diff) > thresh ? v + amount * diff : v;
+        let sharp = Math.abs(diff) > thresh ? v + amount * diff : v;
+        if (blur2) { const d2 = v - blur2[i * 3 + c]; if (Math.abs(d2) > thresh * 2) sharp += SH.a2 * d2; }
         out[i * 4 + c] = Math.round(sharp * a + 255 * (1 - a));
       }
       out[i * 4 + 3] = 255;
@@ -448,7 +453,8 @@
   // Shirt-Bild -> {front, back}: je {png, jpg, pdf} (Blobs), weisser Hintergrund, saubere Kante,
   // vergroessert/nachgeschaerft und mit Druckgroesse (passt in 40 x 50 cm).
   async function split(file, opt = {}) {
-    const targetH = opt.targetHeight || 1600;
+    const targetH = opt.targetHeight || 1600;            // PNG + JPEG
+    const pdfH = Math.max(targetH, opt.pdfHeight || 2800); // PDF in hoher Aufloesung
     const bitmap = await createImageBitmap(file, {colorSpaceConversion: 'none', premultiplyAlpha: 'none'});
     try {
       const canvas = document.createElement('canvas'); canvas.width = bitmap.width; canvas.height = bitmap.height;
@@ -460,16 +466,23 @@
       const path = shirtSeam(px, w, h), out = {};
       for (const [side, left, label] of [['front', true, 'Vorderseite'], ['back', false, 'Rueckseite']]) {
         await pause();
-        const img = printSide(px, w, h, path, left, targetH);
-        const c = document.createElement('canvas'); c.width = img.w; c.height = img.h;
-        c.getContext('2d').putImageData(new ImageData(img.data, img.w, img.h), 0, 0);
-        const blob = (type, q) => new Promise((ok, fail) => c.toBlob(b => b ? ok(b) : fail(Error('Bild konnte nicht gespeichert werden')), type, q));
-        const png = pngPrintSize(new Uint8Array(await (await blob('image/png')).arrayBuffer()), img.w, img.h);
-        const jpg = jpegPrintSize(new Uint8Array(await (await blob('image/jpeg', 1.0)).arrayBuffer()), img.w, img.h);
-        const pdf = pdfFromJpeg(jpg, img.w, img.h, `ShirtBOX ${label}`);
-        const s = mmPerPx(img.w, img.h);
+        const img = printSide(px, w, h, path, left, pdfH);
+        const big = document.createElement('canvas'); big.width = img.w; big.height = img.h;
+        big.getContext('2d').putImageData(new ImageData(img.data, img.w, img.h), 0, 0);
+        // PNG/JPEG: hochwertig verkleinert (bleibt scharf), PDF: volle hohe Aufloesung.
+        const f = Math.min(1, targetH / img.h), sw = Math.round(img.w * f), shh = Math.round(img.h * f);
+        const small = document.createElement('canvas'); small.width = sw; small.height = shh;
+        const sctx = small.getContext('2d'); sctx.imageSmoothingEnabled = true; sctx.imageSmoothingQuality = 'high';
+        sctx.drawImage(big, 0, 0, sw, shh);
+        const blob = (c, type, q) => new Promise((ok, fail) => c.toBlob(b => b ? ok(b) : fail(Error('Bild konnte nicht gespeichert werden')), type, q));
+        const bytes = async b => new Uint8Array(await b.arrayBuffer());
+        const png = pngPrintSize(await bytes(await blob(small, 'image/png')), sw, shh);
+        const jpg = jpegPrintSize(await bytes(await blob(small, 'image/jpeg', 1.0)), sw, shh);
+        const pdfJpg = jpegPrintSize(await bytes(await blob(big, 'image/jpeg', 1.0)), img.w, img.h);
+        const pdf = pdfFromJpeg(pdfJpg, img.w, img.h, `ShirtBOX ${label}`);
+        const s = mmPerPx(sw, shh);
         out[side] = {png: new Blob([png], {type: 'image/png'}), jpg: new Blob([jpg], {type: 'image/jpeg'}), pdf: new Blob([pdf], {type: 'application/pdf'}),
-          size: `${(img.w * s / 10).toFixed(1)} x ${(img.h * s / 10).toFixed(1)} cm, ${img.w} x ${img.h} px`};
+          size: `${(sw * s / 10).toFixed(1)} x ${(shh * s / 10).toFixed(1)} cm, PNG/JPEG ${sw} x ${shh} px, PDF ${img.w} x ${img.h} px`};
       }
       return out;
     } finally { bitmap.close(); }
@@ -738,7 +751,8 @@
         // je als PNG, JPEG (100 %) und PDF mit Druckgroesse (passend in 40 x 50 cm).
         // Bei vielen Shirts etwas kleiner, damit die Mails nicht zu gross werden.
         const targetHeight = states.length <= 2 ? 1600 : states.length === 3 ? 1300 : 1000;
-        const parts = await (await whiteModule()).split(file, {targetHeight});
+        const pdfHeight = states.length <= 2 ? 2800 : states.length === 3 ? 2000 : 1600;
+        const parts = await (await whiteModule()).split(file, {targetHeight, pdfHeight});
         for (const [side, label] of [['front', 'Vorderseite'], ['back', 'Rueckseite']]) {
           for (const ext of ['png', 'jpg', 'pdf']) {
             const blob = parts[side][ext];
