@@ -642,11 +642,8 @@
         // Die Druckdatei immer als PNG mitsenden. Keine kuenstliche Hochskalierung.
         const printPng = file.type === 'image/png' ? file : await pngImage(file);
         body.set(`druck_${i}`, printPng, `ShirtBOX_Design-${i + 1}_Druckdatei.png`);
-        // JPEG in der tatsaechlich verfuegbaren Originalaufloesung fuer Jeroms Produktionsmail.
-        // Keine erneute JPEG-Kompression, falls das generierte Original bereits JPEG ist.
-        const originalJpeg = file.type === 'image/jpeg' ? file : await jpegImage(file);
-        body.append(`original_${i}`, originalJpeg, `ShirtBOX_Design-${i + 1}_Original.jpg`);
-        size += originalJpeg.size;
+        // Bestellmail: nur EIN Anhang pro Design (das Shirt-Bild als PNG). Die getrennten
+        // Vorder-/Rueckseiten kommen ausschliesslich ins Mail "Zum Weiterleiten".
         size += printPng.size;
         body.set(`bild_${i}`, await mailImage(file), `design-${i + 1}.jpg`);
         // Shirt-Bild auseinanderschneiden: links Vorderseite, rechts Rueckseite.
