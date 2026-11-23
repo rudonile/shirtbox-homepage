@@ -616,17 +616,10 @@
   // Schickt Bestellung, Druckdateien und Originalbilder an den Worker. Er versendet die interne Mail und die Kundenbestätigung.
   function getOrderId(){let id=sessionStorage.getItem('shirtbox-order-id');if(!id){id=crypto.randomUUID();sessionStorage.setItem('shirtbox-order-id',id);}return id;}
   // Shirt-Bild teilen und auf total weissen Hintergrund stellen (weisser-hintergrund.js).
-  let whiteLoad;
+  // Das Modul ist oben in dieser Datei eingebaut; es wird nichts nachgeladen.
   async function whiteModule() {
-    if (typeof window.ShirtboxWhite?.make === 'function') return window.ShirtboxWhite;
-    whiteLoad ||= new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'weisser-hintergrund.js?v=20261123-scharf1';
-      script.onload = () => window.ShirtboxWhite?.make ? resolve(window.ShirtboxWhite) : reject(Error('Modul fuer weissen Hintergrund fehlt.'));
-      script.onerror = () => reject(Error('weisser-hintergrund.js konnte nicht geladen werden. Bitte Homepage-Dateien vollständig veröffentlichen.'));
-      document.head.appendChild(script);
-    }).catch(error => { whiteLoad = null; throw error; });
-    return whiteLoad;
+    if (typeof window.ShirtboxWhite?.split === 'function') return window.ShirtboxWhite;
+    throw Error('Vorder-/Rueckseiten-Modul fehlt. Bitte die aktuelle formular.js veröffentlichen.');
   }
   async function sendConfirmation(order) {
     const states = [...designs.values()], value = id => document.getElementById(id).value.trim();
